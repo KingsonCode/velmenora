@@ -4,6 +4,14 @@ import Link from "next/link";
 import { generateAllSlugs, getPageData } from "@/lib/generate";
 import CTAButton from "@/components/CTAButton";
 
+/* 🔥 NEW IMPORTS (UPGRADE) */
+import { generateContent } from "@/lib/contentEngine";
+import BrokerCard from "@/components/BrokerCard";
+import { brokers } from "@/data/brokers";
+import FAQ from "@/components/FAQ";
+import { getFAQ } from "@/lib/faq";
+import { generateFAQSchema } from "@/lib/faqSchema";
+
 /* =========================================================
    🔥 STATIC GENERATION
 ========================================================= */
@@ -49,14 +57,18 @@ export default async function Page(
 
     if (!data) return notFound();
 
-    const { country, title, description } = data;
+    const { country, title } = data;
+
+    const content = generateContent(data);
+    const faqItems = getFAQ(country.name);
+    const faqSchema = generateFAQSchema(faqItems);
 
     const ctaText = `Start Trading in ${country.name} — Limited Spots Available`;
 
     return (
         <main className="bg-[#0B0F14] text-white">
 
-            {/* 🔙 BACK BUTTON (NEW) */}
+            {/* 🔙 BACK BUTTON */}
             <div className="max-w-3xl mx-auto px-6 pt-10">
                 <Link
                     href="/"
@@ -73,41 +85,50 @@ export default async function Page(
                     {title}
                 </h1>
 
-                {/* INTRO */}
+                {/* 🔥 INTRO (DYNAMIC) */}
                 <p className="text-lg text-gray-400 mb-10 leading-relaxed">
-                    {description}
+                    {content.intro}
                 </p>
+
+                {/* 💰 CTA TOP */}
+                <CTAButton
+                    broker="exness"
+                    country={country.slug}
+                    text={`Start Trading in ${country.name}`}
+                    className="inline-block bg-yellow-400 text-black px-5 py-3 rounded-lg font-semibold mb-10"
+                />
+
+                {/* 🔥 BROKER SECTION */}
+                <div className="space-y-6 mb-12">
+                    <h2 className="text-2xl font-bold">
+                        {content.sectionTitle}
+                    </h2>
+
+                    {brokers.map((b) => (
+                        <BrokerCard
+                            key={b.slug}
+                            broker={b}
+                            country={country.slug}
+                        />
+                    ))}
+                </div>
 
                 {/* 🧠 CONTENT */}
                 <div className="space-y-8 text-gray-300 leading-relaxed">
 
-                    <h2 className="text-2xl md:text-3xl font-bold">
-                        Is Forex Trading Legal in {country.name}?
-                    </h2>
-
                     <p>
-                        Forex trading in <strong>{country.name}</strong> is rapidly growing as more traders gain access to global markets through mobile apps and online platforms.
+                        Traders in <strong>{country.name}</strong> prefer brokers with fast withdrawals,
+                        strong regulation, and reliable platforms.
                     </p>
 
                     <p>
-                        Many traders prefer brokers that support local payment methods and fast withdrawals, making the experience smoother and more reliable.
-                    </p>
-
-                    <h2 className="text-2xl md:text-3xl font-bold mt-10">
-                        Best Broker Recommendation in {country.name}
-                    </h2>
-
-                    <p>
-                        Based on execution speed, withdrawal reliability, and user experience, Exness remains one of the top broker choices for traders in <strong>{country.name}</strong>.
-                    </p>
-
-                    <p>
-                        It offers low spreads, instant withdrawals, and supports mobile trading — which makes it ideal for both beginners and advanced traders.
+                        Choosing the right broker can significantly impact your trading success,
+                        especially in fast-moving forex markets.
                     </p>
 
                 </div>
 
-                {/* 💰 CTA BLOCK */}
+                {/* 💰 CTA BLOCK (FIXED) */}
                 <div className="mt-14 p-8 bg-[#121a24] border border-white/10 rounded-2xl text-center">
                     <h3 className="text-xl md:text-2xl font-semibold mb-3">
                         Start Trading in {country.name}
@@ -117,12 +138,37 @@ export default async function Page(
                         Join thousands of traders using trusted brokers with fast withdrawals.
                     </p>
 
-                    <CTAButton broker="exness" text={ctaText} />
+                    <CTAButton
+                        broker="exness"
+                        country={country.slug}
+                        text={ctaText}
+                    />
 
                     <p className="text-xs text-gray-500 mt-3">
                         No signup fees • Start in 2 minutes
                     </p>
                 </div>
+
+                {/* 💰 FINAL CTA */}
+                <div className="mt-10 text-center">
+                    <CTAButton
+                        broker="exness"
+                        country={country.slug}
+                        text="Open Account Now"
+                        className="inline-block bg-yellow-400 text-black px-6 py-3 rounded-xl font-semibold"
+                    />
+                </div>
+
+                {/* ❓ FAQ */}
+                <FAQ items={faqItems} />
+
+                {/* 🧾 FAQ SCHEMA */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(faqSchema),
+                    }}
+                />
 
                 {/* 🔗 INTERNAL LINKS */}
                 <div className="mt-16 border-t border-[#1f2a36] pt-8">

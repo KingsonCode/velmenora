@@ -1,5 +1,3 @@
-// 📁 /lib/generate.ts
-
 import { countries, type Country } from "./countries";
 import { templates, type Template } from "./templates";
 
@@ -12,10 +10,12 @@ export type PageData = {
     description: string;
     country: Country;
     template: Template;
+    keyword: string;
+    type: string;
 };
 
 /* =========================================================
-   🔥 GENERATE ALL SLUGS
+   🔥 GENERATE ALL SLUGS (STATIC PATHS)
 ========================================================= */
 export function generateAllSlugs() {
     return countries.flatMap((country) =>
@@ -26,24 +26,36 @@ export function generateAllSlugs() {
 }
 
 /* =========================================================
-   🔥 GET PAGE DATA
+   🔥 GENERATE ALL PAGES (NEW - FULL DATA)
 ========================================================= */
-export function getPageData(slug: string): PageData | null {
+export function generatePages(): PageData[] {
+    const pages: PageData[] = [];
+
     for (const country of countries) {
         for (const tpl of templates) {
-            const expectedSlug = `${tpl.type}-in-${country.slug}`;
+            const slug = `${tpl.type}-in-${country.slug}`;
 
-            if (slug === expectedSlug) {
-                return {
-                    slug,
-                    title: tpl.generateTitle(country),
-                    description: tpl.generateDescription(country),
-                    country,
-                    template: tpl,
-                };
-            }
+            const keyword = tpl.generateTitle(country);
+
+            pages.push({
+                slug,
+                title: tpl.generateTitle(country),
+                description: tpl.generateDescription(country),
+                country,
+                template: tpl,
+                keyword,
+                type: tpl.type,
+            });
         }
     }
 
-    return null;
+    return pages;
+}
+
+/* =========================================================
+   🔥 GET PAGE DATA (FAST LOOKUP)
+========================================================= */
+export function getPageData(slug: string): PageData | null {
+    const pages = generatePages();
+    return pages.find((p) => p.slug === slug) || null;
 }

@@ -9,9 +9,16 @@ type Broker = {
     features: string[];
     rating?: number;
     badge?: string;
+    link?: string; // 🔥 optional (for override)
 };
 
-export default function BrokerCard({ broker }: { broker: Broker }) {
+export default function BrokerCard({
+    broker,
+    country,
+}: {
+    broker: Broker;
+    country: string;
+}) {
     return (
         <div
             className="
@@ -65,11 +72,14 @@ export default function BrokerCard({ broker }: { broker: Broker }) {
                 ))}
             </ul>
 
-            {/* CTA */}
+            {/* 🔥 CTA (TRACKED + DYNAMIC) */}
             <div className="mt-auto w-full">
                 <CTAButton
                     broker={broker.slug}
+                    country={country}
+                    href={broker.link} // optional override
                     text={`Trade with ${broker.name}`}
+                    className="inline-block w-full bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold text-center"
                 />
             </div>
         </div>
