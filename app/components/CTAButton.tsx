@@ -1,4 +1,9 @@
-export default function CTAButton({ broker }: { broker: string }) {
+type Props = {
+    broker: string;
+    text?: string;
+};
+
+export default function CTAButton({ broker, text }: Props) {
     return (
         <a
             href="https://one.exnessonelink.com/a/tmodpmod"
@@ -6,7 +11,7 @@ export default function CTAButton({ broker }: { broker: string }) {
             rel="noopener noreferrer"
             className="cta-button"
         >
-            🚀 Start Trading Now
+            {text || "🚀 Start Trading Now"}
         </a>
     );
 }

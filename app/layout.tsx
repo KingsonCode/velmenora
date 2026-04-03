@@ -1,4 +1,5 @@
 import "./styles/globals.css";
+
 export const metadata = {
     title: "Velmenora — Trade Smarter",
     description: "Access top brokers and smarter trading tools with Velmenora.",
@@ -18,7 +19,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className="bg-[#0B0F14] text-white">
-                {children}
+
+                {/* 🔥 GLOBAL CONTAINER */}
+                <div className="container">
+                    {children}
+                </div>
+
             </body>
         </html>
     );

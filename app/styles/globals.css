@@ -382,3 +382,29 @@ footer {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* ========================================= */
+/* 🔥 GLOBAL CONTAINER FIX (CRITICAL) */
+/* ========================================= */
+
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+
+.hero {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+}
