@@ -1,17 +1,20 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { getCountryBySlug, generateSEO } from "../lib/countries";
-import GeoFunnel from "../components/GeoFunnel";
+import { getCountryBySlug, generateSEO } from "@/lib/countries";
+import GeoFunnel from "@/components/GeoFunnel";
 
 /* =========================================================
-   🔥 SEO
+   🔥 SEO (FIXED FOR ASYNC PARAMS)
 ========================================================= */
 
 export async function generateMetadata(
-    { params }: { params: { country: string } }
+    { params }: { params: Promise<{ country: string }> }
 ): Promise<Metadata> {
-    const country = getCountryBySlug(params.country);
+
+    const { country: slug } = await params;
+
+    const country = getCountryBySlug(slug);
 
     if (!country) return {};
 
@@ -33,17 +36,20 @@ export async function generateMetadata(
    🔥 PAGE
 ========================================================= */
 
-export default function CountryPage(
-    { params }: { params: { country: string } }
+export default async function CountryPage(
+    { params }: { params: Promise<{ country: string }> }
 ) {
-    const country = getCountryBySlug(params.country);
+
+    const { country: slug } = await params;
+
+    const country = getCountryBySlug(slug);
 
     if (!country) return notFound();
 
     return (
         <main className="min-h-screen bg-[#0B0F14] text-white">
 
-            {/* 🔥 GEO FUNNEL (FIXED WITH SLUG) */}
+            {/* 🌍 GEO FUNNEL */}
             <GeoFunnel
                 data={{
                     countryName: country.name,
@@ -53,7 +59,7 @@ export default function CountryPage(
                     ctaLink: `/blog/best-brokers-in-${country.slug}`,
                     brokers: ["Exness", "Deriv"],
                     payments: country.payments,
-                    slug: country.slug, // ✅ IMPORTANT FIX
+                    slug: country.slug,
                 }}
             />
 

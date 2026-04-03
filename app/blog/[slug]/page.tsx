@@ -14,10 +14,14 @@ export async function generateStaticParams() {
 }
 
 /* =========================================================
-   🔥 SEO METADATA (PRO VERSION)
+   🔥 SEO METADATA
 ========================================================= */
-export function generateMetadata({ params }: { params: { slug: string } }) {
-    const data = getPageData(params.slug);
+export async function generateMetadata(
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+
+    const data = getPageData(slug);
 
     if (!data) return {};
 
@@ -27,7 +31,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
         openGraph: {
             title: data.title,
             description: data.description,
-            url: `https://velmenora.com/blog/${params.slug}`,
+            url: `https://velmenora.com/blog/${slug}`,
             siteName: "Velmenora",
         },
     };
@@ -36,8 +40,12 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
 /* =========================================================
    🔥 PAGE
 ========================================================= */
-export default function Page({ params }: { params: { slug: string } }) {
-    const data = getPageData(params.slug);
+export default async function Page(
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+
+    const data = getPageData(slug);
 
     if (!data) return notFound();
 
@@ -47,6 +55,16 @@ export default function Page({ params }: { params: { slug: string } }) {
 
     return (
         <main className="bg-[#0B0F14] text-white">
+
+            {/* 🔙 BACK BUTTON (NEW) */}
+            <div className="max-w-3xl mx-auto px-6 pt-10">
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition"
+                >
+                    ← Back to Home
+                </Link>
+            </div>
 
             <article className="max-w-3xl mx-auto px-6 py-20">
 
@@ -106,7 +124,7 @@ export default function Page({ params }: { params: { slug: string } }) {
                     </p>
                 </div>
 
-                {/* 🔗 INTERNAL LINKS (SEO BOOST) */}
+                {/* 🔗 INTERNAL LINKS */}
                 <div className="mt-16 border-t border-[#1f2a36] pt-8">
                     <h3 className="text-xl font-semibold mb-4">
                         Related Guides

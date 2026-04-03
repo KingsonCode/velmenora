@@ -1,36 +1,22 @@
-/* =========================================================
-   🔥 DATA SOURCE (COUNTRIES)
-========================================================= */
+// 📁 /lib/generate.ts
 
-const countries = [
-    { name: "Kenya", slug: "kenya" },
-    { name: "Nigeria", slug: "nigeria" },
-    { name: "Tanzania", slug: "tanzania" },
-];
+import { countries, type Country } from "./countries";
+import { templates, type Template } from "./templates";
 
 /* =========================================================
-   🔥 TEMPLATES (PAGE TYPES)
+   🔥 TYPES
 ========================================================= */
-
-const templates = [
-    {
-        type: "how-to-trade",
-        title: (c: any) => `How to Trade Forex in ${c.name}`,
-        description: (c: any) =>
-            `Learn how to trade forex in ${c.name} step by step.`,
-    },
-    {
-        type: "is-exness-legit",
-        title: (c: any) => `Is Exness Legit in ${c.name}?`,
-        description: (c: any) =>
-            `Full review of Exness broker in ${c.name}.`,
-    },
-];
+export type PageData = {
+    slug: string;
+    title: string;
+    description: string;
+    country: Country;
+    template: Template;
+};
 
 /* =========================================================
    🔥 GENERATE ALL SLUGS
 ========================================================= */
-
 export function generateAllSlugs() {
     return countries.flatMap((country) =>
         templates.map((tpl) => ({
@@ -40,19 +26,20 @@ export function generateAllSlugs() {
 }
 
 /* =========================================================
-   🔥 GET PAGE DATA (MATCH SLUG)
+   🔥 GET PAGE DATA
 ========================================================= */
-
-export function getPageData(slug: string) {
+export function getPageData(slug: string): PageData | null {
     for (const country of countries) {
         for (const tpl of templates) {
             const expectedSlug = `${tpl.type}-in-${country.slug}`;
 
             if (slug === expectedSlug) {
                 return {
-                    title: tpl.title(country),
-                    description: tpl.description(country),
+                    slug,
+                    title: tpl.generateTitle(country),
+                    description: tpl.generateDescription(country),
                     country,
+                    template: tpl,
                 };
             }
         }

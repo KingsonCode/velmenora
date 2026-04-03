@@ -1,29 +1,38 @@
 // 📁 /lib/templates.ts
 
-type Template = {
+import type { Country } from "./countries";
+
+/* =========================================================
+   🔥 TEMPLATE TYPE (FULL POWER)
+========================================================= */
+export type Template = {
     type: string;
-    generateTitle: (country: string) => string;
-    generateDescription: (country: string) => string;
-    keywords: (country: string) => string[];
+    generateTitle: (country: Country) => string;
+    generateDescription: (country: Country) => string;
+    keywords: (country: Country) => string[];
 };
 
+/* =========================================================
+   🔥 TEMPLATES (PRO MAX — SEO + MONEY)
+========================================================= */
 export const templates: Template[] = [
     /* =========================================================
        🔥 1. LEGALITY PAGE (HIGH TRUST INTENT)
     ========================================================= */
     {
         type: "is-exness-legal",
-        generateTitle: (country) =>
-            `Is Exness Legal in ${country}? (2026 Full Guide + Safety Check)`,
 
-        generateDescription: (country) =>
-            `Is Exness allowed in ${country}? Learn about regulations, safety, withdrawal reliability, and whether traders can legally use Exness in ${country}.`,
+        generateTitle: (c) =>
+            `Is Exness Legal in ${c.name}? (2026 Full Guide + Safety Check)`,
 
-        keywords: (country) => [
-            `Is Exness legal in ${country}`,
-            `Exness ${country} regulation`,
-            `Can I use Exness in ${country}`,
-            `Exness safe ${country}`,
+        generateDescription: (c) =>
+            `Is Exness allowed in ${c.name}? Learn about regulations, safety, withdrawal reliability, and whether traders can legally use Exness in ${c.name}.`,
+
+        keywords: (c) => [
+            `Is Exness legal in ${c.name}`,
+            `Exness ${c.name} regulation`,
+            `Can I use Exness in ${c.name}`,
+            `Exness safe ${c.name}`,
         ],
     },
 
@@ -32,17 +41,18 @@ export const templates: Template[] = [
     ========================================================= */
     {
         type: "best-brokers",
-        generateTitle: (country) =>
-            `Best Forex Brokers in ${country} (2026) — Low Spreads & Fast Withdrawals`,
 
-        generateDescription: (country) =>
-            `Looking for the best forex brokers in ${country}? Compare top platforms with low spreads, instant withdrawals, and trusted regulation for ${country} traders.`,
+        generateTitle: (c) =>
+            `Best Forex Brokers in ${c.name} (2026) — Low Spreads & Fast Withdrawals`,
 
-        keywords: (country) => [
-            `best forex brokers in ${country}`,
-            `top brokers ${country}`,
-            `forex trading ${country}`,
-            `low spread brokers ${country}`,
+        generateDescription: (c) =>
+            `Looking for the best forex brokers in ${c.name}? Compare top platforms with low spreads, instant withdrawals, and trusted regulation for ${c.name} traders.`,
+
+        keywords: (c) => [
+            `best forex brokers in ${c.name}`,
+            `top brokers ${c.name}`,
+            `forex trading ${c.name}`,
+            `low spread brokers ${c.name}`,
         ],
     },
 
@@ -51,17 +61,18 @@ export const templates: Template[] = [
     ========================================================= */
     {
         type: "how-to-trade",
-        generateTitle: (country) =>
-            `How to Start Forex Trading in ${country} (Beginner Guide 2026)`,
 
-        generateDescription: (country) =>
-            `Step-by-step guide to start forex trading in ${country}. Learn how to open an account, deposit money, and trade safely as a beginner.`,
+        generateTitle: (c) =>
+            `How to Start Forex Trading in ${c.name} (Beginner Guide 2026)`,
 
-        keywords: (country) => [
-            `how to trade forex in ${country}`,
-            `forex beginners ${country}`,
-            `start trading ${country}`,
-            `forex guide ${country}`,
+        generateDescription: (c) =>
+            `Step-by-step guide to start forex trading in ${c.name}. Learn how to open an account, deposit money, and trade safely as a beginner.`,
+
+        keywords: (c) => [
+            `how to trade forex in ${c.name}`,
+            `forex beginners ${c.name}`,
+            `start trading ${c.name}`,
+            `forex guide ${c.name}`,
         ],
     },
 
@@ -70,17 +81,18 @@ export const templates: Template[] = [
     ========================================================= */
     {
         type: "deposit-methods",
-        generateTitle: (country) =>
-            `Best Deposit Methods for Forex Trading in ${country} (2026)`,
 
-        generateDescription: (country) =>
-            `Discover the best ways to deposit money for forex trading in ${country}, including mobile money, bank transfer, and instant payment options.`,
+        generateTitle: (c) =>
+            `Best Deposit Methods for Forex Trading in ${c.name} (2026)`,
 
-        keywords: (country) => [
-            `deposit forex ${country}`,
-            `mobile money forex ${country}`,
-            `mpesa forex ${country}`,
-            `forex payments ${country}`,
+        generateDescription: (c) =>
+            `Discover the best ways to deposit money for forex trading in ${c.name}, including mobile money, bank transfer, and instant payment options.`,
+
+        keywords: (c) => [
+            `deposit forex ${c.name}`,
+            `mobile money forex ${c.name}`,
+            `mpesa forex ${c.name}`,
+            `forex payments ${c.name}`,
         ],
     },
 
@@ -89,17 +101,18 @@ export const templates: Template[] = [
     ========================================================= */
     {
         type: "withdraw-money",
-        generateTitle: (country) =>
-            `How to Withdraw Money from Forex in ${country} (Fast & Safe)`,
 
-        generateDescription: (country) =>
-            `Learn how to withdraw money from forex brokers in ${country} using the fastest and safest methods available to local traders.`,
+        generateTitle: (c) =>
+            `How to Withdraw Money from Forex in ${c.name} (Fast & Safe)`,
 
-        keywords: (country) => [
-            `withdraw forex ${country}`,
-            `forex withdrawal ${country}`,
-            `how to withdraw exness ${country}`,
-            `get money from forex ${country}`,
+        generateDescription: (c) =>
+            `Learn how to withdraw money from forex brokers in ${c.name} using the fastest and safest methods available to local traders.`,
+
+        keywords: (c) => [
+            `withdraw forex ${c.name}`,
+            `forex withdrawal ${c.name}`,
+            `how to withdraw exness ${c.name}`,
+            `get money from forex ${c.name}`,
         ],
     },
 
@@ -108,17 +121,18 @@ export const templates: Template[] = [
     ========================================================= */
     {
         type: "exness-review",
-        generateTitle: (country) =>
-            `Exness Review in ${country} (2026) — Fees, Spreads & Withdrawal Tested`,
 
-        generateDescription: (country) =>
-            `Honest Exness review for ${country} traders. See spreads, fees, withdrawal speed, and whether Exness is worth using in ${country}.`,
+        generateTitle: (c) =>
+            `Exness Review in ${c.name} (2026) — Fees, Spreads & Withdrawal Tested`,
 
-        keywords: (country) => [
-            `exness review ${country}`,
-            `exness fees ${country}`,
-            `exness spreads ${country}`,
-            `exness withdrawal ${country}`,
+        generateDescription: (c) =>
+            `Honest Exness review for ${c.name} traders. See spreads, fees, withdrawal speed, and whether Exness is worth using in ${c.name}.`,
+
+        keywords: (c) => [
+            `exness review ${c.name}`,
+            `exness fees ${c.name}`,
+            `exness spreads ${c.name}`,
+            `exness withdrawal ${c.name}`,
         ],
     },
 ];
