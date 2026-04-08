@@ -1,10 +1,12 @@
-import { NextResponse } from "next/server";
-import { brokers } from "@/data/brokers";
+// app/go/[slug]/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { brokers } from "@/lib/brokers";
 
 /* =========================================================
    🔥 HELPER: GET CLIENT IP
 ========================================================= */
-function getIP(req: Request) {
+function getIP(req: NextRequest) {
     return (
         req.headers.get("x-forwarded-for") ||
         req.headers.get("x-real-ip") ||
@@ -15,65 +17,100 @@ function getIP(req: Request) {
 /* =========================================================
    🔥 HELPER: BOT DETECTION
 ========================================================= */
-function isBot(userAgent: string | null) {
-    if (!userAgent) return false;
-
-    return /bot|crawl|spider|slurp|facebook|whatsapp/i.test(userAgent);
+function isBot(userAgent: string) {
+    return /bot|crawl|spider|slurp|facebook|whatsapp|preview|meta|curl/i.test(
+        userAgent.toLowerCase()
+    );
 }
 
 /* =========================================================
-   🔥 MAIN HANDLER
+   🔥 MAIN HANDLER (NEXT 16 FIXED)
 ========================================================= */
-export async function GET(req: Request, { params }: any) {
+export async function GET(
+    req: NextRequest,
+    context: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await context.params; // ✅ muhimu sana
+
     const { searchParams } = new URL(req.url);
+    const broker = brokers[slug as keyof typeof brokers];
 
-    const slug = params.slug;
-    const broker = brokers.find((b) => b.slug === slug);
+    /* ================= VALIDATION ================= */
 
-    /* ❌ INVALID BROKER */
     if (!broker) {
-        return NextResponse.redirect("https://velmenora.com");
+        return NextResponse.json(
+            { error: "Broker not found", slug },
+            { status: 404 }
+        );
     }
 
-    /* =========================================================
-       🔥 TRACKING DATA
-    ========================================================= */
-    const source = searchParams.get("src") || "unknown";
-    const country = searchParams.get("country") || "global";
+    if (!broker.active) {
+        return NextResponse.json(
+            { error: "Broker inactive", slug },
+            { status: 403 }
+        );
+    }
 
-    const userAgent = req.headers.get("user-agent");
+    /* ================= TRACKING INPUT ================= */
+
+    const source = searchParams.get("src") || "direct";
+    const countryParam = searchParams.get("country") || "auto";
+
+    const userAgent = req.headers.get("user-agent") || "";
     const ip = getIP(req);
     const bot = isBot(userAgent);
 
-    /* =========================================================
-       🔥 LOG (FOR NOW → console, later DB)
-    ========================================================= */
-    if (!bot) {
-        console.log("🔥 CLICK EVENT", {
-            broker: broker.slug,
-            source,
-            country,
-            ip,
-            userAgent,
-            timestamp: new Date().toISOString(),
-        });
+    /* ================= GEO DETECTION ================= */
+
+    const countryHeader =
+        req.headers.get("x-vercel-ip-country") || "unknown";
+
+    const country =
+        countryParam !== "auto" ? countryParam : countryHeader;
+
+    /* ================= BOT HANDLING ================= */
+
+    if (bot) {
+        return NextResponse.redirect(new URL("/", req.url));
     }
 
-    /* =========================================================
-       🔥 REDIRECT WITH TRACKING PARAMS
-    ========================================================= */
+    /* ================= BUILD FINAL URL ================= */
 
-    const finalUrl = new URL(broker.link);
+    const finalUrl = new URL(broker.url);
 
     finalUrl.searchParams.set("utm_source", "velmenora");
     finalUrl.searchParams.set("utm_medium", "affiliate");
-    finalUrl.searchParams.set("utm_campaign", source);
-    finalUrl.searchParams.set("utm_content", country);
+    finalUrl.searchParams.set("utm_campaign", slug);
+    finalUrl.searchParams.set("utm_content", source);
+    finalUrl.searchParams.set("geo", country);
 
-    /* =========================================================
-       🔥 REDIRECT
-    ========================================================= */
-    return NextResponse.redirect(finalUrl.toString(), {
-        status: 302,
-    });
+    /* ================= LOGGING ================= */
+
+    const logPayload = {
+        event: "affiliate_click",
+        broker: broker.slug,
+        source,
+        country,
+        ip,
+        userAgent,
+        timestamp: new Date().toISOString(),
+    };
+
+    console.log(JSON.stringify(logPayload));
+
+    /* ================= OPTIONAL: DB TRACKING ================= */
+    /*
+    await db.query(
+      `
+      INSERT INTO clicks (broker, source, country, ip, user_agent, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      ON CONFLICT DO NOTHING
+      `,
+      [broker.slug, source, country, ip, userAgent]
+    );
+    */
+
+    /* ================= REDIRECT ================= */
+
+    return NextResponse.redirect(finalUrl.toString(), 302);
 }
