@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getByTier } from "@/lib/countries";
-import MarketTicker from "./MarketTicker"; // ✅ ADD
+import MarketTicker from "./MarketTicker";
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
@@ -28,34 +28,34 @@ export default function Navbar() {
 
     return (
         <>
-            {/* 🔥 MARKET TICKER (TOP BAR) */}
+            {/* 🔥 MARKET TICKER */}
             <div className="fixed top-0 left-0 w-full z-[1000]">
                 <MarketTicker />
             </div>
 
-            {/* ================= HEADER ================= */}
+            {/* 🔥 HEADER */}
             <header
-                className={`fixed top-[32px] left-0 w-full z-[999] transition-all duration-300 ${scrolled
-                        ? "bg-white/70 backdrop-blur-xl border-b border-black/5 shadow-sm"
-                        : "bg-transparent"
+                className={`fixed top-[28px] left-0 w-full z-[999] transition-all duration-300 ${scrolled
+                    ? "bg-white/70 backdrop-blur-xl border-b border-black/5 shadow-sm py-1.5"
+                    : "bg-transparent py-2.5"
                     }`}
             >
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
 
-                    {/* 🔥 LOGO */}
+                    {/* LOGO */}
                     <Link href="/" className="flex items-center">
                         <Image
                             src="/logo.svg"
                             alt="Velmenora"
-                            width={180}
-                            height={60}
+                            width={130}
+                            height={36}
                             priority
-                            className="object-contain logo"
+                            style={{ height: "auto" }} // 🔥 muhimu
                         />
                     </Link>
 
-                    {/* ================= NAV ================= */}
-                    <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+                    {/* NAV */}
+                    <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
 
                         <NavLink href="/" active={isActive("/")}>Home</NavLink>
                         <NavLink href="/compare" active={isActive("/compare")}>Compare</NavLink>
@@ -68,7 +68,7 @@ export default function Navbar() {
                                 Markets <span className="text-xs">▾</span>
                             </span>
 
-                            <div className="absolute left-0 mt-4 w-64 bg-white border border-black/5 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-2 shadow-xl">
+                            <div className="absolute left-0 mt-3 w-60 bg-white border border-black/5 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-2 shadow-xl">
                                 {topMarkets.slice(0, 6).map((c) => (
                                     <Link
                                         key={c.code}
@@ -86,7 +86,7 @@ export default function Navbar() {
                     <div className="hidden md:block">
                         <Link
                             href="/compare"
-                            className="px-5 py-2 rounded-xl font-semibold transition-all duration-300 bg-black text-white hover:bg-gray-800 hover:scale-[1.03]"
+                            className="px-4 py-1.5 rounded-lg font-semibold transition-all duration-300 bg-black text-white hover:bg-gray-800 hover:scale-[1.03]"
                         >
                             Start Trading
                         </Link>
@@ -95,14 +95,14 @@ export default function Navbar() {
                     {/* MOBILE BTN */}
                     <button
                         onClick={() => setOpen(true)}
-                        className="md:hidden text-2xl text-gray-700"
+                        className="md:hidden text-xl text-gray-700"
                     >
                         ☰
                     </button>
                 </div>
             </header>
 
-            {/* ================= MOBILE ================= */}
+            {/* 🔥 MOBILE MENU */}
             <div className="md:hidden">
 
                 <div
@@ -121,9 +121,8 @@ export default function Navbar() {
                             <Image
                                 src="/logo.svg"
                                 alt="Velmenora"
-                                width={140}
-                                height={50}
-                                className="logo"
+                                width={130}
+                                height={40}
                             />
                             <button onClick={() => setOpen(false)}>✕</button>
                         </div>
@@ -147,7 +146,6 @@ export default function Navbar() {
 
                     </div>
                 </div>
-
             </div>
         </>
     );
@@ -159,8 +157,8 @@ function NavLink({ href, active, children }: any) {
         <Link
             href={href}
             className={`transition ${active
-                    ? "text-black"
-                    : "text-gray-500 hover:text-black"
+                ? "text-black"
+                : "text-gray-500 hover:text-black"
                 }`}
         >
             {children}

@@ -1,11 +1,21 @@
 "use client";
 
-import Sparkline from "./Sparkline";
+import dynamic from "next/dynamic";
 
+/* 🔥 SSR SAFE IMPORT */
+const MarketChart = dynamic(() => import("./MarketChart"), {
+    ssr: false,
+});
+
+/* 🔥 MOCK DATA (REALISTIC FOREX STYLE) */
 const sampleData = Array.from({ length: 40 }, (_, i) => {
-    let base = 1.1;
+    let base = 1.08;
     base += (Math.random() - 0.5) * 0.01;
-    return base;
+
+    return {
+        time: `${9 + Math.floor(i / 4)}:${(i % 4) * 15}`.padStart(5, "0"),
+        price: Number(base.toFixed(5)),
+    };
 });
 
 export default function MarketHeroChart() {
@@ -30,11 +40,12 @@ export default function MarketHeroChart() {
                     </div>
                 </div>
 
-                {/* 🔥 BIG CHART */}
+                {/* 🔥 CHART CARD */}
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
 
-                    <div className="h-40 w-full">
-                        <Sparkline data={sampleData} />
+                    {/* 🔥 IMPORTANT WRAPPER */}
+                    <div className="w-full min-w-0">
+                        <MarketChart data={sampleData} />
                     </div>
 
                 </div>
