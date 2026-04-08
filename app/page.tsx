@@ -1,163 +1,160 @@
-import { headers } from "next/headers";
-import type { Metadata } from "next";
-
-import CTAButton from "@/components/CTAButton";
-import BrokerCard from "@/components/BrokerCard";
-import BlogCard from "@/components/BlogCard";
-
-import { getCountryByCode } from "@/lib/countries";
-import { getFunnel } from "@/lib/geoFunnel";
+"use client";
 
 import { brokers } from "@/data/brokers";
-import { blogPosts } from "@/data/blogPreview";
+import BrokerCard from "@/components/BrokerCard";
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
-/* =========================================================
-   🔥 SEO (UNCHANGED)
-========================================================= */
+/* 🔥 HERO BACKGROUNDS */
+const images = [
+    "/hero/forex1.jpg",
+    "/hero/forex2.jpg",
+    "/hero/forex3.jpg",
+];
 
-export async function generateMetadata(): Promise<Metadata> {
-    const h = await headers();
-    const code = h.get("x-vercel-ip-country")?.toLowerCase();
+export default function HomePage() {
+    const [index, setIndex] = useState(0);
 
-    const country = getCountryByCode(code || "tz");
-    const name = country?.name || "Worldwide";
-
-    return {
-        title: `Best Forex Brokers in ${name} | Velmenora`,
-        description: `Trade forex in ${name} using trusted brokers with fast withdrawals.`,
-    };
-}
-
-/* =========================================================
-   🔥 PAGE
-========================================================= */
-
-export default async function Home() {
-    const h = await headers();
-    const code = h.get("x-vercel-ip-country")?.toUpperCase();
-
-    const country = getCountryByCode(code?.toLowerCase() || "tz");
-    const name = country?.name || "Worldwide";
-
-    const funnel = getFunnel(code);
-
-    const featuredPost = blogPosts[0];
-    const otherPosts = blogPosts.slice(1);
-
-    /* 🔥 SOCIAL PROOF */
-    const names = ["John", "David", "Michael", "James", "Brian"];
-    const countries = ["Kenya", "Tanzania", "Nigeria", "Ghana"];
-    const amounts = [120, 240, 75, 310, 180];
-
-    const rand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-    const liveEvent = `${rand(names)} from ${rand(countries)} just made $${rand(amounts)}`;
-
-    const ctaText = `Start Trading in ${name} — Limited Spots Available`;
+    useEffect(() => {
+        const i = setInterval(() => {
+            setIndex((prev) => (prev + 1) % images.length);
+        }, 5000);
+        return () => clearInterval(i);
+    }, []);
 
     return (
-        <main className="min-h-screen bg-[#0B0F14] text-white relative">
+        <main className="text-white">
 
-            {/* 🔥 LIVE BAR */}
-            <section className="text-center text-xs text-green-400 py-2">
-                🟢 {liveEvent} • {Math.floor(Math.random() * 3) + 1} min ago
-            </section>
+            {/* ================= HERO ================= */}
+            <section className="relative h-[90vh] flex items-center justify-center text-center overflow-hidden">
 
-            {/* 🔴 NAVBAR */}
-            <header className="w-full border-b border-white/10 bg-[#020617]/80 backdrop-blur sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-                    <h1 className="text-lg font-semibold">Velmenora</h1>
-                    <CTAButton broker="exness" text={ctaText} />
-                </div>
-            </header>
+                {/* 🔥 BACKGROUND SLIDER (NEXT IMAGE) */}
+                {images.map((img, i) => (
+                    <Image
+                        key={i}
+                        src={img}
+                        alt={`Forex trading background ${i + 1}`}
+                        fill
+                        priority={i === 0} // first image loads fast
+                        className={`object-cover transition duration-1000 ${i === index ? "opacity-100" : "opacity-0"
+                            }`}
+                    />
+                ))}
 
-            {/* ✅ WRAPPER */}
-            <div className="container">
+                {/* OVERLAY */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90" />
 
-                {/* 🟡 HERO */}
-                <section className="text-center py-20 md:py-24">
-                    <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-                        Best Forex Brokers <span className="text-blue-500">in {name}</span>
+                {/* CONTENT */}
+                <div className="relative z-10 max-w-3xl px-6">
+
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        Best Forex Brokers in Tanzania 🇹🇿
                     </h1>
 
-                    <p className="mt-6 text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                        Trade safely with verified brokers. Fast withdrawals, low spreads.
+                    <p className="text-gray-300 mb-8 text-lg">
+                        Trade with trusted brokers. Fast withdrawals. Low spreads. High leverage.
                     </p>
 
-                    <div className="mt-8">
-                        <CTAButton broker="exness" text={ctaText} />
+                    {/* CTA */}
+                    <div className="flex justify-center gap-4 flex-wrap">
+                        <Link
+                            href="#brokers"
+                            className="px-8 py-4 bg-gradient-primary rounded-xl font-semibold shadow-glow hover:scale-105 transition"
+                        >
+                            Compare Brokers →
+                        </Link>
+
+                        <Link
+                            href="/learn"
+                            className="px-6 py-4 bg-white/10 rounded-xl hover:bg-white/20 transition"
+                        >
+                            Learn First
+                        </Link>
                     </div>
 
-                    <p className="text-xs text-red-400 mt-4">
-                        ⏳ Limited bonus spots available
+                    {/* TRUST */}
+                    <div className="mt-8 flex justify-center gap-6 text-sm text-gray-400 flex-wrap">
+                        <span>✔ Verified Brokers</span>
+                        <span>✔ Fast Withdrawals</span>
+                        <span>✔ Beginner Friendly</span>
+                    </div>
+
+                </div>
+            </section>
+
+            {/* ================= BROKERS ================= */}
+            <section id="brokers" className="py-24">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                        Top Forex Brokers in Tanzania
+                    </h2>
+                    <p className="text-gray-400">
+                        Compare the best platforms and start trading today.
                     </p>
-                </section>
+                </div>
 
-                {/* 🧠 WHY */}
-                <section className="py-24 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-10">
-                        Why Choose Our Recommendations?
-                    </h2>
+                <div className="grid md:grid-cols-3 gap-8">
+                    {brokers.map((b, i) => (
+                        <BrokerCard
+                            key={b.id}
+                            broker={b}
+                            rank={i + 1}
+                            country="tanzania"
+                        />
+                    ))}
+                </div>
+            </section>
 
-                    <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                        <div className="p-6 border border-white/10 rounded-xl">✔ Verified</div>
-                        <div className="p-6 border border-white/10 rounded-xl">✔ Fast Withdrawals</div>
-                        <div className="p-6 border border-white/10 rounded-xl">✔ Beginner Friendly</div>
+            {/* ================= WHY ================= */}
+            <section className="py-20 bg-white/5 text-center">
+                <h2 className="text-3xl font-bold mb-6">
+                    Why Traders Choose Velmenora
+                </h2>
+
+                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto text-gray-300">
+
+                    <div>
+                        <h3 className="font-semibold mb-2">Verified Brokers</h3>
+                        <p className="text-sm">
+                            Only trusted platforms with strong reputation.
+                        </p>
                     </div>
-                </section>
 
-                {/* 🏦 BROKERS (FINAL FIXED) */}
-                <section className="py-24">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        Top Brokers in {name}
-                    </h2>
-
-                    <div className="grid sm:grid-cols-2 gap-6 md:gap-8 mt-12 max-w-5xl mx-auto">
-                        {brokers.map((broker) => (
-                            <BrokerCard
-                                key={broker.slug}
-                                broker={broker}
-                                country="global"
-                            />
-                        ))}
+                    <div>
+                        <h3 className="font-semibold mb-2">Fast Withdrawals</h3>
+                        <p className="text-sm">
+                            Get your money quickly and securely.
+                        </p>
                     </div>
-                </section>
 
-                {/* 📰 BLOG */}
-                <section className="py-24">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        Learn Forex Trading in {name}
-                    </h2>
-
-                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-                        {otherPosts.map((post: any) => (
-                            <BlogCard key={post.slug} post={post} />
-                        ))}
+                    <div>
+                        <h3 className="font-semibold mb-2">Low Spreads</h3>
+                        <p className="text-sm">
+                            Trade with tight spreads and better pricing.
+                        </p>
                     </div>
-                </section>
 
-                {/* 🚀 CTA */}
-                <section className="text-center py-24">
-                    <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                        Start Trading in {name} Today
-                    </h2>
+                </div>
+            </section>
 
-                    <p className="text-gray-400 mt-4 mb-6">
-                        Join thousands of traders using trusted platforms.
-                    </p>
+            {/* ================= FINAL CTA ================= */}
+            <section className="py-20 text-center border-t border-white/10">
+                <h2 className="text-3xl font-bold mb-6">
+                    Ready to Start Trading?
+                </h2>
 
-                    <CTAButton broker="exness" text={ctaText} />
+                <Link
+                    href="/compare"
+                    className="px-10 py-5 bg-gradient-primary rounded-xl font-semibold shadow-glow hover:scale-105 transition"
+                >
+                    Compare Brokers Now →
+                </Link>
 
-                    <p className="text-xs text-gray-500 mt-3">
-                        No signup fees • Start in 2 minutes
-                    </p>
-                </section>
-
-            </div>
-
-            {/* 🔥 FLOATING SOCIAL PROOF */}
-            <div className="fixed bottom-6 left-6 bg-[#020617] border border-white/10 px-4 py-3 rounded-lg text-sm text-green-400 shadow-lg">
-                🟢 {liveEvent}
-            </div>
+                <p className="text-gray-500 text-sm mt-4">
+                    No fees • Fast signup • Secure
+                </p>
+            </section>
 
         </main>
     );

@@ -1,29 +1,40 @@
-import "./styles/globals.css";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import Analytics from "@/components/Analytics";
-import { Suspense } from "react";
+import "./globals.css";
 
-const GA_ID =
-    process.env.NEXT_PUBLIC_GA_ID || "G-VMWD4KBDS7";
+/* NAV + FOOTER */
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
-/* =========================================================
-   🔥 SEO METADATA (GLOBAL)
-========================================================= */
-export const metadata = {
-    title: "Velmenora — Trade Smarter",
-    description:
-        "Access top brokers and smarter trading tools with Velmenora.",
-    openGraph: {
-        title: "Velmenora",
-        description: "Trade Smarter. Grow Stronger.",
-        url: "https://velmenora.com",
-        siteName: "Velmenora",
+/* =========================
+   FONTS
+========================= */
+const geistSans = Geist({
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+});
+
+/* =========================
+   SEO (UPDATED FOR FOREX)
+========================= */
+export const metadata: Metadata = {
+    title: {
+        default: "Velmenora — Best Forex Brokers in Tanzania",
+        template: "%s | Velmenora",
     },
+    description:
+        "Compare the best forex brokers in Tanzania. Trade with verified platforms, fast withdrawals, and low spreads.",
 };
 
-/* =========================================================
-   🔥 ROOT LAYOUT
-========================================================= */
+/* =========================
+   ROOT LAYOUT
+========================= */
 export default function RootLayout({
     children,
 }: {
@@ -31,14 +42,31 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <head>
-                {/* 🔥 GOOGLE ANALYTICS SCRIPT */}
+            <body
+                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#020617] text-white`}
+            >
+                <div className="flex flex-col min-h-screen">
+
+                    {/* 🔥 NAVBAR (FULL WIDTH) */}
+                    <Navbar />
+
+                    {/* 🔥 MAIN (GLOBAL CENTER FIX) */}
+                    <main className="flex-1 flex justify-center">
+                        <div className="w-full max-w-7xl px-6">
+                            {children}
+                        </div>
+                    </main>
+
+                    {/* 🔻 FOOTER */}
+                    <Footer />
+
+                </div>
+
+                {/* ✅ GOOGLE ANALYTICS */}
                 <Script
-                    src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+                    src="https://www.googletagmanager.com/gtag/js?id=G-VMWD4KBDS7"
                     strategy="afterInteractive"
                 />
-
-                {/* 🔥 GA INIT (SPA SAFE) */}
                 <Script id="gtag-init" strategy="afterInteractive">
                     {`
             window.dataLayer = window.dataLayer || [];
@@ -46,25 +74,11 @@ export default function RootLayout({
             window.gtag = gtag;
 
             gtag('js', new Date());
-
-            // ❗ Disable auto page view (we handle it manually)
-            gtag('config', '${GA_ID}', {
-              send_page_view: false
+            gtag('config', 'G-VMWD4KBDS7', {
+              anonymize_ip: true
             });
           `}
                 </Script>
-            </head>
-
-            <body className="bg-[#0B0F14] text-white">
-                {/* 🔥 ROUTE TRACKING (FIXED WITH SUSPENSE) */}
-                <Suspense fallback={null}>
-                    <Analytics />
-                </Suspense>
-
-                {/* 🔥 GLOBAL WRAPPER */}
-                <div className="container">
-                    {children}
-                </div>
             </body>
         </html>
     );

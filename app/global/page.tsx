@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CountryHero from "@/components/CountryHero";
+import CountryHero from "components/CountryHero";
 import Link from "next/link";
 
 export const metadata: Metadata = {

@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { getCountryBySlug, generateSEO } from "@/lib/countries";
-import GeoFunnel from "@/components/GeoFunnel";
-import CTAButton from "@/components/CTAButton";
-import BrokerCard from "@/components/BrokerCard";
+import GeoFunnel from "components/GeoFunnel";
+import CTAButton from "components/CTAButton";
+import BrokerCard from "components/BrokerCard";
 import { brokers } from "@/data/brokers";
 
 /* =========================================================

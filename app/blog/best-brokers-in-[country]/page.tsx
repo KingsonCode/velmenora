@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { countries, getCountryBySlug, generateSEO } from "@/lib/countries";
 import { getFunnel } from "@/lib/geoFunnel";
-import CTAButton from "@/components/CTAButton";
-import BrokerCard from "@/components/BrokerCard";
+import CTAButton from "components/CTAButton";
+import BrokerCard from "components/BrokerCard";
 import { brokers } from "@/data/brokers";
 
 // 🔥 STATIC PATHS (SEO)
@@ -58,7 +58,7 @@ export default function Page({
 
             {/* 🔥 CTA ABOVE THE FOLD */}
             <a
-                href="/go/exness"
+                href="/compare"
                 className="inline-block bg-yellow-400 text-black px-5 py-3 rounded-lg font-semibold mb-10"
             >
                 Start Trading in {country.name}
@@ -99,10 +99,10 @@ export default function Page({
             {/* 🔥 FINAL CTA */}
             <div className="text-center mt-12">
                 <a
-                    href="/go/exness"
+                    href="/compare"
                     className="inline-block bg-yellow-400 text-black px-6 py-3 rounded-xl font-semibold"
                 >
-                    Open Account Now
+                    Compare Brokers
                 </a>
             </div>
 

@@ -1,45 +1,47 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-import { generateAllSlugs, getPageData } from "@/lib/generate";
-import CTAButton from "@/components/CTAButton";
+import { getPost, getAllPostsData } from "@/lib/blog/posts";
+import { generateProgrammaticPost } from "@/lib/blog/programmaticEngine";
+import { generateAllSlugs } from "@/lib/blog/keywords";
 
-/* 🔥 NEW IMPORTS (UPGRADE) */
-import { generateContent } from "@/lib/contentEngine";
+/* 🔥 COMPONENTS */
+import CTAButton from "@/components/CTAButton";
 import BrokerCard from "@/components/BrokerCard";
 import { brokers } from "@/data/brokers";
-import FAQ from "@/components/FAQ";
-import { getFAQ } from "@/lib/faq";
-import { generateFAQSchema } from "@/lib/faqSchema";
+
+/* 🔥 ENGINES */
+import { injectInternalLinks } from "@/lib/blog/internalLinks";
+import { injectBrokerCards } from "@/lib/blog/brokerCards";
 
 /* =========================================================
-   🔥 STATIC GENERATION
+   🔥 SSG (1000+ PAGES)
 ========================================================= */
 export async function generateStaticParams() {
-    return generateAllSlugs().map((item) => ({
-        slug: item.slug,
-    }));
+    return generateAllSlugs().map((slug) => ({ slug }));
 }
 
 /* =========================================================
    🔥 SEO METADATA
 ========================================================= */
-export async function generateMetadata(
-    { params }: { params: Promise<{ slug: string }> }
-) {
-    const { slug } = await params;
+export async function generateMetadata({ params }: any) {
+    let post = getPost(params.slug);
 
-    const data = getPageData(slug);
+    if (!post) {
+        post = generateProgrammaticPost(params.slug);
+    }
 
-    if (!data) return {};
+    if (!post) {
+        return { title: "Article Not Found" };
+    }
 
     return {
-        title: `${data.title} (2026 Guide)`,
-        description: data.description,
+        title: `${post.title} (2026 Guide)`,
+        description: post.description,
         openGraph: {
-            title: data.title,
-            description: data.description,
-            url: `https://velmenora.com/blog/${slug}`,
+            title: post.title,
+            description: post.description,
+            url: `https://velmenora.com/blog/${post.slug}`,
             siteName: "Velmenora",
         },
     };
@@ -48,155 +50,158 @@ export async function generateMetadata(
 /* =========================================================
    🔥 PAGE
 ========================================================= */
-export default async function Page(
-    { params }: { params: Promise<{ slug: string }> }
-) {
-    const { slug } = await params;
+export default function BlogPostPage({ params }: any) {
+    /* 🔥 1. GET POST (STATIC OR PROGRAMMATIC) */
+    let post = getPost(params.slug);
 
-    const data = getPageData(slug);
+    if (!post) {
+        post = generateProgrammaticPost(params.slug);
+    }
 
-    if (!data) return notFound();
+    if (!post) return notFound();
 
-    const { country, title } = data;
+    const allPosts = getAllPostsData();
 
-    const content = generateContent(data);
-    const faqItems = getFAQ(country.name);
-    const faqSchema = generateFAQSchema(faqItems);
+    /* 🔥 RELATED POSTS */
+    const related = allPosts
+        .filter((p) => p.slug !== post.slug)
+        .slice(0, 3);
 
-    const ctaText = `Start Trading in ${country.name} — Limited Spots Available`;
+    const country = post.country || "global";
+    const slug = post.slug;
+
+    /* =========================================================
+       🔥 CONTENT PIPELINE (SEO + MONEY)
+    ========================================================= */
+
+    let html = post.content || "";
+
+    // 🔥 SEO
+    html = injectInternalLinks(html, country);
+
+    // 💰 Monetization
+    html = injectBrokerCards(html, slug, country);
+
+    /* ========================================================= */
 
     return (
         <main className="bg-[#0B0F14] text-white">
 
-            {/* 🔙 BACK BUTTON */}
+            {/* 🔙 BACK */}
             <div className="max-w-3xl mx-auto px-6 pt-10">
                 <Link
-                    href="/"
-                    className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition"
+                    href="/blog"
+                    className="text-sm text-gray-400 hover:text-white"
                 >
-                    ← Back to Home
+                    ← Back to Blog
                 </Link>
             </div>
 
-            <article className="max-w-3xl mx-auto px-6 py-20">
+            <article className="max-w-3xl mx-auto px-6 py-16">
 
-                {/* 🟡 TITLE */}
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-                    {title}
+                {/* ================= TITLE ================= */}
+                <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+                    {post.title}
                 </h1>
 
-                {/* 🔥 INTRO (DYNAMIC) */}
-                <p className="text-lg text-gray-400 mb-10 leading-relaxed">
-                    {content.intro}
+                {/* ================= DESCRIPTION ================= */}
+                <p className="text-lg text-gray-400 mb-8">
+                    {post.description}
                 </p>
 
-                {/* 💰 CTA TOP */}
-                <CTAButton
-                    broker="exness"
-                    country={country.slug}
-                    text={`Start Trading in ${country.name}`}
-                    className="inline-block bg-yellow-400 text-black px-5 py-3 rounded-lg font-semibold mb-10"
-                />
+                {/* ================= 🔥 TOP CTA ================= */}
+                <div className="mb-10 p-6 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-800/20 border border-blue-500/30">
+                    <p className="font-semibold mb-3">
+                        🚀 Start Trading with Trusted Brokers
+                    </p>
 
-                {/* 🔥 BROKER SECTION */}
-                <div className="space-y-6 mb-12">
+                    <CTAButton
+                        broker="exness"
+                        country={country}
+                        text="Compare Brokers →"
+                        className="bg-gradient-primary px-6 py-3 rounded-lg font-semibold"
+                        data-track={`top-cta-${slug}`}
+                    />
+                </div>
+
+                {/* ================= 🔥 BROKER GRID ================= */}
+                <section className="mb-12 space-y-6">
                     <h2 className="text-2xl font-bold">
-                        {content.sectionTitle}
+                        Recommended Brokers
                     </h2>
 
-                    {brokers.map((b) => (
-                        <BrokerCard
-                            key={b.slug}
-                            broker={b}
-                            country={country.slug}
-                        />
-                    ))}
-                </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {brokers.slice(0, 2).map((b) => (
+                            <BrokerCard
+                                key={b.slug}
+                                broker={b}
+                                country={country}
+                            />
+                        ))}
+                    </div>
+                </section>
 
-                {/* 🧠 CONTENT */}
-                <div className="space-y-8 text-gray-300 leading-relaxed">
-
-                    <p>
-                        Traders in <strong>{country.name}</strong> prefer brokers with fast withdrawals,
-                        strong regulation, and reliable platforms.
-                    </p>
-
-                    <p>
-                        Choosing the right broker can significantly impact your trading success,
-                        especially in fast-moving forex markets.
-                    </p>
-
-                </div>
-
-                {/* 💰 CTA BLOCK (FIXED) */}
-                <div className="mt-14 p-8 bg-[#121a24] border border-white/10 rounded-2xl text-center">
-                    <h3 className="text-xl md:text-2xl font-semibold mb-3">
-                        Start Trading in {country.name}
-                    </h3>
-
-                    <p className="text-gray-400 mb-5">
-                        Join thousands of traders using trusted brokers with fast withdrawals.
-                    </p>
-
-                    <CTAButton
-                        broker="exness"
-                        country={country.slug}
-                        text={ctaText}
-                    />
-
-                    <p className="text-xs text-gray-500 mt-3">
-                        No signup fees • Start in 2 minutes
-                    </p>
-                </div>
-
-                {/* 💰 FINAL CTA */}
-                <div className="mt-10 text-center">
-                    <CTAButton
-                        broker="exness"
-                        country={country.slug}
-                        text="Open Account Now"
-                        className="inline-block bg-yellow-400 text-black px-6 py-3 rounded-xl font-semibold"
-                    />
-                </div>
-
-                {/* ❓ FAQ */}
-                <FAQ items={faqItems} />
-
-                {/* 🧾 FAQ SCHEMA */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify(faqSchema),
-                    }}
+                {/* ================= 🔥 CONTENT ================= */}
+                <article
+                    className="prose prose-invert max-w-none mb-12"
+                    dangerouslySetInnerHTML={{ __html: html }}
                 />
 
-                {/* 🔗 INTERNAL LINKS */}
-                <div className="mt-16 border-t border-[#1f2a36] pt-8">
-                    <h3 className="text-xl font-semibold mb-4">
-                        Related Guides
+                {/* ================= 🔥 MID CTA ================= */}
+                <div className="mb-12 p-6 bg-white/5 border border-white/10 rounded-xl text-center">
+                    <h3 className="text-xl font-semibold mb-2">
+                        ⚡ Open Your Trading Account
                     </h3>
 
-                    <div className="grid gap-3">
-
-                        <Link
-                            href={`/blog/best-brokers-in-${country.slug}`}
-                            className="text-blue-400 hover:underline"
-                        >
-                            Best Brokers in {country.name}
-                        </Link>
-
-                        <Link
-                            href={`/blog/how-to-trade-in-${country.slug}`}
-                            className="text-blue-400 hover:underline"
-                        >
-                            How to Trade in {country.name}
-                        </Link>
-
-                    </div>
+                    <CTAButton
+                        broker="exness"
+                        country={country}
+                        text="Open Account →"
+                        data-track={`mid-cta-${slug}`}
+                    />
                 </div>
 
-            </article>
+                {/* ================= RELATED ================= */}
+                <section className="mt-16">
+                    <h3 className="text-xl font-semibold mb-6">
+                        Related Articles
+                    </h3>
 
+                    <div className="grid md:grid-cols-3 gap-4">
+                        {related.map((p) => (
+                            <Link
+                                key={p.slug}
+                                href={`/blog/${p.slug}`}
+                                className="p-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition"
+                            >
+                                <h4 className="text-sm font-semibold line-clamp-2">
+                                    {p.title}
+                                </h4>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+
+                {/* ================= FINAL CTA ================= */}
+                <section className="mt-16 text-center p-10 bg-gradient-to-r from-blue-600/20 to-blue-800/20 rounded-xl border border-blue-500/30">
+                    <h3 className="text-2xl font-semibold mb-3">
+                        💰 Ready to Trade Forex?
+                    </h3>
+
+                    <p className="text-gray-400 mb-6">
+                        Compare top brokers and start trading today.
+                    </p>
+
+                    <CTAButton
+                        broker="exness"
+                        country={country}
+                        text="Compare Brokers →"
+                        className="px-8 py-4"
+                        data-track={`bottom-cta-${slug}`}
+                    />
+                </section>
+
+            </article>
         </main>
     );
 }

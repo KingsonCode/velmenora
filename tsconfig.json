@@ -24,11 +24,11 @@
     "noEmit": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    /* 🔥 PATH ALIAS (FIXED) */
+    /* 🔥 PATH ALIAS (FIXED CORRECTLY) */
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./app/*"
+        "./*"
       ]
     },
     /* 🔥 STABILITY */
