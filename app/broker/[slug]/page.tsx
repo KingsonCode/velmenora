@@ -1,18 +1,23 @@
+// app/broker/[slug]/page.tsx
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { brokers } from "@/data/brokers";
 import CTAButton from "@/components/CTAButton";
 
-/* =========================================================
-   🔥 SEO METADATA
-========================================================= */
-export async function generateMetadata({ params }: any) {
-    const broker = brokers.find((b) => b.slug === params.slug);
+/* ================= SEO ================= */
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}) {
+    const { slug } = await params;
+    const broker = brokers.find((b) => b.slug === slug);
 
     if (!broker) return { title: "Broker Not Found" };
 
     return {
-        title: `${broker.name} Review (2026)`,
+        title: `${broker.name} Review (2026) | Velmenora`,
         description: broker.description,
         openGraph: {
             title: broker.name,
@@ -22,11 +27,15 @@ export async function generateMetadata({ params }: any) {
     };
 }
 
-/* =========================================================
-   🔥 PAGE
-========================================================= */
-export default function BrokerPage({ params }: any) {
-    const broker = brokers.find((b) => b.slug === params.slug);
+/* ================= PAGE ================= */
+export default async function BrokerPage({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}) {
+    const { slug } = await params;
+
+    const broker = brokers.find((b) => b.slug === slug);
     if (!broker) return notFound();
 
     const country = "tanzania";
@@ -48,17 +57,21 @@ export default function BrokerPage({ params }: any) {
                     ★ {broker.rating.toFixed(1)} / 5 Rating
                 </div>
 
+                <p className="text-sm text-green-400 mb-6">
+                    Best for {country} traders 🇹🇿
+                </p>
+
                 {/* 🔥 HERO CTA */}
                 <CTAButton
                     broker={broker.slug}
                     country={country}
-                    href={`/go/${broker.slug}?src=broker-hero`}
+                    href={`/go/${broker.slug}?src=broker-hero&country=${country}`}
                     text="Open Account →"
                     className="bg-gradient-primary px-10 py-5 rounded-xl font-semibold shadow-xl hover:scale-[1.03]"
                 />
 
                 <div className="mt-6 text-sm text-gray-400">
-                    Trusted by thousands • Fast withdrawals • Secure platform
+                    Trusted • Fast withdrawals • Secure platform
                 </div>
             </section>
 
@@ -100,22 +113,23 @@ export default function BrokerPage({ params }: any) {
                     <h2 className="text-xl font-bold mb-4 text-red-400">Cons</h2>
                     <ul className="space-y-2 text-sm">
                         <li>✖ Limited bonuses</li>
+                        <li>✖ Not available in some countries</li>
                     </ul>
                 </div>
 
             </section>
 
-            {/* 🔥 INTERNAL LINKING (VERY IMPORTANT SEO) */}
-            <section className="text-center mb-16">
-                <p className="text-gray-400 mb-4">
-                    Want to compare more options?
-                </p>
+            {/* 🔥 COMPARISON (SEO BOOST) */}
+            <section className="max-w-5xl mx-auto px-6 mb-16 text-center">
+                <h2 className="text-2xl font-bold mb-4">
+                    Compare {broker.name} with other brokers
+                </h2>
 
                 <Link
                     href="/compare"
                     className="text-blue-400 hover:underline"
                 >
-                    Compare all forex brokers →
+                    Compare all brokers →
                 </Link>
             </section>
 
@@ -124,7 +138,7 @@ export default function BrokerPage({ params }: any) {
                 <CTAButton
                     broker={broker.slug}
                     country={country}
-                    href={`/go/${broker.slug}?src=broker-mid`}
+                    href={`/go/${broker.slug}?src=broker-mid&country=${country}`}
                     text="Start Trading Now →"
                     className="bg-blue-600 px-8 py-4 rounded-xl font-semibold"
                 />
@@ -137,13 +151,13 @@ export default function BrokerPage({ params }: any) {
                 </h2>
 
                 <p className="text-gray-400 mb-6">
-                    Join thousands of traders using this trusted broker.
+                    Join thousands of traders today.
                 </p>
 
                 <CTAButton
                     broker={broker.slug}
                     country={country}
-                    href={`/go/${broker.slug}?src=broker-bottom`}
+                    href={`/go/${broker.slug}?src=broker-bottom&country=${country}`}
                     text="Open Account Now →"
                     className="bg-green-500 px-10 py-5 rounded-xl font-semibold"
                 />
