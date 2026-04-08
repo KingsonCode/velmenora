@@ -50,7 +50,7 @@ export default async function NewsPage() {
     const news = await getNews();
 
     return (
-        <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="max-w-7xl mx-auto px-6 pt-32 pb-10">
 
             {/* HEADER */}
             <div className="mb-8">
@@ -63,12 +63,8 @@ export default async function NewsPage() {
                 </p>
             </div>
 
-            {/* 🔥 CONTENT */}
-            <Suspense
-                fallback={
-                    <p className="text-gray-400">Loading market data...</p>
-                }
-            >
+            {/* CONTENT */}
+            <Suspense fallback={<p className="text-gray-400">Loading market data...</p>}>
                 {news.length > 0 ? (
                     <ClientNews news={news} />
                 ) : (
