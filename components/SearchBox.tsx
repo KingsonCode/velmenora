@@ -46,16 +46,22 @@ export default function SearchBox() {
         if (!open) return;
 
         if (e.key === "ArrowDown") {
-            setActiveIndex((prev) => Math.min(prev + 1, filtered.length - 1));
+            setActiveIndex((prev) =>
+                Math.min(prev + 1, filtered.length - 1)
+            );
         }
 
         if (e.key === "ArrowUp") {
-            setActiveIndex((prev) => Math.max(prev - 1, 0));
+            setActiveIndex((prev) =>
+                Math.max(prev - 1, 0)
+            );
         }
 
         if (e.key === "Enter") {
-            if (activeIndex >= 0) {
-                handleSearch(filtered[activeIndex].name);
+            const selected = filtered[activeIndex];
+
+            if (selected) {
+                handleSearch(selected.name);
             } else {
                 handleSearch();
             }
@@ -130,8 +136,8 @@ export default function SearchBox() {
                                 key={broker.slug}
                                 onClick={() => handleSearch(broker.name)}
                                 className={`px-4 py-3 cursor-pointer transition ${i === activeIndex
-                                        ? "bg-yellow-500/20"
-                                        : "hover:bg-white/10"
+                                    ? "bg-yellow-500/20"
+                                    : "hover:bg-white/10"
                                     }`}
                             >
                                 {highlight(broker.name)}

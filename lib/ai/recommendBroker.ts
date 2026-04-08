@@ -102,19 +102,16 @@ export function recommendBroker(brokers: Broker[]): AIResult | null {
 
     /* ================= SMART SORT ================= */
     const best = scored.sort((a, b) => {
-        // 1️⃣ Score
         if (b.score !== a.score) return b.score - a.score;
 
-        // 2️⃣ Rating fallback
         if (b.broker.rating !== a.broker.rating) {
             return b.broker.rating - a.broker.rating;
         }
 
-        // 3️⃣ Lower deposit wins
         const depA = parseDeposit(a.broker.minDeposit);
         const depB = parseDeposit(b.broker.minDeposit);
         return depA - depB;
     })[0];
 
-    return best;
+    return best ?? null;
 }

@@ -2,29 +2,54 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function FadeIn({ children }: { children: React.ReactNode }) {
-    const ref = useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = useState(true); // ⚠️ muhimu: true default
+type FadeInProps = {
+    children: React.ReactNode;
+    delay?: number;
+    duration?: number;
+    once?: boolean;
+};
+
+export default function FadeIn({
+    children,
+    delay = 0,
+    duration = 700,
+    once = true,
+}: FadeInProps) {
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [visible, setVisible] = useState(false);
 
     useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+
         const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setVisible(true);
-                }
+            (entries) => {
+                const entry = entries[0];
+                if (!entry?.isIntersecting) return;
+
+                setVisible(true);
+
+                // stop observing after first reveal (performance boost)
+                if (once) observer.unobserve(entry.target);
             },
             { threshold: 0.1 }
         );
 
-        if (ref.current) observer.observe(ref.current);
+        observer.observe(el);
 
         return () => observer.disconnect();
-    }, []);
+    }, [once]);
 
     return (
         <div
             ref={ref}
-            className={`transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+            style={{
+                transitionDelay: `${delay}ms`,
+                transitionDuration: `${duration}ms`,
+            }}
+            className={`transform transition-all ease-out ${visible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
                 }`}
         >
             {children}

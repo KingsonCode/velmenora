@@ -59,11 +59,17 @@ function applyDecay(profile: UserProfile) {
 
     const decayFactor = Math.pow(0.9, diffDays);
 
-    Object.keys(profile.clicks).forEach((id) => {
-        profile.clicks[id] = Math.floor(profile.clicks[id] * decayFactor);
-    });
+    const newClicks: Record<string, number> = {};
 
-    return profile;
+    for (const id of Object.keys(profile.clicks)) {
+        const current = profile.clicks[id] ?? 0;
+        newClicks[id] = Math.floor(current * decayFactor);
+    }
+
+    return {
+        ...profile,
+        clicks: newClicks,
+    };
 }
 
 /* ================= TRACK ================= */

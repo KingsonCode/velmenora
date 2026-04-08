@@ -93,21 +93,20 @@ export function injectInternalLinks(
         let text = part;
 
         for (const rule of LINK_RULES) {
-            if (linkCount[rule.key] >= rule.limit) continue;
+            if ((linkCount[rule.key] ?? 0) >= rule.limit) continue;
 
             for (const pattern of rule.patterns) {
-                if (linkCount[rule.key] >= rule.limit) break;
+                if ((linkCount[rule.key] ?? 0) >= rule.limit) break;
 
                 text = text.replace(pattern, (match) => {
-                    if (linkCount[rule.key] >= rule.limit) return match;
+                    if ((linkCount[rule.key] ?? 0) >= rule.limit) return match;
 
-                    // 🎲 pick random anchor variation
                     const variation =
                         rule.variations[
                         Math.floor(Math.random() * rule.variations.length)
                         ];
 
-                    linkCount[rule.key]++;
+                    linkCount[rule.key] = (linkCount[rule.key] ?? 0) + 1;
 
                     return `<a href="${rule.href(country)}">${variation}</a>`;
                 });

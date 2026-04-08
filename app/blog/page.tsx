@@ -80,7 +80,9 @@ export default async function BlogPage() {
             {/* ================= BLOG SECTIONS ================= */}
             <section className="space-y-16">
                 {sortedMarkets.map((market) => {
-                    const marketPosts = byMarket[market]
+                    const posts = byMarket[market] ?? [];
+
+                    const marketPosts = (byMarket[market] || [])
                         .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
                         .slice(0, 6);
 

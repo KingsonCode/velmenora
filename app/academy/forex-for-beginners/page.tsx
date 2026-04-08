@@ -1,59 +1,125 @@
+import Link from "next/link";
+
 export default function ForexBeginners() {
     return (
-        <main className="max-w-3xl mx-auto px-4 py-16">
-            <h1 className="text-4xl font-bold mb-6">
-                Forex Trading for Beginners
-            </h1>
+        <main className="max-w-4xl mx-auto px-4 pt-32 pb-20">
+            {/* HERO */}
+            <section className="mb-12">
+                <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                    Forex Trading for Beginners
+                </h1>
 
-            <p className="text-gray-700 mb-6">
-                If you're new to forex trading, this guide will help you understand
-                the basics and avoid common beginner mistakes.
-            </p>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                    If you're new to forex trading, this guide will help you understand the basics,
+                    avoid common mistakes, and start trading the right way.
+                </p>
+            </section>
 
-            <h2 className="text-2xl font-semibold mt-10 mb-4">
-                Step 1: Learn the Basics
-            </h2>
+            {/* STEP 1 */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-semibold mb-4">
+                    Step 1: Learn the Basics
+                </h2>
 
-            <p className="text-gray-700 mb-6">
-                Understand currency pairs, pips, spreads, and leverage before risking money.
-            </p>
+                <p className="text-gray-400 leading-relaxed mb-4">
+                    Before you trade, you need to understand how the market works.
+                    Learn key concepts like:
+                </p>
 
-            <h2 className="text-2xl font-semibold mt-10 mb-4">
-                Step 2: Choose a Broker
-            </h2>
+                <ul className="space-y-3 text-gray-400">
+                    <li>✔ Currency pairs (EUR/USD, GBP/USD)</li>
+                    <li>✔ Pips and spreads</li>
+                    <li>✔ Leverage and margin</li>
+                    <li>✔ Buy vs Sell (long vs short)</li>
+                </ul>
+            </section>
 
-            <p className="text-gray-700 mb-6">
-                Select a trusted forex broker with low spreads and fast withdrawals.
-            </p>
+            {/* STEP 2 */}
+            <section className="mb-12 bg-white/5 border border-white/10 rounded-xl p-6">
+                <h2 className="text-2xl font-semibold mb-4">
+                    Step 2: Choose a Reliable Broker
+                </h2>
 
-            <h2 className="text-2xl font-semibold mt-10 mb-4">
-                Step 3: Start with Demo Account
-            </h2>
+                <p className="text-gray-400 leading-relaxed mb-4">
+                    Your broker determines your trading experience. Choose one with:
+                </p>
 
-            <p className="text-gray-700 mb-6">
-                Practice trading without risking real money.
-            </p>
+                <ul className="space-y-2 text-gray-400">
+                    <li>• Low spreads</li>
+                    <li>• Fast withdrawals</li>
+                    <li>• Strong regulation</li>
+                    <li>• MT4 / MT5 platforms</li>
+                </ul>
 
-            <h2 className="text-2xl font-semibold mt-10 mb-4">
-                Step 4: Risk Management
-            </h2>
+                <div className="mt-6">
+                    <Link href="/explorer" className="text-blue-400 font-semibold">
+                        Compare Trusted Brokers →
+                    </Link>
+                </div>
+            </section>
 
-            <ul className="list-disc pl-6 text-gray-700 space-y-2">
-                <li>Never risk more than 1-2% per trade</li>
-                <li>Use stop loss</li>
-                <li>Avoid overtrading</li>
-            </ul>
+            {/* STEP 3 */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-semibold mb-4">
+                    Step 3: Start with a Demo Account
+                </h2>
+
+                <p className="text-gray-400 leading-relaxed">
+                    A demo account allows you to practice trading without risking real money.
+                    This is where you build confidence and test strategies before going live.
+                </p>
+            </section>
+
+            {/* STEP 4 */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-semibold mb-4 text-red-400">
+                    Step 4: Risk Management (Critical)
+                </h2>
+
+                <p className="text-gray-400 mb-4 leading-relaxed">
+                    Most beginners lose money because they ignore risk management.
+                    Follow these rules:
+                </p>
+
+                <ul className="space-y-3 text-gray-400">
+                    <li>✔ Never risk more than 1–2% per trade</li>
+                    <li>✔ Always use a stop loss</li>
+                    <li>✔ Avoid overtrading</li>
+                    <li>✔ Stay disciplined</li>
+                </ul>
+            </section>
+
+            {/* COMMON MISTAKES (SEO BOOST + TRUST) */}
+            <section className="mb-12">
+                <h2 className="text-2xl font-semibold mb-4">
+                    Common Beginner Mistakes
+                </h2>
+
+                <ul className="space-y-3 text-gray-400">
+                    <li>• Trading without a strategy</li>
+                    <li>• Over-leveraging</li>
+                    <li>• Letting emotions control decisions</li>
+                    <li>• Skipping demo practice</li>
+                </ul>
+            </section>
 
             {/* CTA */}
-            <div className="mt-12 p-6 bg-blue-50 rounded-xl">
-                <h3 className="font-semibold mb-2">
-                    Start Trading Now
+            <section className="mt-16 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-white/10 rounded-2xl p-8">
+                <h3 className="text-2xl font-semibold mb-3">
+                    Ready to Start Trading?
                 </h3>
 
-                <a href="/explore" className="text-blue-600 font-semibold">
+                <p className="text-gray-400 mb-6">
+                    Explore trusted forex brokers and open your first trading account today.
+                </p>
+
+                <Link
+                    href="/explorer"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-lg font-semibold"
+                >
                     View Best Forex Brokers →
-                </a>
-            </div>
+                </Link>
+            </section>
         </main>
     );
 }
