@@ -3,24 +3,81 @@
 import Link from "next/link";
 import CTAButton from "./CTAButton";
 import { Broker } from "@/data/brokers";
+import {
+    getBrokerBadges,
+    getTopBrokerId,
+} from "@/lib/ai/brokerBadges";
+
+/* 🧠 TRACKING */
+import { trackClick } from "@/lib/ai/personalization";
 
 /* ================= TYPES ================= */
 type Props = {
     broker: Broker;
     country?: string;
     rank?: number;
+    allBrokers?: Broker[];
 };
 
+/* ================= BADGE STYLE ================= */
+function getBadgeStyle(badge: string) {
+    switch (badge) {
+        case "Best Overall":
+            return "bg-yellow-500 text-black border-yellow-400";
+        case "Low Deposit":
+            return "bg-green-500/20 text-green-400 border-green-500/30";
+        case "High Leverage":
+            return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+        case "Beginner Friendly":
+            return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+        case "Top Rated":
+            return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+        default:
+            return "bg-white/10 text-white border-white/20";
+    }
+}
+
 /* ================= COMPONENT ================= */
-export default function BrokerCard({ broker, country, rank }: Props) {
+export default function BrokerCard({
+    broker,
+    country,
+    rank,
+    allBrokers = [],
+}: Props) {
+
+    /* 🔥 SAFE LIST */
+    const list = allBrokers.length ? allBrokers : [broker];
+
+    /* 🔥 COMPUTE ONCE */
+    const topBrokerId = getTopBrokerId(list);
+
+    const badges = getBrokerBadges(
+        broker,
+        list,
+        topBrokerId
+    );
+
+    const isBest = badges.includes("Best Overall");
+
     return (
         <div className="relative">
 
+            {/* 🥇 BEST OVERALL FLOATING BADGE */}
+            {isBest && (
+                <div className="absolute -top-3 -left-3 z-20 bg-yellow-500 text-black text-xs px-3 py-1 rounded-full font-bold shadow-lg">
+                    🥇 #1 Choice
+                </div>
+            )}
+
             {/* ================= CLICKABLE CARD ================= */}
             <Link href={`/broker/${broker.slug}`} className="block">
-                <div className="group relative cursor-pointer bg-dark/60 backdrop-blur-md rounded-2xl p-6 border border-white/10 flex flex-col text-center transition-all duration-300 shadow-card hover:shadow-premium hover:-translate-y-1 active:scale-[0.98]">
+                <div
+                    className={`group relative cursor-pointer bg-dark/60 backdrop-blur-md rounded-2xl p-6 border flex flex-col text-center transition-all duration-300 shadow-card hover:shadow-premium hover:-translate-y-1 active:scale-[0.98]
+          ${isBest ? "border-yellow-500/40 ring-1 ring-yellow-500/30" : "border-white/10"}
+        `}
+                >
 
-                    {/* 🔥 HOVER GLOW (FIXED) */}
+                    {/* 🔥 HOVER GLOW */}
                     <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition bg-blue-500/5 blur-xl pointer-events-none" />
 
                     {/* 🔢 RANK */}
@@ -30,15 +87,22 @@ export default function BrokerCard({ broker, country, rank }: Props) {
                         </div>
                     )}
 
-                    {/* 🏆 BEST BADGE */}
-                    {rank === 1 && (
-                        <div className="absolute top-4 right-4 bg-yellow-400 text-black text-xs px-3 py-1 rounded-full font-semibold">
-                            Best Overall
+                    {/* 🎯 AI BADGES */}
+                    {badges.length > 0 && (
+                        <div className="flex gap-2 flex-wrap justify-center mb-3 mt-4">
+                            {badges.map((badge) => (
+                                <span
+                                    key={badge}
+                                    className={`text-xs px-2 py-1 rounded-full border ${getBadgeStyle(badge)}`}
+                                >
+                                    {badge}
+                                </span>
+                            ))}
                         </div>
                     )}
 
                     {/* HEADER */}
-                    <div className="flex items-center justify-center gap-3 mb-3 flex-wrap mt-4">
+                    <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
                         {broker.logo && (
                             <img
                                 src={broker.logo}
@@ -88,7 +152,7 @@ export default function BrokerCard({ broker, country, rank }: Props) {
 
                     {/* FEATURES */}
                     <ul className="space-y-2 mb-4 text-sm text-gray-300 text-left w-full max-w-xs mx-auto">
-                        {broker.features.slice(0, 3).map((f: string, i: number) => (
+                        {broker.features.slice(0, 3).map((f, i) => (
                             <li key={i} className="flex items-start">
                                 <span className="text-green-400 mr-2 mt-[2px]">✔</span>
                                 {f}
@@ -126,26 +190,28 @@ export default function BrokerCard({ broker, country, rank }: Props) {
                         )}
                     </div>
 
-                    {/* UX SIGNAL */}
+                    {/* UX */}
                     <div className="text-blue-400 text-sm font-medium mb-2">
                         View Full Review →
                     </div>
                 </div>
             </Link>
 
-            {/* ================= CTA (NOT INSIDE LINK) ================= */}
+            {/* ================= CTA ================= */}
             <div className="mt-4 w-full space-y-3">
 
-                {/* 💰 MONEY BUTTON */}
+                {/* 💰 PRIMARY CTA (TRACKED + ANALYTICS SAFE) */}
                 <CTAButton
                     broker={broker.slug}
                     country={country || "global"}
                     href={`/go/${broker.slug}?src=card&country=${country}`}
                     text="Open Account →"
+                    position="mid"
+                    onClick={() => trackClick(broker.id)} // 🔥 AI MEMORY
                     className="block w-full bg-gradient-primary px-4 py-3 rounded-xl font-semibold text-white hover:scale-[1.02] transition"
                 />
 
-                {/* 📄 DETAILS BUTTON */}
+                {/* DETAILS */}
                 <Link
                     href={`/broker/${broker.slug}`}
                     className="block w-full bg-white/5 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/10 transition text-center"
@@ -153,6 +219,7 @@ export default function BrokerCard({ broker, country, rank }: Props) {
                     View Details
                 </Link>
 
+                {/* TRUST TEXT */}
                 <p className="text-xs text-gray-500 text-center">
                     No fees • Fast signup • Secure
                 </p>

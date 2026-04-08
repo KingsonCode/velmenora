@@ -2,7 +2,16 @@
 
 import { event } from "@/lib/gtag";
 
-type Position = "hero" | "mid" | "bottom" | "sticky" | "unknown";
+/* 🔥 POSITION TYPE (EXPANDED + FUTURE SAFE) */
+type Position =
+    | "hero"
+    | "mid"
+    | "bottom"
+    | "sticky"
+    | "card"
+    | "compare"
+    | "table"
+    | "unknown";
 
 type Props = {
     broker: string;
@@ -11,6 +20,14 @@ type Props = {
     text?: string;
     className?: string;
     position?: Position;
+    onClick?: () => void;
+};
+
+/* 🔥 CENTRALIZED AFFILIATE LINKS */
+const AFFILIATE_LINKS: Record<string, string> = {
+    exness: "https://one.exnessonelink.com/a/tmodpmod",
+    deriv: "#",
+    xm: "#",
 };
 
 export default function CTAButton({
@@ -20,12 +37,17 @@ export default function CTAButton({
     text,
     className = "",
     position = "unknown",
+    onClick,
 }: Props) {
-    const defaultLinks: Record<string, string> = {
-        exness: "https://one.exnessonelink.com/a/tmodpmod",
-    };
+    const finalHref = href || AFFILIATE_LINKS[broker];
 
-    const finalHref = href || defaultLinks[broker] || "#";
+    /* ❌ SAFETY CHECK */
+    if (!finalHref) {
+        if (process.env.NODE_ENV === "development") {
+            console.warn(`⚠️ No affiliate link for broker: ${broker}`);
+        }
+        return null;
+    }
 
     const handleClick = () => {
         const payload = {
@@ -54,6 +76,9 @@ export default function CTAButton({
             label: `${broker}_${country}_${position}`,
             value: 1,
         });
+
+        /* 🔥 OPTIONAL EXTENSION */
+        if (onClick) onClick();
 
         /* 🔥 DEV LOG */
         if (process.env.NODE_ENV === "development") {

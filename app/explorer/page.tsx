@@ -1,18 +1,18 @@
 import { Suspense } from "react";
-import CompareClient from "./CompareClient";
+import ExplorerClient from "./ExplorerClient";
 
 export const dynamic = "force-dynamic";
 
-export default function ComparePage() {
+export default function ExplorePage() {
     return (
         <Suspense
             fallback={
                 <div className="min-h-screen flex items-center justify-center text-white">
-                    🔄 Loading comparison...
+                    🔄 Loading brokers...
                 </div>
             }
         >
-            <CompareClient />
+            <ExplorerClient />
         </Suspense>
     );
 }

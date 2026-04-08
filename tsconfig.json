@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     /* 🔥 CORE */
-    "target": "ES2020",
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
@@ -18,13 +18,17 @@
         "name": "next"
       }
     ],
-    /* 🔥 STRICTNESS */
+    /* 🔥 STRICTNESS (KEEP THIS STRONG) */
     "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "isolatedModules": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    /* 🔥 INTEROP */
     "esModuleInterop": true,
-    /* 🔥 PATH ALIAS (FIXED CORRECTLY) */
+    "allowJs": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    /* 🔥 PATH ALIAS */
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -35,7 +39,10 @@
     "forceConsistentCasingInFileNames": true,
     /* 🔥 PERFORMANCE */
     "incremental": true,
-    "allowJs": true
+    /* 🔥 NEXT.JS IMPORTANT */
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "next-env.d.ts",

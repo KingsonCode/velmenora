@@ -115,7 +115,7 @@ export default function Footer() {
 
             {/* ================= TRUST STRIP ================= */}
             <div className="border-t border-[#1f2a36] py-6 text-center text-xs text-gray-500 px-6">
-                Trusted by traders across Africa • Independent broker reviews • Real withdrawal testing
+                Trusted by traders worldwide • Independent broker reviews • Real withdrawal testing
             </div>
 
             {/* ================= DISCLAIMER ================= */}
