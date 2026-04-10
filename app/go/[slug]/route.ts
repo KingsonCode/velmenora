@@ -1,36 +1,34 @@
-// app/go/[slug]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { brokers } from "@/lib/brokers";
 
-/* =========================================================
-   🔥 HELPER: GET CLIENT IP
-========================================================= */
+/* ================= IP ================= */
 function getIP(req: NextRequest) {
-    return (
-        req.headers.get("x-forwarded-for") ||
-        req.headers.get("x-real-ip") ||
-        "unknown"
-    );
+    const forwarded = req.headers.get("x-forwarded-for");
+    if (forwarded) return forwarded.split(",")[0];
+
+    return req.headers.get("x-real-ip") || "unknown";
 }
 
-/* =========================================================
-   🔥 HELPER: BOT DETECTION
-========================================================= */
+/* ================= BOT DETECTION (IMPROVED) ================= */
 function isBot(userAgent: string) {
-    return /bot|crawl|spider|slurp|facebook|whatsapp|preview|meta|curl/i.test(
+    return /bot|crawl|spider|slurp|facebook|whatsapp|preview|meta|curl|python|wget/i.test(
         userAgent.toLowerCase()
     );
 }
 
-/* =========================================================
-   🔥 MAIN HANDLER (NEXT 16 FIXED)
-========================================================= */
+/* ================= DEVICE ================= */
+function getDevice(userAgent: string) {
+    if (/mobile/i.test(userAgent)) return "mobile";
+    if (/tablet/i.test(userAgent)) return "tablet";
+    return "desktop";
+}
+
+/* ================= MAIN ================= */
 export async function GET(
     req: NextRequest,
     context: { params: Promise<{ slug: string }> }
 ) {
-    const { slug } = await context.params; // ✅ muhimu sana
+    const { slug } = await context.params;
 
     const { searchParams } = new URL(req.url);
     const broker = brokers[slug as keyof typeof brokers];
@@ -51,46 +49,57 @@ export async function GET(
         );
     }
 
-    /* ================= TRACKING INPUT ================= */
+    /* ================= INPUT ================= */
 
-    const source = searchParams.get("src") || "direct";
-    const countryParam = searchParams.get("country") || "auto";
+    const source = searchParams.get("src") || "market_page";
 
     const userAgent = req.headers.get("user-agent") || "";
     const ip = getIP(req);
     const bot = isBot(userAgent);
+    const device = getDevice(userAgent);
 
-    /* ================= GEO DETECTION ================= */
-
-    const countryHeader =
-        req.headers.get("x-vercel-ip-country") || "unknown";
+    /* ================= GEO ================= */
 
     const country =
-        countryParam !== "auto" ? countryParam : countryHeader;
+        req.headers.get("x-vercel-ip-country") || "unknown";
 
-    /* ================= BOT HANDLING ================= */
+    /* ================= BOT BLOCK ================= */
 
     if (bot) {
         return NextResponse.redirect(new URL("/", req.url));
     }
 
-    /* ================= BUILD FINAL URL ================= */
+    /* ================= SAFE URL BUILD ================= */
 
-    const finalUrl = new URL(broker.url);
+    let finalUrl: URL;
 
+    try {
+        finalUrl = new URL(broker.url);
+    } catch {
+        return NextResponse.json(
+            { error: "Invalid broker URL" },
+            { status: 500 }
+        );
+    }
+
+    /* 🔥 IMPORTANT: DO NOT BREAK AFFILIATE PARAMS */
     finalUrl.searchParams.set("utm_source", "velmenora");
     finalUrl.searchParams.set("utm_medium", "affiliate");
     finalUrl.searchParams.set("utm_campaign", slug);
     finalUrl.searchParams.set("utm_content", source);
+
+    /* EXTRA TRACKING */
+    finalUrl.searchParams.set("device", device);
     finalUrl.searchParams.set("geo", country);
 
-    /* ================= LOGGING ================= */
+    /* ================= LOG ================= */
 
     const logPayload = {
         event: "affiliate_click",
         broker: broker.slug,
         source,
         country,
+        device,
         ip,
         userAgent,
         timestamp: new Date().toISOString(),
@@ -98,15 +107,15 @@ export async function GET(
 
     console.log(JSON.stringify(logPayload));
 
-    /* ================= OPTIONAL: DB TRACKING ================= */
+    /* ================= OPTIONAL DB ================= */
     /*
     await db.query(
       `
-      INSERT INTO clicks (broker, source, country, ip, user_agent, created_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
+      INSERT INTO clicks (broker, source, country, device, ip, user_agent, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
       ON CONFLICT DO NOTHING
       `,
-      [broker.slug, source, country, ip, userAgent]
+      [broker.slug, source, country, device, ip, userAgent]
     );
     */
 

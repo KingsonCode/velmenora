@@ -36,8 +36,8 @@ export default function Navbar() {
             {/* 🔥 HEADER */}
             <header
                 className={`fixed top-[28px] left-0 w-full z-[999] transition-all duration-300 ${scrolled
-                    ? "bg-white/70 backdrop-blur-xl border-b border-black/5 shadow-sm py-1.5"
-                    : "bg-transparent py-2.5"
+                        ? "bg-white/70 backdrop-blur-xl border-b border-black/5 shadow-sm py-1.5"
+                        : "bg-black/60 backdrop-blur-xl py-2.5"
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -48,9 +48,10 @@ export default function Navbar() {
                             src="/logo.svg"
                             alt="Velmenora"
                             width={130}
-                            height={36}
+                            height={40}
                             priority
-                            style={{ height: "auto" }} // 🔥 muhimu
+                            className="w-auto h-10"
+                            sizes="(max-width: 768px) 100px, 130px"
                         />
                     </Link>
 
@@ -62,22 +63,32 @@ export default function Navbar() {
                         <NavLink href="/news" active={isActive("/news")}>News</NavLink>
                         <NavLink href="/academy" active={isActive("/academy")}>Academy</NavLink>
 
-                        {/* MARKETS */}
+                        {/* 🔥 MARKETS DROPDOWN (PRO MAX) */}
                         <div className="relative group">
-                            <span className="cursor-pointer text-gray-500 group-hover:text-black transition flex items-center gap-1">
+
+                            {/* TRIGGER */}
+                            <span className="cursor-pointer text-gray-300 md:text-gray-500 group-hover:text-white md:group-hover:text-black transition flex items-center gap-1">
                                 Markets <span className="text-xs">▾</span>
                             </span>
 
-                            <div className="absolute left-0 mt-3 w-60 bg-white border border-black/5 rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-2 shadow-xl">
-                                {topMarkets.slice(0, 6).map((c) => (
-                                    <Link
-                                        key={c.code}
-                                        href={`/${c.slug}`}
-                                        className="block px-3 py-2 rounded-lg hover:bg-gray-100 transition text-sm"
-                                    >
-                                        {c.name}
-                                    </Link>
-                                ))}
+                            {/* DROPDOWN */}
+                            <div className="absolute left-0 top-full pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:scale-100 scale-95 transform transition-all duration-200">
+
+                                {/* HITBOX FIX */}
+                                <div className="bg-[#0B0F1A] md:bg-white border border-gray-800 md:border-black/5 rounded-xl p-2 shadow-2xl w-64">
+
+                                    {topMarkets.slice(0, 6).map((c) => (
+                                        <Link
+                                            key={c.code}
+                                            href={`/${c.slug}`}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-white md:text-gray-700 hover:bg-white/10 md:hover:bg-gray-100 transition"
+                                        >
+                                            {c.name}
+                                            <span className="text-xs opacity-50">→</span>
+                                        </Link>
+                                    ))}
+
+                                </div>
                             </div>
                         </div>
                     </nav>
@@ -95,7 +106,7 @@ export default function Navbar() {
                     {/* MOBILE BTN */}
                     <button
                         onClick={() => setOpen(true)}
-                        className="md:hidden text-xl text-gray-700"
+                        className="md:hidden text-xl text-gray-200"
                     >
                         ☰
                     </button>
@@ -123,6 +134,7 @@ export default function Navbar() {
                                 alt="Velmenora"
                                 width={130}
                                 height={40}
+                                className="w-auto h-10"
                             />
                             <button onClick={() => setOpen(false)}>✕</button>
                         </div>
@@ -151,14 +163,14 @@ export default function Navbar() {
     );
 }
 
-/* NAV LINK */
+/* 🔥 NAV LINK FIX */
 function NavLink({ href, active, children }: any) {
     return (
         <Link
             href={href}
             className={`transition ${active
-                ? "text-black"
-                : "text-gray-500 hover:text-black"
+                    ? "text-white md:text-black"
+                    : "text-gray-300 md:text-gray-500 hover:text-white md:hover:text-black"
                 }`}
         >
             {children}
