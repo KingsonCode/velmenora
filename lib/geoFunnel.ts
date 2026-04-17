@@ -1,60 +1,81 @@
-export type CountryCode = "TZ" | "KE" | "NG" | "OTHER";
+import { resolveGeo } from "@/lib/geo";
+import { getCountryByCode } from "@/lib/geo";
 
-export type Funnel = {
-    countryName: string;
-    title: string;
-    description: string;
-    ctaText: string;
-    ctaLink: string;
-    brokers: string[];
-    payments: string[];
-    slug: string;
-};
+export function buildFunnel(countryCode?: string) {
+    const geo = resolveGeo(countryCode);
+    const countryData = getCountryByCode(geo.country ?? undefined);
 
-const GEO_FUNNEL: Record<CountryCode, Funnel> = {
-    TZ: {
-        countryName: "Tanzania",
-        title: "Best Forex Brokers in Tanzania",
-        description: "Trade forex in Tanzania using trusted brokers.",
-        ctaText: "Start Trading in Tanzania",
-        ctaLink: "/blog/best-brokers-in-tanzania",
-        brokers: ["Exness", "Deriv"],
-        payments: ["M-Pesa", "Tigo Pesa"],
-        slug: "tanzania",
-    },
-    KE: {
-        countryName: "Kenya",
-        title: "Best Forex Brokers in Kenya",
-        description: "Trade forex in Kenya using trusted brokers.",
-        ctaText: "Start Trading in Kenya",
-        ctaLink: "/blog/best-brokers-in-kenya",
-        brokers: ["Exness", "XM"],
-        payments: ["M-Pesa"],
-        slug: "kenya",
-    },
-    NG: {
-        countryName: "Nigeria",
-        title: "Best Forex Brokers in Nigeria",
-        description: "Trade forex in Nigeria using trusted brokers.",
-        ctaText: "Start Trading in Nigeria",
-        ctaLink: "/blog/best-brokers-in-nigeria",
-        brokers: ["Exness", "OctaFX"],
-        payments: ["Crypto"],
-        slug: "nigeria",
-    },
-    OTHER: {
-        countryName: "Worldwide",
-        title: "Best Forex Brokers Worldwide",
-        description: "Trade globally with trusted brokers.",
-        ctaText: "Start Trading Now",
-        ctaLink: "/blog",
-        brokers: ["Exness"],
-        payments: ["Card", "Crypto"],
-        slug: "global",
-    },
-};
+    const isGlobal = geo.cluster === "GLOBAL" || !countryData;
 
-export function getFunnel(code?: string): Funnel {
-    if (!code) return GEO_FUNNEL.OTHER;
-    return GEO_FUNNEL[code as CountryCode] ?? GEO_FUNNEL.OTHER;
+    /* ================= COUNTRY ================= */
+    const countryName = isGlobal
+        ? "your region"
+        : countryData.name;
+
+    const countrySlug = isGlobal
+        ? "global"
+        : countryData.slug;
+
+    /* ================= SEO ================= */
+    const title = isGlobal
+        ? "Best Forex Brokers Worldwide (2026)"
+        : `Best Forex Brokers in ${countryName} (2026)`;
+
+    const description = isGlobal
+        ? "Trade forex globally with trusted brokers and secure platforms."
+        : `Trade forex in ${countryName} with trusted brokers, fast withdrawals, and low spreads. Payments: ${geo.payments?.join(", ") || "Card, Bank Transfer"}.`;
+
+    /* ================= 🧠 INTENT HEADLINES ================= */
+
+    const headline =
+        geo.intent === "beginner"
+            ? `Start Forex Trading in ${countryName}`
+            : `Trade Forex Like a Pro in ${countryName}`;
+
+    const subheadline =
+        geo.intent === "beginner"
+            ? `Start with low deposit, easy platforms, and fast withdrawals. No experience needed.`
+            : `Access raw spreads, fast execution, and professional trading platforms.`;
+
+    /* ================= CTA ================= */
+
+    const ctaText =
+        geo.intent === "beginner"
+            ? "Start Trading"
+            : "Open Pro Account";
+
+    const cta = {
+        primary: ctaText,
+        link: isGlobal
+            ? "/brokers"
+            : `/brokers/${countrySlug}`,
+    };
+
+    return {
+        /* CORE */
+        country: countryName,
+        countryCode: geo.country,
+        slug: countrySlug,
+
+        language: geo.language,
+        cluster: geo.cluster,
+
+        /* SEO */
+        title,
+        description,
+
+        /* 🔥 CONVERSION ENGINE */
+        headline,
+        subheadline,
+
+        /* CTA */
+        cta,
+
+        /* MONEY ENGINE */
+        brokers: geo.brokers,
+        payments: geo.payments || [],
+
+        /* INTENT */
+        intent: geo.intent,
+    };
 }

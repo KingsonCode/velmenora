@@ -1,65 +1,66 @@
-import Hero from "@/components/Hero";
-import WhyVelmenora from "@/components/WhyVelmenora";
-import LearnForex from "@/components/LearnForex";
-import FinalCTA from "@/components/FinalCTA";
-import TopBrokers from "@/components/TopBrokers";
-import MarketHeroChart from "@/components/MarketHeroChart";
-import TopMarkets from "@/components/TopMarkets";
-import NewsSection from "@/components/NewsSection";
+import Link from "next/link";
 
-/* ================= SAFE SYMBOL HELPER ================= */
-function getSymbol(pair?: string) {
-    if (!pair) return "FX:EURUSD"; // 🔥 HARD FALLBACK
-
-    if (pair === "XAUUSD") return "OANDA:XAUUSD";
-    if (pair === "XAGUSD") return "OANDA:XAGUSD";
-    if (pair === "BTCUSD") return "BITSTAMP:BTCUSD";
-    if (pair === "ETHUSD") return "BITSTAMP:ETHUSD";
-
-    if (pair.length === 6) return `FX:${pair}`;
-
-    return pair;
-}
-
+/* ================= GLOBAL HOMEPAGE ================= */
 export default function Home() {
-
-    /* 🔥 OPTIONAL: DEFAULT PAIR (SAFE) */
-    const defaultPair = "EURUSD";
-
-    /* 🔥 SAFE USAGE (NO CRASH) */
-    const symbol = getSymbol(defaultPair);
-
     return (
-        <main className="bg-black text-white overflow-hidden">
+        <main className="min-h-screen bg-[#0B0F1A] text-white">
 
-            {/* 🔥 HERO */}
-            <Hero />
+            {/* HERO */}
+            <section className="text-center py-20 px-6">
+                <h1 className="text-4xl font-bold mb-4">
+                    Find & Compare the Best Forex Brokers Worldwide
+                </h1>
+                <p className="text-gray-400 max-w-2xl mx-auto">
+                    Discover top-rated forex brokers, compare spreads, fees, and platforms,
+                    and choose the best broker for your trading journey.
+                </p>
 
-            {/* 🔥 MARKET CHART (SAFE COMPONENT) */}
-            <MarketHeroChart />
+                {/* CTA */}
+                <div className="mt-8 flex justify-center gap-4">
+                    <Link
+                        href="/en/tz"
+                        className="bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold"
+                    >
+                        🇹🇿 Brokers in Tanzania
+                    </Link>
 
-            {/* 🔥 TOP MARKETS */}
-            <section className="border-y border-white/10">
-                <TopMarkets />
+                    <Link
+                        href="/en/ke"
+                        className="bg-white/10 px-6 py-3 rounded-lg"
+                    >
+                        🇰🇪 Brokers in Kenya
+                    </Link>
+                </div>
             </section>
 
-            {/* 🔥 TRUST */}
-            <WhyVelmenora />
+            {/* TOP BROKERS */}
+            <section className="max-w-5xl mx-auto px-6 py-12">
+                <h2 className="text-2xl font-semibold mb-6">
+                    Top Forex Brokers (Global)
+                </h2>
 
-            {/* 🔥 NEWS */}
-            <section className="border-y border-white/10">
-                <NewsSection />
+                <div className="grid gap-6">
+                    <div className="p-6 border border-yellow-500 rounded-lg">
+                        <h3 className="text-xl font-bold">Exness</h3>
+                        <p className="text-gray-400">
+                            Best overall forex broker for global traders.
+                        </p>
+                        <Link href="/brokers/exness" className="text-yellow-400 mt-2 block">
+                            Read Review →
+                        </Link>
+                    </div>
+
+                    <div className="p-6 border border-yellow-500 rounded-lg">
+                        <h3 className="text-xl font-bold">IC Markets</h3>
+                        <p className="text-gray-400">
+                            Lowest spreads for scalping and advanced traders.
+                        </p>
+                        <Link href="/brokers/ic-markets" className="text-yellow-400 mt-2 block">
+                            Read Review →
+                        </Link>
+                    </div>
+                </div>
             </section>
-
-            {/* 🔥 MONEY */}
-            <TopBrokers />
-
-            {/* 🔥 EDUCATION */}
-            <LearnForex />
-
-            {/* 🔥 CTA */}
-            <FinalCTA />
-
         </main>
     );
 }

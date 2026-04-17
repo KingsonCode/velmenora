@@ -1,4 +1,9 @@
-export function generateFAQSchema(items: { q: string; a: string }[]) {
+type FAQItem = {
+    q: string;
+    a: string;
+};
+
+export function generateFAQSchema(items: FAQItem[]) {
     return {
         "@context": "https://schema.org",
         "@type": "FAQPage",

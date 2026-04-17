@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrokerCard from "@/components/BrokerCard";
-import { brokers } from "@/data/brokers";
+import { getAllBrokers } from "@/lib/brokers";
+import type { Broker } from "@/lib/types/broker";
 
 /* 🔥 AI CORE */
 import { recommendBroker } from "@/lib/ai/recommendBroker";
@@ -14,6 +15,18 @@ import {
     getPersonalizedScore,
     subscribeProfileUpdate,
 } from "@/lib/ai/personalization";
+
+const brokers = getAllBrokers();
+
+function supportsPlatform(broker: Broker, platform: string) {
+    if (platform === "All") return true;
+
+    const search = platform.toLowerCase();
+
+    return broker.features.some((feature) =>
+        feature.toLowerCase().includes(search)
+    );
+}
 
 export default function ExplorerClient() {
     const router = useRouter();
@@ -70,8 +83,8 @@ export default function ExplorerClient() {
             return (
                 b.name.toLowerCase().includes(debouncedSearch.toLowerCase()) &&
                 b.rating >= minRating &&
-                b.minDeposit <= maxDeposit &&
-                (platform === "All" || b.platforms.includes(platform))
+                (b.minDeposit ?? 0) <= maxDeposit &&
+                supportsPlatform(b, platform)
             );
         });
 
@@ -92,7 +105,7 @@ export default function ExplorerClient() {
 
         /* 💰 DEPOSIT */
         if (sort === "deposit") {
-            result.sort((a, b) => a.minDeposit - b.minDeposit);
+            result.sort((a, b) => (a.minDeposit ?? 0) - (b.minDeposit ?? 0));
         }
 
         return result;
@@ -211,13 +224,13 @@ export default function ExplorerClient() {
             <div className="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {filtered.map((broker, i) => (
-                    <div key={broker.id} className="relative">
+                    <div key={broker.slug} className="relative">
 
                         <button
                             onClick={() => toggleCompare(broker.slug)}
                             className={`absolute top-2 right-2 px-3 py-1 text-xs rounded-full ${compare.includes(broker.slug)
-                                    ? "bg-yellow-500 text-black"
-                                    : "bg-white/10"
+                                ? "bg-yellow-500 text-black"
+                                : "bg-white/10"
                                 }`}
                         >
                             {compare.includes(broker.slug) ? "Selected" : "Compare"}
@@ -226,7 +239,7 @@ export default function ExplorerClient() {
                         <BrokerCard
                             broker={broker}
                             rank={i + 1}
-                            country="tanzania"
+                            country="TZ"
                             allBrokers={filtered} // 🔥 IMPORTANT (for badges)
                         />
 

@@ -1,19 +1,28 @@
 "use client";
 
-import { getTopBrokers, BrokerCategory } from "@/lib/brokers";
+import { getAllBrokers, getTopBrokers } from "@/lib/brokers";
+import type { Category, CountryCode } from "@/lib/types/broker";
 
 /* ================= CATEGORY ================= */
-function getCategory(pair: string): BrokerCategory {
-    if (pair.includes("XAU") || pair.includes("XAG")) return "gold";
-    if (pair.includes("BTC") || pair.includes("ETH")) return "crypto";
-    return "forex";
+function getCategory(pair: string): Category {
+    if (pair.includes("XAU") || pair.includes("XAG")) return "CFD";
+    if (pair.includes("BTC") || pair.includes("ETH")) return "CRYPTO";
+    return "FOREX";
 }
 
 export default function MarketCTA({ pair }: { pair: string }) {
     const category = getCategory(pair);
 
-    const country = "TZ"; // unaweza auto later
-    const broker = getTopBrokers(category, country)[0];
+    const country: CountryCode = "TZ"; // unaweza auto later
+    const broker =
+        getAllBrokers().find(
+            (item) =>
+                item.category.includes(category) &&
+                (!item.countries ||
+                    item.countries.includes(country) ||
+                    item.countries.includes("GLOBAL"))
+        ) ??
+        getTopBrokers(country, 1)[0];
 
     if (!broker) return null;
 
@@ -21,9 +30,9 @@ export default function MarketCTA({ pair }: { pair: string }) {
         <div className="relative overflow-hidden rounded-xl border border-blue-500 bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center">
 
             {/* 🔥 BADGE */}
-            {broker.badge && (
+            {broker.tags?.[0] && (
                 <div className="absolute top-3 right-3 text-xs bg-white text-black px-2 py-1 rounded">
-                    {broker.badge}
+                    {broker.tags[0]}
                 </div>
             )}
 

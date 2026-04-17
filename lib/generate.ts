@@ -1,4 +1,4 @@
-import { countries, type Country } from "./countries";
+import { countries, type CountryMeta as Country } from "@/lib/geo";
 import { templates, type Template } from "./templates";
 
 /* =========================================================

@@ -1,228 +1,209 @@
-"use client";
-
 import Link from "next/link";
-import CTAButton from "./CTAButton";
-import { Broker } from "@/data/brokers";
-import {
-    getBrokerBadges,
-    getTopBrokerId,
-} from "@/lib/ai/brokerBadges";
+import type { Broker, CountryCode } from "@/lib/types/broker";
+import { GeoResult } from "@/lib/geo";
 
-/* 🧠 TRACKING */
-import { trackClick } from "@/lib/ai/personalization";
-
-/* ================= TYPES ================= */
 type Props = {
     broker: Broker;
-    country?: string;
+    country?: CountryCode;
     rank?: number;
     allBrokers?: Broker[];
+    highlight?: boolean;
+    geo?: GeoResult; // 🔥 FULL GEO ENGINE
 };
 
-/* ================= BADGE STYLE ================= */
-function getBadgeStyle(badge: string) {
-    switch (badge) {
-        case "Best Overall":
-            return "bg-yellow-500 text-black border-yellow-400";
-        case "Low Deposit":
-            return "bg-green-500/20 text-green-400 border-green-500/30";
-        case "High Leverage":
-            return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-        case "Beginner Friendly":
-            return "bg-purple-500/20 text-purple-400 border-purple-500/30";
-        case "Top Rated":
-            return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-        default:
-            return "bg-white/10 text-white border-white/20";
+/* ================= BADGES ================= */
+function getBadges(broker: Broker): string[] {
+    const badges: string[] = [];
+
+    const text = (broker.features || []).join(" ").toLowerCase();
+
+    if (text.includes("instant") || text.includes("fast")) {
+        badges.push("⚡ Fast Withdrawal");
     }
+
+    if (text.includes("bonus") || broker.tags?.includes("beginner")) {
+        badges.push("🎯 Beginner Friendly");
+    }
+
+    if (text.includes("low spread") || broker.tags?.includes("low-spread")) {
+        badges.push("💰 Low Spread");
+    }
+
+    if ((broker.conversion?.trustLevel ?? 0) >= 8) {
+        badges.push("🛡️ Trusted");
+    }
+
+    return badges.slice(0, 3);
+}
+
+/* ================= SMART EXPLANATION ================= */
+function getExplanation(
+    broker: Broker,
+    geo?: GeoResult,
+    rank?: number
+): string | null {
+    if (!geo) return null;
+
+    const explanations: string[] = [];
+
+    /* 🥇 TOP */
+    if (rank === 1) {
+        explanations.push("🔥 Best choice right now");
+    }
+
+    /* 💳 PAYMENT MATCH */
+    const match = broker.payments?.find((p) =>
+        geo.payments?.includes(p)
+    );
+
+    if (match) {
+        explanations.push(`💸 Supports ${match}`);
+    }
+
+    /* 🎯 INTENT */
+    if (geo.intent === "beginner" && broker.tags?.includes("beginner")) {
+        explanations.push("🎯 Great for beginners");
+    }
+
+    if (
+        geo.intent === "pro" &&
+        (broker.tags?.includes("pro") || broker.tags?.includes("low-spread"))
+    ) {
+        explanations.push("⚡ Built for serious traders");
+    }
+
+    /* 🌍 REGION BOOST */
+    if (
+        broker.regions?.includes("AFRICA") &&
+        geo.cluster === "AFRICA"
+    ) {
+        explanations.push("🌍 Optimized for your region");
+    }
+
+    return explanations[0] || null;
 }
 
 /* ================= COMPONENT ================= */
 export default function BrokerCard({
     broker,
-    country,
+    country: _country,
     rank,
-    allBrokers = [],
+    allBrokers: _allBrokers,
+    highlight = false,
+    geo,
 }: Props) {
-
-    /* 🔥 SAFE LIST */
-    const list = allBrokers.length ? allBrokers : [broker];
-
-    /* 🔥 COMPUTE ONCE */
-    const topBrokerId = getTopBrokerId(list);
-
-    const badges = getBrokerBadges(
-        broker,
-        list,
-        topBrokerId
-    );
-
-    const isBest = badges.includes("Best Overall");
+    const badges = getBadges(broker);
+    const explanation = getExplanation(broker, geo, rank);
 
     return (
-        <div className="relative">
-
-            {/* 🥇 BEST OVERALL FLOATING BADGE */}
-            {isBest && (
-                <div className="absolute -top-3 -left-3 z-20 bg-yellow-500 text-black text-xs px-3 py-1 rounded-full font-bold shadow-lg">
-                    🥇 #1 Choice
+        <div
+            className={`
+        relative flex flex-col justify-between
+        p-6 rounded-2xl border transition-all duration-300
+        ${highlight
+                    ? "bg-gradient-to-br from-green-900/40 to-black border-green-700 shadow-xl scale-[1.03]"
+                    : "bg-gray-900 border-gray-800 hover:border-gray-600"
+                }
+      `}
+        >
+            {/* 🔥 TOP BADGE */}
+            {highlight && (
+                <div className="absolute -top-3 left-4 bg-green-600 text-xs px-3 py-1 rounded-full font-semibold shadow">
+                    🔥 Recommended
                 </div>
             )}
 
-            {/* ================= CLICKABLE CARD ================= */}
-            <Link href={`/broker/${broker.slug}`} className="block">
-                <div
-                    className={`group relative cursor-pointer bg-dark/60 backdrop-blur-md rounded-2xl p-6 border flex flex-col text-center transition-all duration-300 shadow-card hover:shadow-premium hover:-translate-y-1 active:scale-[0.98]
-          ${isBest ? "border-yellow-500/40 ring-1 ring-yellow-500/30" : "border-white/10"}
-        `}
-                >
+            {/* 🔝 HEADER */}
+            <div className="mb-4">
 
-                    {/* 🔥 HOVER GLOW */}
-                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition bg-blue-500/5 blur-xl pointer-events-none" />
-
-                    {/* 🔢 RANK */}
-                    {typeof rank === "number" && (
-                        <div className="absolute top-4 left-4 bg-gradient-primary text-white text-xs px-3 py-1 rounded-full font-semibold shadow-glow">
-                            #{rank}
-                        </div>
-                    )}
-
-                    {/* 🎯 AI BADGES */}
-                    {badges.length > 0 && (
-                        <div className="flex gap-2 flex-wrap justify-center mb-3 mt-4">
-                            {badges.map((badge) => (
-                                <span
-                                    key={badge}
-                                    className={`text-xs px-2 py-1 rounded-full border ${getBadgeStyle(badge)}`}
-                                >
-                                    {badge}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* HEADER */}
-                    <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
-                        {broker.logo && (
-                            <img
-                                src={broker.logo}
-                                alt={broker.name}
-                                className="h-8 object-contain"
-                            />
-                        )}
-
-                        <h2 className="text-xl font-semibold text-white">
-                            {broker.name}
-                        </h2>
-
-                        {broker.badge && (
-                            <span className="text-xs bg-gradient-primary px-3 py-1 rounded-full text-white">
-                                {broker.badge}
-                            </span>
-                        )}
+                {/* RANK */}
+                {rank && (
+                    <div className="text-sm text-green-400 mb-1 font-medium">
+                        #{rank} Top Pick
                     </div>
+                )}
 
-                    {/* ⭐ RATING */}
-                    <div className="mb-2 flex items-center justify-center gap-2">
-                        <div className="flex text-yellow-400 text-sm">
-                            {"★".repeat(Math.round(broker.rating))}
-                            {"☆".repeat(5 - Math.round(broker.rating))}
-                        </div>
-                        <span className="text-gray-400 text-sm">
-                            {broker.rating.toFixed(1)}/5
-                        </span>
-                    </div>
+                {/* NAME */}
+                <h3 className="text-2xl font-bold mb-2">
+                    {broker.name}
+                </h3>
 
-                    {/* 👥 REVIEWS */}
-                    {broker.reviews && (
-                        <p className="text-xs text-gray-500 mb-3">
-                            {broker.reviews.toLocaleString()}+ traders
-                        </p>
-                    )}
-
-                    {/* TRUST */}
-                    <div className="mb-4 text-xs text-green-400 font-medium">
-                        ✔ Regulated • ✔ Fast Withdrawals • ✔ Low Spread
-                    </div>
-
-                    {/* DESCRIPTION */}
-                    <p className="text-gray-400 text-sm mb-4 leading-relaxed">
-                        {broker.description}
-                    </p>
-
-                    {/* FEATURES */}
-                    <ul className="space-y-2 mb-4 text-sm text-gray-300 text-left w-full max-w-xs mx-auto">
-                        {broker.features.slice(0, 3).map((f, i) => (
-                            <li key={i} className="flex items-start">
-                                <span className="text-green-400 mr-2 mt-[2px]">✔</span>
-                                {f}
-                            </li>
-                        ))}
-                    </ul>
-
-                    {/* STATS */}
-                    <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-6">
-                        {broker.minDeposit && (
-                            <div className="bg-white/5 rounded-lg p-2">
-                                <div className="text-gray-500">Min</div>
-                                <div className="text-white font-medium">
-                                    {broker.minDeposit}
-                                </div>
-                            </div>
-                        )}
-
-                        {broker.leverage && (
-                            <div className="bg-white/5 rounded-lg p-2">
-                                <div className="text-gray-500">Lev</div>
-                                <div className="text-white font-medium">
-                                    {broker.leverage}
-                                </div>
-                            </div>
-                        )}
-
-                        {broker.spreadsFrom && (
-                            <div className="bg-white/5 rounded-lg p-2">
-                                <div className="text-gray-500">Spread</div>
-                                <div className="text-white font-medium">
-                                    {broker.spreadsFrom}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* UX */}
-                    <div className="text-blue-400 text-sm font-medium mb-2">
-                        View Full Review →
-                    </div>
+                {/* ⭐ RATING */}
+                <div className="text-yellow-400 text-lg">
+                    ⭐ {broker.rating ?? "4.5"}
                 </div>
-            </Link>
 
-            {/* ================= CTA ================= */}
-            <div className="mt-4 w-full space-y-3">
+            </div>
 
-                {/* 💰 PRIMARY CTA (TRACKED + ANALYTICS SAFE) */}
-                <CTAButton
-                    broker={broker.slug}
-                    country={country || "global"}
-                    href={`/go/${broker.slug}?src=card&country=${country}`}
-                    text="Open Account →"
-                    position="mid"
-                    onClick={() => trackClick(broker.id)} // 🔥 AI MEMORY
-                    className="block w-full bg-gradient-primary px-4 py-3 rounded-xl font-semibold text-white hover:scale-[1.02] transition"
-                />
+            {/* 🔥 SMART EXPLANATION */}
+            {explanation && (
+                <div className="mb-4 text-sm bg-green-900/30 border border-green-700 px-3 py-2 rounded-lg text-green-300">
+                    {explanation}
+                </div>
+            )}
 
-                {/* DETAILS */}
+            {/* 🔥 BADGES */}
+            {badges.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                    {badges.map((badge) => (
+                        <span
+                            key={badge}
+                            className="text-xs bg-green-900/40 border border-green-700 px-2 py-1 rounded"
+                        >
+                            {badge}
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {/* 🔥 FEATURES */}
+            <div className="mb-5">
+                <p className="text-gray-400 text-sm leading-relaxed">
+                    {broker.features?.join(", ") ||
+                        "Low spreads, fast execution"}
+                </p>
+            </div>
+
+            {/* 🔥 TAGS */}
+            {broker.tags && (
+                <div className="flex flex-wrap gap-2 mb-5">
+                    {broker.tags.slice(0, 3).map((tag) => (
+                        <span
+                            key={tag}
+                            className="text-xs bg-gray-800 px-2 py-1 rounded"
+                        >
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {/* 🔥 DIVIDER */}
+            <div className="border-t border-gray-800 my-4" />
+
+            {/* 🔥 CTA */}
+            <div className="flex flex-col gap-3 mt-auto">
+
                 <Link
-                    href={`/broker/${broker.slug}`}
-                    className="block w-full bg-white/5 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/10 transition text-center"
+                    href={`/brokers/${broker.slug}`}
+                    className="text-blue-400 text-sm underline"
                 >
-                    View Details
+                    👉 Read Review
                 </Link>
 
-                {/* TRUST TEXT */}
-                <p className="text-xs text-gray-500 text-center">
-                    No fees • Fast signup • Secure
-                </p>
+                <a
+                    href={`/go/${broker.slug}?src=card`}
+                    className={`
+            text-center py-3 rounded-xl font-semibold transition text-sm
+            ${highlight
+                            ? "bg-green-600 hover:bg-green-500"
+                            : "bg-gray-800 hover:bg-gray-700"
+                        }
+          `}
+                >
+                    🚀 Open Account
+                </a>
+
             </div>
         </div>
     );

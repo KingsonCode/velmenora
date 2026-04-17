@@ -1,116 +1,146 @@
 "use client";
 
-import { brokers } from "@/data/brokers";
-import CTAButton from "@/components/CTAButton";
-import Link from "next/link";
+import { getTopBrokers } from "@/lib/brokers";
+import { resolveGeo } from "@/lib/geo";
+import type { Broker, CountryCode } from "@/lib/types/broker";
 
-/* 🔥 OPTIONAL: SORT (BEST FIRST) */
-const sortedBrokers = [...brokers].sort((a, b) => b.rating - a.rating);
+const BROKER_COUNTRIES = new Set<CountryCode>([
+    "TZ",
+    "KE",
+    "NG",
+    "ZA",
+    "UG",
+    "GH",
+    "GLOBAL",
+]);
+
+function toBrokerCountry(code?: string | null): CountryCode {
+    return code && BROKER_COUNTRIES.has(code as CountryCode)
+        ? (code as CountryCode)
+        : "GLOBAL";
+}
 
 export default function TopBrokers() {
+    const geo = resolveGeo();
+
+    const brokers: Broker[] = getTopBrokers(toBrokerCountry(geo.country), 6);
+
+    /* 🔥 SMART SORT (conversion-first) */
+    const sorted = [...brokers].sort((a, b) => {
+        const scoreA =
+            (a.rating ?? 4.5) +
+            (geo.brokers.includes(a.slug) ? 1 : 0);
+
+        const scoreB =
+            (b.rating ?? 4.5) +
+            (geo.brokers.includes(b.slug) ? 1 : 0);
+
+        return scoreB - scoreA;
+    });
+
     return (
-        <section className="py-24 bg-black text-white">
+        <section className="py-20 px-6 bg-black text-white">
 
-            <div className="max-w-6xl mx-auto px-4">
+            {/* ================= HEADER ================= */}
+            <div className="max-w-6xl mx-auto text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                    Top Forex Brokers in {geo.meta?.name || "Your Region"}
+                </h2>
 
-                {/* 🔥 HEADER */}
-                <div className="text-center mb-14">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                        🔥 Top Forex Brokers in Tanzania
-                    </h2>
+                <p className="text-gray-400">
+                    Compare the best forex brokers with fast withdrawals, low spreads and trusted platforms.
+                </p>
+            </div>
 
-                    <p className="text-gray-400 max-w-2xl mx-auto">
-                        Compare the best brokers with fast withdrawals, low spreads,
-                        and trusted platforms.
-                    </p>
-                </div>
+            {/* ================= GRID ================= */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
 
-                {/* 💎 GRID */}
-                <div className="grid md:grid-cols-3 gap-8">
+                {sorted.slice(0, 6).map((broker, i) => {
+                    const isTop = i === 0;
 
-                    {sortedBrokers.slice(0, 6).map((broker, i) => {
-                        const isTop = i === 0;
-
-                        return (
-                            <div
-                                key={broker.id}
-                                className={`relative p-6 rounded-2xl border transition ${isTop
-                                        ? "border-yellow-400 bg-yellow-500/5 scale-[1.03]"
-                                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                                    }`}
-                            >
-
-                                {/* 🏆 BADGE */}
-                                {isTop && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full">
-                                        🏆 Best Overall
-                                    </div>
-                                )}
-
-                                {/* 📊 RANK */}
-                                <div className="text-sm text-gray-400 mb-2">
-                                    #{i + 1} Ranked Broker
+                    return (
+                        <div
+                            key={broker.slug}
+                            className={`relative p-6 rounded-xl border transition ${isTop
+                                    ? "border-yellow-400 bg-gradient-to-b from-yellow-400/10"
+                                    : "border-white/10 hover:border-yellow-400"
+                                }`}
+                        >
+                            {/* 🔥 BADGE */}
+                            {isTop && (
+                                <div className="absolute top-3 right-3 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
+                                    #1 Recommended
                                 </div>
+                            )}
 
-                                {/* 🏢 NAME */}
-                                <h3 className="text-xl font-semibold mb-2">
-                                    {broker.name}
-                                </h3>
-
-                                {/* ⭐ RATING */}
-                                <p className="text-yellow-400 text-sm mb-2">
-                                    ⭐ {broker.rating} Rating
-                                </p>
-
-                                {/* 📄 DESCRIPTION */}
-                                <p className="text-gray-400 text-sm mb-4">
-                                    {broker.description}
-                                </p>
-
-                                {/* ✅ FEATURES */}
-                                <ul className="text-sm text-gray-300 mb-6 space-y-1">
-                                    {broker.features.slice(0, 3).map((f, idx) => (
-                                        <li key={idx}>✔ {f}</li>
-                                    ))}
-                                </ul>
-
-                                {/* 🚀 CTA */}
-                                <div className="flex flex-col gap-3">
-
-                                    <CTAButton
-                                        broker={broker.slug}
-                                        country="tanzania"
-                                        position="mid"
-                                        text="Open Account"
-                                        className="bg-yellow-500 text-black text-center py-3 rounded-xl font-semibold hover:scale-105 transition"
-                                    />
-
-                                    <Link
-                                        href={`/broker/${broker.slug}`}
-                                        className="text-center text-sm text-gray-400 hover:text-white underline"
-                                    >
-                                        View Details
-                                    </Link>
-
-                                </div>
-
+                            {/* 🔥 RANK */}
+                            <div className="text-xs text-gray-500 mb-1">
+                                #{i + 1} Broker
                             </div>
-                        );
-                    })}
 
-                </div>
+                            {/* 🔥 NAME */}
+                            <h3 className="text-lg font-semibold mb-2">
+                                {broker.name}
+                            </h3>
 
-                {/* 🔍 VIEW ALL */}
-                <div className="text-center mt-12">
-                    <Link
-                        href="/explorer"
-                        className="inline-block px-8 py-4 border border-white/20 rounded-xl hover:bg-white/10 transition"
-                    >
-                        🔍 View All Brokers
-                    </Link>
-                </div>
+                            {/* 🔥 DESCRIPTION (DERIVED) */}
+                            <p className="text-sm text-gray-400 mb-3">
+                                {broker.category.join(" • ")}
+                            </p>
+
+                            {/* 🔥 RATING */}
+                            <div className="flex justify-between items-center mb-3 text-sm">
+                                <span className="text-yellow-400">
+                                    ⭐ {broker.rating ?? 4.5}
+                                </span>
+
+                                <span className="text-green-400">
+                                    Trusted
+                                </span>
+                            </div>
+
+                            {/* 🔥 REGIONS */}
+                            <div className="text-xs text-gray-500 mb-4">
+                                Available in: {broker.regions?.join(", ") || "Global"}
+                            </div>
+
+                            {/* 🔥 PAYMENTS (GEO) */}
+                            {geo.payments.length > 0 && (
+                                <div className="text-xs text-gray-400 mb-4">
+                                    Payments: {geo.payments.join(", ")}
+                                </div>
+                            )}
+
+                            {/* 🔥 CTA STACK */}
+                            <div className="flex gap-3">
+                                <a
+                                    href={broker.url}
+                                    target="_blank"
+                                    className="flex-1 text-center bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold"
+                                >
+                                    Trade Now
+                                </a>
+
+                                <a
+                                    href={`/brokers/${broker.slug}`}
+                                    className="flex-1 text-center border border-white/20 px-4 py-2 rounded-lg text-sm"
+                                >
+                                    Review
+                                </a>
+                            </div>
+
+                            {/* 🔥 URGENCY */}
+                            {isTop && (
+                                <div className="mt-3 text-xs text-yellow-400">
+                                    🔥 High signup rate in your region
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
             </div>
+
         </section>
     );
 }

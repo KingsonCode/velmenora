@@ -1,13 +1,14 @@
-import { Broker } from "@/data/brokers";
+/* ================= IMPORTS ================= */
+import type { Broker } from "@/lib/types/broker";
 import { scoreBroker } from "./recommendBroker";
 
 /* ================= TYPES ================= */
 export type Badge =
     | "Best Overall"
-    | "Low Deposit"
-    | "High Leverage"
+    | "Top Rated"
     | "Beginner Friendly"
-    | "Top Rated";
+    | "Low Spreads"
+    | "Fast Withdrawals";
 
 /* ================= CONFIG ================= */
 const MAX_BADGES = 2;
@@ -15,36 +16,35 @@ const MAX_BADGES = 2;
 const BADGE_PRIORITY: Badge[] = [
     "Best Overall",
     "Top Rated",
-    "Low Deposit",
-    "High Leverage",
+    "Low Spreads",
+    "Fast Withdrawals",
     "Beginner Friendly",
 ];
 
 /* ================= HELPERS ================= */
-function parseDeposit(val: any): number {
-    if (typeof val === "number") return val;
-    if (!val) return 0;
-    return parseFloat(String(val).replace("$", "")) || 0;
+
+/* Detect keywords inside features */
+function hasFeature(broker: Broker, keyword: string) {
+    return broker.features.some((f) =>
+        f.toLowerCase().includes(keyword.toLowerCase())
+    );
 }
 
-function parseLeverage(val?: string): number {
-    if (!val) return 0;
-    const parts = val.split(":");
-    return parseInt(parts[1] || "0") || 0;
-}
+/* ================= CORE ================= */
 
-/* ================= PRE-COMPUTE (IMPORTANT) ================= */
 /**
- * Compute once → reuse everywhere
+ * 🔥 Get Top Broker (AI scoring)
  */
 export function getTopBrokerId(all: Broker[]): string | null {
     if (!all.length) return null;
 
     return [...all]
-        .sort((a, b) => scoreBroker(b) - scoreBroker(a))[0]?.id || null;
+        .sort((a, b) => scoreBroker(b) - scoreBroker(a))[0]?.slug || null;
 }
 
-/* ================= MAIN ================= */
+/**
+ * 🔥 Generate Smart Badges
+ */
 export function getBrokerBadges(
     broker: Broker,
     all: Broker[],
@@ -52,12 +52,10 @@ export function getBrokerBadges(
 ): Badge[] {
     const badges: Badge[] = [];
 
-    const deposit = parseDeposit(broker.minDeposit);
-    const leverage = parseLeverage(broker.leverage);
+    const topId = topBrokerId ?? getTopBrokerId(all);
 
     /* 🥇 BEST OVERALL */
-    const topId = topBrokerId ?? getTopBrokerId(all);
-    if (topId && broker.id === topId) {
+    if (topId && broker.slug === topId) {
         badges.push("Best Overall");
     }
 
@@ -66,18 +64,18 @@ export function getBrokerBadges(
         badges.push("Top Rated");
     }
 
-    /* 💰 LOW DEPOSIT */
-    if (deposit <= 10) {
-        badges.push("Low Deposit");
+    /* 💸 LOW SPREADS */
+    if (hasFeature(broker, "low spread") || hasFeature(broker, "raw")) {
+        badges.push("Low Spreads");
     }
 
-    /* ⚡ HIGH LEVERAGE */
-    if (leverage >= 1000) {
-        badges.push("High Leverage");
+    /* ⚡ FAST WITHDRAWALS */
+    if (hasFeature(broker, "instant") || hasFeature(broker, "fast")) {
+        badges.push("Fast Withdrawals");
     }
 
-    /* 🧠 BEGINNER */
-    if (broker.description?.toLowerCase().includes("beginner")) {
+    /* 🧠 BEGINNER FRIENDLY */
+    if (hasFeature(broker, "beginner")) {
         badges.push("Beginner Friendly");
     }
 
@@ -87,6 +85,5 @@ export function getBrokerBadges(
             BADGE_PRIORITY.indexOf(a) - BADGE_PRIORITY.indexOf(b)
     );
 
-    /* ================= LIMIT ================= */
     return sorted.slice(0, MAX_BADGES);
 }

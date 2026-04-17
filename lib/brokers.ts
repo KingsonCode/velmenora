@@ -1,161 +1,157 @@
 /* ================= TYPES ================= */
 
-export type BrokerCategory = "forex" | "crypto" | "gold";
+import type { Broker, CountryCode, Region } from "@/lib/types/broker";
 
-export type BrokerConfig = {
-    name: string;
-    slug: string;
-    url: string;
-    active: boolean;
+/* ================= DATA ================= */
 
-    /* 🔥 UI + CONVERSION */
-    rating: number;
-    badge?: string;
-    features: string[];
+import { BROKERS as RAW_BROKERS } from "@/lib/brokers-data";
 
-    /* 🔥 TARGETING */
-    categories: BrokerCategory[];
-    priority: number;
+/* ================= NORMALIZED ================= */
 
-    /* 🔥 GEO */
-    preferredCountries?: string[];
-};
+const BROKERS: Broker[] = RAW_BROKERS.filter(
+    (b: Broker) => b.active !== false
+);
 
-/* ================= DATABASE ================= */
+/* ================= INDEX ================= */
 
-export const brokers: Record<string, BrokerConfig> = {
-    exness: {
-        name: "Exness",
-        slug: "exness",
-        url: "https://one.exnessonelink.com/a/tmodpmod",
-        active: true,
-
-        rating: 4.9,
-        badge: "Best Overall",
-        features: ["Ultra-low spreads", "Instant withdrawals", "MT4/MT5"],
-
-        categories: ["forex", "gold"],
-        priority: 10,
-        preferredCountries: ["TZ", "KE", "UG"],
-    },
-
-    xm: {
-        name: "XM",
-        slug: "xm",
-        url: "https://affs.click/eJwMj",
-        active: true,
-
-        rating: 4.6,
-        features: ["Bonuses", "Beginner friendly", "MT4/MT5"],
-
-        categories: ["forex"],
-        priority: 7,
-    },
-
-    pepperstone: {
-        name: "Pepperstone",
-        slug: "pepperstone",
-        url: "https://pepperstone.com/global/go/refer-a-friend/?locale=en&promo_type=RAF&utm_source=3344410",
-        active: true,
-
-        rating: 4.8,
-        badge: "Low Spreads",
-        features: ["Razor account", "Fast execution", "No dealing desk"],
-
-        categories: ["forex"],
-        priority: 9,
-    },
-
-    tickmill: {
-        name: "Tickmill",
-        slug: "tickmill",
-        url: "https://my.tickmill.com/?utm_campaign=ib_link&utm_content=IB75242421&utm_medium=ibdashboardrlw&utm_source=link",
-        active: true,
-
-        rating: 4.7,
-        features: ["Low commission", "Fast execution", "Reliable platform"],
-
-        categories: ["forex"],
-        priority: 8,
-    },
-
-    roboforex: {
-        name: "RoboForex",
-        slug: "roboforex",
-        url: "https://my.roboforex.com/?a=couzb",
-        active: true,
-
-        rating: 4.6,
-        features: ["Bonuses", "Cent accounts", "Flexible leverage"],
-
-        categories: ["forex", "crypto"],
-        priority: 7,
-    },
-
-    avatrade: {
-        name: "AvaTrade",
-        slug: "avatrade",
-        url: "https://www.avatrade.com/trading-account/?p=Webtrader&tag=220422",
-        active: true,
-
-        rating: 4.6,
-        features: ["Copy trading", "Fixed spreads", "Beginner friendly"],
-
-        categories: ["forex", "crypto"],
-        priority: 6,
-    },
-
-    axi: {
-        name: "Axi",
-        slug: "axi",
-        url: "https://records.axiaffiliates.com/visit/?bta=42694&brand=axitrader",
-        active: true,
-
-        rating: 4.6,
-        features: ["Low latency", "Institutional grade", "MT4"],
-
-        categories: ["forex"],
-        priority: 6,
-    },
-
-    fxpro: {
-        name: "FXPro",
-        slug: "fxpro",
-        url: "https://www.fxpro.com/?ib=2oWicYtJK",
-        active: true,
-
-        rating: 4.7,
-        features: ["cTrader", "No requotes", "Deep liquidity"],
-
-        categories: ["forex"],
-        priority: 7,
-    },
-};
+const BROKER_MAP = new Map<string, Broker>(
+    BROKERS.map((b) => [b.slug, b])
+);
 
 /* ================= HELPERS ================= */
 
-/* 🔥 GET BY CATEGORY */
-export function getBrokersByCategory(category: BrokerCategory) {
-    return Object.values(brokers)
-        .filter((b) => b.active && b.categories.includes(category))
-        .sort((a, b) => b.priority - a.priority);
+function scoreBroker(b: Broker): number {
+    return (b.priority || 0) * 2 + (b.rating || 0);
 }
 
-/* 🔥 SMART GEO SORT */
+/* ================= CORE ================= */
+
+export function getBroker(slug: string): Broker | null {
+    return BROKER_MAP.get(slug) ?? null;
+}
+
+export function getAllBrokers(): Broker[] {
+    return [...BROKERS].sort((a, b) => scoreBroker(b) - scoreBroker(a));
+}
+
+/* ================= GEO ================= */
+
+export function getBrokersByCountry(
+    country: CountryCode
+): Broker[] {
+    return BROKERS.filter((b) =>
+        b.countries?.includes(country)
+    );
+}
+
+export function getBrokersByRegion(
+    region: Region
+): Broker[] {
+    return BROKERS.filter((b) =>
+        b.regions?.includes(region)
+    );
+}
+
+/* ================= TOP (FULL GEO FALLBACK) ================= */
+
 export function getTopBrokers(
-    category: BrokerCategory,
-    country?: string
-) {
-    let list = getBrokersByCategory(category);
+    country?: CountryCode,
+    limit = 5
+): Broker[] {
+    let list: Broker[] = [];
 
     if (country) {
-        list = list.sort((a, b) => {
-            const aScore = a.preferredCountries?.includes(country) ? 1 : 0;
-            const bScore = b.preferredCountries?.includes(country) ? 1 : 0;
+        const local = getBrokersByCountry(country);
 
-            return bScore - aScore || b.priority - a.priority;
-        });
+        if (local.length > 0) {
+            list = local;
+        } else {
+            const regional = getBrokersByRegion("AFRICA");
+
+            if (regional.length > 0) {
+                list = regional;
+            } else {
+                list = getBrokersByRegion("GLOBAL");
+            }
+        }
+    } else {
+        list = getBrokersByRegion("GLOBAL");
     }
 
-    return list;
+    return list
+        .sort((a, b) => scoreBroker(b) - scoreBroker(a))
+        .slice(0, limit);
+}
+
+/* ================= RELATED ================= */
+
+export function getRelatedBrokers(
+    slug: string,
+    limit = 3
+): Broker[] {
+    const current = getBroker(slug);
+    if (!current) return [];
+
+    return BROKERS
+        .filter((b) => b.slug !== slug)
+        .map((b) => {
+            let score = scoreBroker(b);
+
+            // 🎯 CATEGORY BOOST (ARRAY SAFE)
+            if (
+                current.category &&
+                b.category?.some((c) =>
+                    current.category.includes(c)
+                )
+            ) {
+                score += 5;
+            }
+
+            // 🌍 REGION BOOST
+            if (
+                current.regions &&
+                b.regions?.some((r) =>
+                    current.regions!.includes(r)
+                )
+            ) {
+                score += 3;
+            }
+
+            return { broker: b, score };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map((x) => x.broker);
+}
+
+/* ================= LINK (AFFILIATE-FIRST) ================= */
+
+export function getBrokerLink(
+    broker: Broker,
+    country?: CountryCode
+): string {
+    // 🎯 1. GEO AFFILIATE
+    if (country && broker.affiliate?.geo?.[country]) {
+        return broker.affiliate.geo[country]!;
+    }
+
+    // 🌍 2. DEFAULT AFFILIATE
+    if (broker.affiliate?.default) {
+        return broker.affiliate.default;
+    }
+
+    // 🧯 3. LEGACY FALLBACK
+    if (country && broker.alt_urls?.[country]) {
+        return broker.alt_urls[country];
+    }
+
+    return broker.url ?? "#";
+}
+
+/* ================= SMART PICK ================= */
+
+export function getBestBrokerForCountry(
+    country?: CountryCode
+): Broker | null {
+    return getTopBrokers(country, 1)[0] ?? null;
 }

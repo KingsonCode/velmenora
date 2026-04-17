@@ -1,12 +1,46 @@
 "use client";
 
-import { brokers } from "@/data/brokers";
+import { getTopBrokers } from "@/lib/brokers";
+import { resolveGeo } from "@/lib/geo";
+import type { Broker, CountryCode } from "@/lib/types/broker";
+
+const BROKER_COUNTRIES = new Set<CountryCode>([
+    "TZ",
+    "KE",
+    "NG",
+    "ZA",
+    "UG",
+    "GH",
+    "GLOBAL",
+]);
+
+function toBrokerCountry(code?: string | null): CountryCode {
+    return code && BROKER_COUNTRIES.has(code as CountryCode)
+        ? (code as CountryCode)
+        : "GLOBAL";
+}
+
+function formatPlatforms(broker: Broker): string {
+    return broker.platforms?.length
+        ? broker.platforms.join(" / ")
+        : "Multiple";
+}
 
 export default function BrokerTable() {
-    /* 🔥 SORT (same logic as grid) */
+    const geo = resolveGeo();
+
+    const brokers: Broker[] = getTopBrokers(toBrokerCountry(geo.country), 5);
+
+    /* 🔥 SMART SORT (RANK + PRIORITY) */
     const sorted = [...brokers].sort((a, b) => {
-        const scoreA = a.rating + (a.reviews || 0) / 10000;
-        const scoreB = b.rating + (b.reviews || 0) / 10000;
+        const scoreA =
+            (a.rating ?? 4.5) +
+            (geo.brokers.includes(a.slug) ? 1 : 0);
+
+        const scoreB =
+            (b.rating ?? 4.5) +
+            (geo.brokers.includes(b.slug) ? 1 : 0);
+
         return scoreB - scoreA;
     });
 
@@ -20,76 +54,86 @@ export default function BrokerTable() {
                 </h2>
 
                 <p className="text-gray-400">
-                    See spreads, leverage, deposits and choose the best broker for you.
+                    See spreads, platforms, deposits and choose the best broker for you.
                 </p>
             </div>
 
-            {/* 🔥 TABLE WRAPPER */}
+            {/* 🔥 TABLE */}
             <div className="max-w-6xl mx-auto overflow-x-auto">
-
                 <table className="w-full border-collapse text-sm">
 
-                    {/* 🔥 HEADER */}
+                    {/* HEADER */}
                     <thead>
                         <tr className="text-left text-gray-400 border-b border-white/10">
                             <th className="py-4 px-4">Broker</th>
                             <th className="py-4 px-4">Rating</th>
                             <th className="py-4 px-4">Min Deposit</th>
-                            <th className="py-4 px-4">Leverage</th>
-                            <th className="py-4 px-4">Spreads</th>
+                            <th className="py-4 px-4">Platforms</th>
+                            <th className="py-4 px-4">Features</th>
                             <th className="py-4 px-4 text-center">Action</th>
                         </tr>
                     </thead>
 
-                    {/* 🔥 BODY */}
+                    {/* BODY */}
                     <tbody>
-                        {sorted.map((broker, i) => (
-                            <tr
-                                key={broker.id}
-                                className="border-b border-white/5 hover:bg-white/5 transition"
-                            >
-                                {/* BROKER */}
-                                <td className="py-4 px-4 font-semibold text-white">
-                                    #{i + 1} {broker.name}
-                                </td>
+                        {sorted.map((broker, i) => {
+                            const isTop = i === 0;
 
-                                {/* RATING */}
-                                <td className="py-4 px-4 text-yellow-400">
-                                    {broker.rating} ★
-                                </td>
+                            return (
+                                <tr
+                                    key={broker.slug}
+                                    className="border-b border-white/5 hover:bg-white/5 transition"
+                                >
+                                    {/* BROKER */}
+                                    <td className="py-4 px-4 font-semibold text-white">
+                                        <span className="text-gray-500 mr-2">
+                                            #{i + 1}
+                                        </span>
+                                        {broker.name}
 
-                                {/* DEPOSIT */}
-                                <td className="py-4 px-4">
-                                    {broker.minDeposit || "-"}
-                                </td>
+                                        {isTop && (
+                                            <span className="ml-2 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
+                                                Top
+                                            </span>
+                                        )}
+                                    </td>
 
-                                {/* LEVERAGE */}
-                                <td className="py-4 px-4">
-                                    {broker.leverage || "-"}
-                                </td>
+                                    {/* RATING */}
+                                    <td className="py-4 px-4 text-yellow-400">
+                                        ⭐ {broker.rating ?? 4.5}
+                                    </td>
 
-                                {/* SPREAD */}
-                                <td className="py-4 px-4">
-                                    {broker.spreadsFrom || "-"}
-                                </td>
+                                    {/* MIN DEPOSIT */}
+                                    <td className="py-4 px-4">
+                                        {broker.minDeposit != null ? `$${broker.minDeposit}` : "$10"}
+                                    </td>
 
-                                {/* CTA */}
-                                <td className="py-4 px-4 text-center">
-                                    <a
-                                        href={broker.link}
-                                        className={`
-                      inline-block px-5 py-2 rounded-lg font-semibold transition
-                      ${i === 0
-                                                ? "bg-gradient-primary shadow-glow hover:shadow-glow-lg"
-                                                : "bg-white/10 hover:bg-white/20"
-                                            }
-                    `}
-                                    >
-                                        Trade Now
-                                    </a>
-                                </td>
-                            </tr>
-                        ))}
+                                    {/* PLATFORMS */}
+                                    <td className="py-4 px-4">
+                                        {formatPlatforms(broker)}
+                                    </td>
+
+                                    {/* FEATURES (REPLACES SPREADS) */}
+                                    <td className="py-4 px-4 text-gray-400">
+                                        {broker.category.slice(0, 2).join(", ")}
+                                    </td>
+
+                                    {/* CTA */}
+                                    <td className="py-4 px-4 text-center">
+                                        <a
+                                            href={broker.url}
+                                            target="_blank"
+                                            className={`inline-block px-5 py-2 rounded-lg font-semibold transition ${isTop
+                                                    ? "bg-yellow-400 text-black shadow-lg"
+                                                    : "bg-white/10 hover:bg-white/20"
+                                                }`}
+                                        >
+                                            Trade Now
+                                        </a>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
 
                 </table>
@@ -97,7 +141,9 @@ export default function BrokerTable() {
 
             {/* 🔥 SEO TEXT */}
             <div className="max-w-4xl mx-auto mt-12 text-center text-gray-400 text-sm">
-                This comparison table helps traders in Tanzania choose the best forex broker based on trading conditions, leverage and deposit requirements.
+                This comparison table helps traders in{" "}
+                {geo.meta?.name || "your region"} choose the best forex broker
+                based on trading conditions, platform options and deposit requirements.
             </div>
 
         </section>

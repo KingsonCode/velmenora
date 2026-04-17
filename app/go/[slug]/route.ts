@@ -1,25 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { brokers } from "@/lib/brokers";
+import { getBroker } from "@/lib/brokers";
+import { buildAffiliateLink } from "@/lib/affiliate";
 
-/* ================= IP ================= */
-function getIP(req: NextRequest) {
-    const forwarded = req.headers.get("x-forwarded-for");
-    if (forwarded) return forwarded.split(",")[0];
+/* ================= RATE LIMIT ================= */
+const RATE_LIMIT = new Map<string, number>();
 
-    return req.headers.get("x-real-ip") || "unknown";
+function isRateLimited(ip: string): boolean {
+    const now = Date.now();
+    const last = RATE_LIMIT.get(ip) || 0;
+
+    if (now - last < 1000) return true;
+
+    RATE_LIMIT.set(ip, now);
+    return false;
 }
 
-/* ================= BOT DETECTION (IMPROVED) ================= */
-function isBot(userAgent: string) {
-    return /bot|crawl|spider|slurp|facebook|whatsapp|preview|meta|curl|python|wget/i.test(
-        userAgent.toLowerCase()
+/* ================= IP ================= */
+function getIP(req: NextRequest): string {
+    return (
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        req.headers.get("x-real-ip") ||
+        "unknown"
     );
 }
 
-/* ================= DEVICE ================= */
-function getDevice(userAgent: string) {
-    if (/mobile/i.test(userAgent)) return "mobile";
-    if (/tablet/i.test(userAgent)) return "tablet";
+/* ================= BOT FILTER ================= */
+function isBot(ua: string): boolean {
+    return /bot|crawl|spider|meta|facebook|whatsapp|preview|curl|wget/i.test(
+        ua.toLowerCase()
+    );
+}
+
+/* ================= DEVICE DETECTION ================= */
+function getDevice(ua: string): "mobile" | "tablet" | "desktop" {
+    if (/mobile/i.test(ua)) return "mobile";
+    if (/tablet/i.test(ua)) return "tablet";
     return "desktop";
 }
 
@@ -30,96 +45,65 @@ export async function GET(
 ) {
     const { slug } = await context.params;
 
-    const { searchParams } = new URL(req.url);
-    const broker = brokers[slug as keyof typeof brokers];
+    const broker = getBroker(slug);
 
-    /* ================= VALIDATION ================= */
-
+    /* ================= FAIL SAFE ================= */
     if (!broker) {
-        return NextResponse.json(
-            { error: "Broker not found", slug },
-            { status: 404 }
-        );
-    }
-
-    if (!broker.active) {
-        return NextResponse.json(
-            { error: "Broker inactive", slug },
-            { status: 403 }
-        );
-    }
-
-    /* ================= INPUT ================= */
-
-    const source = searchParams.get("src") || "market_page";
-
-    const userAgent = req.headers.get("user-agent") || "";
-    const ip = getIP(req);
-    const bot = isBot(userAgent);
-    const device = getDevice(userAgent);
-
-    /* ================= GEO ================= */
-
-    const country =
-        req.headers.get("x-vercel-ip-country") || "unknown";
-
-    /* ================= BOT BLOCK ================= */
-
-    if (bot) {
         return NextResponse.redirect(new URL("/", req.url));
     }
 
-    /* ================= SAFE URL BUILD ================= */
+    const ip = getIP(req);
 
-    let finalUrl: URL;
-
-    try {
-        finalUrl = new URL(broker.url);
-    } catch {
-        return NextResponse.json(
-            { error: "Invalid broker URL" },
-            { status: 500 }
-        );
+    /* ================= RATE LIMIT ================= */
+    if (isRateLimited(ip)) {
+        return NextResponse.redirect(new URL("/", req.url));
     }
 
-    /* 🔥 IMPORTANT: DO NOT BREAK AFFILIATE PARAMS */
-    finalUrl.searchParams.set("utm_source", "velmenora");
-    finalUrl.searchParams.set("utm_medium", "affiliate");
-    finalUrl.searchParams.set("utm_campaign", slug);
-    finalUrl.searchParams.set("utm_content", source);
+    const ua = req.headers.get("user-agent") || "";
 
-    /* EXTRA TRACKING */
-    finalUrl.searchParams.set("device", device);
-    finalUrl.searchParams.set("geo", country);
+    /* ================= BOT BLOCK ================= */
+    if (isBot(ua)) {
+        return NextResponse.redirect(new URL("/", req.url));
+    }
 
-    /* ================= LOG ================= */
+    /* ================= CONTEXT ================= */
+    const device = getDevice(ua);
+    const country =
+        req.headers.get("x-vercel-ip-country") || "unknown";
 
-    const logPayload = {
-        event: "affiliate_click",
-        broker: broker.slug,
-        source,
+    const { searchParams } = new URL(req.url);
+    const source = searchParams.get("src") || "direct";
+
+    /* ================= AFFILIATE LINK ================= */
+    const finalUrl = buildAffiliateLink({
+        broker,
         country,
         device,
-        ip,
-        userAgent,
-        timestamp: new Date().toISOString(),
+        source,
+    });
+
+    /* ================= NON-BLOCKING LOG ================= */
+    const payload = {
+        broker: slug,
+        country,
+        device,
+        source,
+        ts: Date.now(),
     };
 
-    console.log(JSON.stringify(logPayload));
+    queueMicrotask(() => {
+        try {
+            console.log("🔥 CLICK:", JSON.stringify(payload));
+        } catch { }
+    });
 
-    /* ================= OPTIONAL DB ================= */
+    /* ================= FUTURE DB HOOK ================= */
     /*
-    await db.query(
-      `
-      INSERT INTO clicks (broker, source, country, device, ip, user_agent, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      ON CONFLICT DO NOTHING
-      `,
-      [broker.slug, source, country, device, ip, userAgent]
-    );
+    queueMicrotask(async () => {
+        await db.insert(clicks).values(payload).onConflictDoNothing();
+    });
     */
 
     /* ================= REDIRECT ================= */
-
-    return NextResponse.redirect(finalUrl.toString(), 302);
+    return NextResponse.redirect(finalUrl, 302);
 }

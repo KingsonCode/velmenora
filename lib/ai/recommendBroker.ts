@@ -1,4 +1,5 @@
-import { Broker } from "@/data/brokers";
+/* ================= IMPORT ================= */
+import type { Broker } from "@/lib/types/broker";
 
 /* ================= TYPES ================= */
 export type AIResult = {
@@ -8,41 +9,45 @@ export type AIResult = {
     badges: string[];
 };
 
-/* ================= CONFIG (TUNABLE) ================= */
+/* ================= CONFIG ================= */
 const WEIGHTS = {
     rating: 3,
-    lowDeposit: 2,
-    highLeverage: 2,
-    beginner: 1,
+    priority: 2,
+    conversion: 3,
+    geo: 2,
+    features: 2,
 };
 
-/* ================= SAFE HELPERS ================= */
-function parseDeposit(val: any): number {
-    if (typeof val === "number") return val;
-    if (!val) return 0;
-    return parseFloat(String(val).replace("$", "")) || 0;
+/* ================= HELPERS ================= */
+
+/* Normalize features into searchable string */
+function featureText(b: Broker): string {
+    return b.features.join(" ").toLowerCase();
 }
 
-function parseLeverage(val?: string): number {
-    if (!val) return 0;
-    const parts = val.split(":");
-    return parseInt(parts[1] || "0") || 0;
-}
-
-/* =========================================================
-   🔥 CORE SCORING FUNCTION (GLOBAL USE — VERY IMPORTANT)
-========================================================= */
+/* ================= CORE SCORING ================= */
 export function scoreBroker(b: Broker): number {
     let score = 0;
 
-    const deposit = parseDeposit(b.minDeposit);
-    const leverage = parseLeverage(b.leverage);
+    /* ⭐ RATING */
+    score += b.rating * WEIGHTS.rating;
 
-    if (b.rating >= 4.7) score += WEIGHTS.rating;
-    if (deposit <= 10) score += WEIGHTS.lowDeposit;
-    if (leverage >= 1000) score += WEIGHTS.highLeverage;
-    if (b.description?.toLowerCase().includes("beginner"))
-        score += WEIGHTS.beginner;
+    /* 🎯 PRIORITY (manual ranking control) */
+    score += (b.priority || 0) * WEIGHTS.priority;
+
+    /* 💰 CONVERSION (affiliate power) */
+    score += (b.conversion?.trustLevel || 0) * WEIGHTS.conversion;
+
+    /* 🌍 GEO (important for TZ/AFRICA) */
+    if (b.regions?.includes("AFRICA")) score += 5;
+    if (b.regions?.includes("GLOBAL")) score += 2;
+
+    /* ⚡ FEATURES (semantic detection) */
+    const f = featureText(b);
+
+    if (f.includes("low spread") || f.includes("raw")) score += 3;
+    if (f.includes("instant") || f.includes("fast")) score += 3;
+    if (f.includes("beginner")) score += 2;
 
     return score;
 }
@@ -52,39 +57,39 @@ export function recommendBroker(brokers: Broker[]): AIResult | null {
     if (!brokers.length) return null;
 
     const scored: AIResult[] = brokers.map((b) => {
-        let score = 0;
+        let score = scoreBroker(b);
         const reasons: string[] = [];
         const badges: string[] = [];
 
-        const deposit = parseDeposit(b.minDeposit);
-        const leverage = parseLeverage(b.leverage);
+        const f = featureText(b);
 
         /* ⭐ RATING */
         if (b.rating >= 4.7) {
-            score += WEIGHTS.rating;
             reasons.push("Top-rated by traders");
             badges.push("⭐ Top Rated");
         }
 
-        /* 💰 LOW DEPOSIT */
-        if (deposit <= 10) {
-            score += WEIGHTS.lowDeposit;
-            reasons.push("Low minimum deposit");
-            badges.push("💰 Low Deposit");
+        /* 💰 LOW SPREADS */
+        if (f.includes("low spread") || f.includes("raw")) {
+            reasons.push("Ultra-low spreads");
+            badges.push("💰 Low Spreads");
         }
 
-        /* ⚡ HIGH LEVERAGE */
-        if (leverage >= 1000) {
-            score += WEIGHTS.highLeverage;
-            reasons.push("High leverage available");
-            badges.push("⚡ High Leverage");
+        /* ⚡ FAST EXECUTION / WITHDRAW */
+        if (f.includes("instant") || f.includes("fast")) {
+            reasons.push("Fast execution & withdrawals");
+            badges.push("⚡ Fast Withdrawals");
         }
 
-        /* 🧠 BEGINNER FRIENDLY */
-        if (b.description?.toLowerCase().includes("beginner")) {
-            score += WEIGHTS.beginner;
+        /* 🧠 BEGINNER */
+        if (f.includes("beginner")) {
             reasons.push("Beginner friendly platform");
             badges.push("🧠 Beginner Friendly");
+        }
+
+        /* 🌍 REGION MATCH */
+        if (b.regions?.includes("AFRICA")) {
+            reasons.push("Available in your region");
         }
 
         /* 🔥 FALLBACK */
@@ -100,17 +105,17 @@ export function recommendBroker(brokers: Broker[]): AIResult | null {
         };
     });
 
-    /* ================= SMART SORT ================= */
+    /* ================= SORT ================= */
     const best = scored.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
 
+        /* tie-breaker: rating */
         if (b.broker.rating !== a.broker.rating) {
             return b.broker.rating - a.broker.rating;
         }
 
-        const depA = parseDeposit(a.broker.minDeposit);
-        const depB = parseDeposit(b.broker.minDeposit);
-        return depA - depB;
+        /* tie-breaker: priority */
+        return (b.broker.priority || 0) - (a.broker.priority || 0);
     })[0];
 
     return best ?? null;

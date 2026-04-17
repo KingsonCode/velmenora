@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-/* TYPES */
+/* ================= TYPES ================= */
 type NewsItem = {
     id: string;
     slug: string;
@@ -12,7 +12,7 @@ type NewsItem = {
     publishedAt?: string | number;
 };
 
-/* FALLBACK */
+/* ================= FALLBACK ================= */
 const FALLBACK_NEWS: NewsItem[] = [
     {
         id: "eurusd-rally",
@@ -26,7 +26,7 @@ const FALLBACK_NEWS: NewsItem[] = [
     },
 ];
 
-/* HELPER */
+/* ================= HELPERS ================= */
 function generateSlug(title: string) {
     return title
         .toLowerCase()
@@ -34,40 +34,48 @@ function generateSlug(title: string) {
         .replace(/ +/g, "-");
 }
 
-/* FETCH ALL */
+function getBaseUrl() {
+    if (process.env.VERCEL_URL) {
+        return `https://${process.env.VERCEL_URL}`;
+    }
+    return "http://localhost:3000";
+}
+
+/* ================= FETCH ALL ================= */
 async function fetchAllNews(): Promise<NewsItem[]> {
     try {
-        const res = await fetch(
-            `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/api/news`,
-            { next: { revalidate: 60 } }
-        );
+        const res = await fetch(`${getBaseUrl()}/api/news`, {
+            next: { revalidate: 60 },
+        });
 
         if (!res.ok) return FALLBACK_NEWS;
 
         const data = await res.json();
-        return Array.isArray(data) && data.length ? data : FALLBACK_NEWS;
+
+        return Array.isArray(data) && data.length
+            ? data
+            : FALLBACK_NEWS;
     } catch {
         return FALLBACK_NEWS;
     }
 }
 
-/* ✅ CORRECT HANDLER */
+/* ================= MAIN ================= */
 export async function GET(
     _req: NextRequest,
-    context: { params: Promise<{ slug: string }> } // 🔥 FIX HERE
+    context: { params: Promise<{ slug: string }> }
 ) {
     try {
-        const { slug } = await context.params; // 🔥 MUST AWAIT
+        const { slug } = await context.params;
 
         const allNews = await fetchAllNews();
 
-        let article = allNews.find((n) => n.slug === slug);
-
-        if (!article) {
-            article = allNews.find(
+        /* 🔥 FIND ARTICLE */
+        let article =
+            allNews.find((n) => n.slug === slug) ||
+            allNews.find(
                 (n) => generateSlug(n.title) === slug
             );
-        }
 
         if (!article) {
             return NextResponse.json(
@@ -76,6 +84,7 @@ export async function GET(
             );
         }
 
+        /* 🔥 ENRICH CONTENT */
         const enriched = {
             ...article,
             content:
@@ -88,7 +97,8 @@ This is a developing story. Stay tuned for updates.`,
         return NextResponse.json(enriched, {
             status: 200,
             headers: {
-                "Cache-Control": "s-maxage=60, stale-while-revalidate=120",
+                "Cache-Control":
+                    "s-maxage=60, stale-while-revalidate=120",
             },
         });
     } catch (error) {

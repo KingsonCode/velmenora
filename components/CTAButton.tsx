@@ -1,18 +1,22 @@
 "use client";
 
+import { useRef } from "react";
 import { event } from "@/lib/gtag";
+import { getBroker } from "@/lib/brokers";
 
-/* 🔥 POSITION TYPE (EXPANDED + FUTURE SAFE) */
-type Position =
-    | "hero"
+/* ========================= */
+export type Position =
+    | "top"
     | "mid"
     | "bottom"
+    | "hero"
     | "sticky"
     | "card"
     | "compare"
     | "table"
     | "unknown";
 
+/* ========================= */
 type Props = {
     broker: string;
     country?: string;
@@ -23,13 +27,7 @@ type Props = {
     onClick?: () => void;
 };
 
-/* 🔥 CENTRALIZED AFFILIATE LINKS */
-const AFFILIATE_LINKS: Record<string, string> = {
-    exness: "https://one.exnessonelink.com/a/tmodpmod",
-    deriv: "#",
-    xm: "#",
-};
-
+/* ========================= */
 export default function CTAButton({
     broker,
     country = "global",
@@ -39,37 +37,44 @@ export default function CTAButton({
     position = "unknown",
     onClick,
 }: Props) {
-    const finalHref = href || AFFILIATE_LINKS[broker];
+    const clickedRef = useRef(false);
+    const brokerData = getBroker(broker);
 
-    /* ❌ SAFETY CHECK */
+    /* 🔥 FINAL LINK → USE /go/ ROUTE */
+    const finalHref =
+        href || (brokerData ? `/go/${broker}` : null);
+
     if (!finalHref) {
         if (process.env.NODE_ENV === "development") {
-            console.warn(`⚠️ No affiliate link for broker: ${broker}`);
+            console.warn(`⚠️ No broker found: ${broker}`);
         }
         return null;
     }
 
-    const handleClick = () => {
+    /* ========================= */
+    const handleClick = async () => {
+        if (clickedRef.current) return; // 🔥 prevent spam clicks
+        clickedRef.current = true;
+
         const payload = {
             broker,
             country,
             position,
-            timestamp: new Date().toISOString(),
+            ts: Date.now(),
         };
 
-        /* 🔥 GOOGLE ANALYTICS */
+        /* 🔥 CLIENT ANALYTICS */
         if (typeof window !== "undefined" && (window as any).gtag) {
             (window as any).gtag("event", "affiliate_click", {
                 broker,
                 country,
                 position,
                 event_category: "affiliate",
-                event_label: `${broker}_${country}`,
+                event_label: `${broker}_${country}_${position}`,
                 value: 1,
             });
         }
 
-        /* 🔥 CUSTOM TRACKING */
         event({
             action: "affiliate_click",
             category: "affiliate",
@@ -77,10 +82,16 @@ export default function CTAButton({
             value: 1,
         });
 
-        /* 🔥 OPTIONAL EXTENSION */
+        /* 🔥 SERVER TRACKING (VERY IMPORTANT) */
+        try {
+            navigator.sendBeacon?.(
+                "/api/track",
+                JSON.stringify(payload)
+            );
+        } catch { }
+
         if (onClick) onClick();
 
-        /* 🔥 DEV LOG */
         if (process.env.NODE_ENV === "development") {
             console.log("🔥 Affiliate Click:", payload);
         }
@@ -90,13 +101,15 @@ export default function CTAButton({
         <a
             href={finalHref}
             target="_blank"
-            rel="nofollow noopener noreferrer"
+            rel="nofollow noopener noreferrer sponsored"
             onClick={handleClick}
             data-broker={broker}
             data-country={country}
             data-position={position}
-            data-type="affiliate"
-            className={className || "cta-button"}
+            className={
+                className ||
+                "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition"
+            }
         >
             {text || "🚀 Start Trading Now"}
         </a>

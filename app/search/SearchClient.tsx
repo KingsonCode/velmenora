@@ -1,164 +1,116 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import BrokerCard from "@/components/BrokerCard";
-import { brokers } from "@/data/brokers";
+import { useState, useMemo } from "react";
+import { getTopBrokers } from "@/lib/brokers";
+import { resolveGeo } from "@/lib/geo";
+import type { Broker, CountryCode } from "@/lib/types/broker";
 
-/* ================= FILTER ENGINE ================= */
-function filterBrokers(query: string) {
-    const q = query.toLowerCase();
+const BROKER_COUNTRIES = new Set<CountryCode>([
+    "TZ",
+    "KE",
+    "NG",
+    "ZA",
+    "UG",
+    "GH",
+    "GLOBAL",
+]);
 
-    return brokers.filter((broker) => {
-        return (
-            broker.name.toLowerCase().includes(q) ||
-            broker.description.toLowerCase().includes(q) ||
-            broker.features.some((f) => f.toLowerCase().includes(q))
-        );
-    });
-}
-
-/* ================= SORT ENGINE (HIGH VALUE) ================= */
-function sortBrokers(results: any[]) {
-    return [...results].sort((a, b) => b.rating - a.rating);
+function toBrokerCountry(code?: string | null): CountryCode {
+    return code && BROKER_COUNTRIES.has(code as CountryCode)
+        ? (code as CountryCode)
+        : "GLOBAL";
 }
 
 export default function SearchClient() {
-    const params = useSearchParams();
-    const router = useRouter();
+    const [query, setQuery] = useState("");
 
-    const query = params.get("q") || "";
+    /* 🌍 GEO CONTEXT (SMART MOVE) */
+    const geo = resolveGeo();
 
-    /* ================= STATE ================= */
-    const [debouncedQuery, setDebouncedQuery] = useState(query);
+    /* 🔥 SOURCE (NOW GEO-AWARE) */
+    const brokers: Broker[] = getTopBrokers(toBrokerCountry(geo.country), 10);
 
-    /* ================= DEBOUNCE ================= */
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            setDebouncedQuery(query);
-        }, 350);
-
-        return () => clearTimeout(timeout);
-    }, [query]);
-
-    /* ================= EXACT MATCH REDIRECT ================= */
-    useEffect(() => {
-        if (!debouncedQuery) return;
-
-        const exact = brokers.find(
-            (b) => b.name.toLowerCase() === debouncedQuery.toLowerCase()
-        );
-
-        if (exact) {
-            router.push(`/broker/${exact.slug}`); // 🔥 MONEY MOVE
-        }
-    }, [debouncedQuery, router]);
-
-    /* ================= RESULTS ================= */
+    /* 🔍 FILTER + SCORING */
     const results = useMemo(() => {
-        if (!debouncedQuery) return [];
+        const q = query.trim().toLowerCase();
 
-        const filtered = filterBrokers(debouncedQuery);
-        return sortBrokers(filtered);
-    }, [debouncedQuery]);
+        if (!q) return brokers.slice(0, 10); // top results default
 
-    /* ================= TRACK SEARCH ================= */
-    useEffect(() => {
-        if (!debouncedQuery) return;
+        return brokers
+            .map((b) => {
+                let score = 0;
 
-        const payload = {
-            event: "search_query",
-            query: debouncedQuery,
-            results: results.length,
-            timestamp: new Date().toISOString(),
-        };
+                /* 🔥 SMART MATCHING */
+                if (b.name.toLowerCase().includes(q)) score += 5;
+                if (b.slug.toLowerCase().includes(q)) score += 3;
 
-        console.log(payload);
+                if (
+                    b.category.some((c) =>
+                        c.toLowerCase().includes(q)
+                    )
+                )
+                    score += 2;
 
-        // 🔥 future API
-        /*
-        fetch("/api/track-search", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        */
-    }, [debouncedQuery, results.length]);
+                /* 🔥 PRIORITY BOOST (IMPORTANT) */
+                if (geo.brokers.includes(b.slug)) score += 4;
 
-    /* ================= UI ================= */
+                return { ...b, score };
+            })
+            .filter((b) => b.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10); // limit results
+    }, [query, brokers, geo]);
+
     return (
-        <div className="min-h-screen bg-black text-white px-6 py-12">
+        <div className="max-w-3xl mx-auto py-10 px-4 text-white">
 
-            {/* 🔎 HEADER */}
-            <div className="max-w-6xl mx-auto mb-10">
-                <h1 className="text-3xl md:text-4xl font-bold mb-3">
-                    🔎 Search Results
-                </h1>
-
-                <p className="text-gray-400">
-                    Showing results for:{" "}
-                    <span className="text-yellow-400 font-semibold">
-                        "{debouncedQuery || "all brokers"}"
-                    </span>
-                </p>
-            </div>
+            {/* 🔍 INPUT */}
+            <input
+                type="text"
+                placeholder="Search brokers (e.g. Exness, MT5, low spread...)"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full p-3 rounded-lg bg-black border border-gray-700 mb-6 outline-none focus:border-yellow-400"
+            />
 
             {/* 🔥 RESULTS */}
-            <div className="max-w-6xl mx-auto">
-                {results.length > 0 ? (
-                    <>
-                        {/* 📊 RESULT COUNT */}
-                        <p className="text-sm text-gray-500 mb-6">
-                            Found {results.length} brokers
-                        </p>
-
-                        {/* 🧱 GRID */}
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {results.map((broker, i) => (
-                                <BrokerCard
-                                    key={broker.id}
-                                    broker={broker}
-                                    rank={i + 1}
-                                    country="tanzania"
-                                />
-                            ))}
-                        </div>
-                    </>
+            <div className="space-y-4">
+                {results.length === 0 ? (
+                    <p className="text-gray-500">
+                        No brokers found. Try different keywords.
+                    </p>
                 ) : (
-                    /* ❌ EMPTY STATE */
-                    <div className="text-center py-20">
-
-                        <h2 className="text-2xl font-semibold mb-3">
-                            No brokers found
-                        </h2>
-
-                        <p className="text-gray-400 mb-6">
-                            Try searching for popular brokers below
-                        </p>
-
-                        {/* 🔥 SUGGESTIONS */}
-                        <div className="flex flex-wrap justify-center gap-3 mb-6">
-                            {["Exness", "Deriv", "XM", "IC Markets"].map((item) => (
-                                <button
-                                    key={item}
-                                    onClick={() => router.push(`/search?q=${item}`)}
-                                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-full hover:bg-white/20 transition"
-                                >
-                                    🔎 {item}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* 🚀 FALLBACK CTA */}
-                        <button
-                            onClick={() => router.push("/explorer")}
-                            className="px-6 py-3 bg-yellow-500 text-black rounded-xl font-semibold"
+                    results.map((b, i) => (
+                        <div
+                            key={b.slug}
+                            className="p-4 border border-gray-700 rounded-lg hover:border-yellow-400 transition"
                         >
-                            Browse All Brokers
-                        </button>
+                            {/* 🔥 RANK */}
+                            <div className="text-xs text-gray-500 mb-1">
+                                #{i + 1} recommended
+                            </div>
 
-                    </div>
+                            <h3 className="font-semibold text-lg">
+                                {b.name}
+                            </h3>
+
+                            <p className="text-sm text-gray-400 mb-2">
+                                {b.category.join(", ")}
+                            </p>
+
+                            {/* 🔥 CTA (VERY IMPORTANT) */}
+                            <a
+                                href={b.url}
+                                target="_blank"
+                                className="inline-block mt-2 text-sm bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold"
+                            >
+                                Trade Now
+                            </a>
+                        </div>
+                    ))
                 )}
             </div>
+
         </div>
     );
 }

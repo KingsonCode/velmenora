@@ -3,7 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { Lang } from "@/lib/i18n";
 
+/* =========================
+   TYPES
+========================= */
+type Props = {
+    lang?: Lang;
+};
+
+/* =========================
+   DATA (CAN MOVE TO DB LATER)
+========================= */
 const brokers = [
     { name: "Exness", slug: "exness" },
     { name: "Deriv", slug: "deriv" },
@@ -11,19 +22,53 @@ const brokers = [
     { name: "IC Markets", slug: "ic-markets" },
 ];
 
-export default function SearchBox() {
+/* =========================
+   I18N TEXT
+========================= */
+const text = {
+    en: {
+        placeholder: "Search Exness, XM, Deriv...",
+        search: "Search",
+        noResults: "No brokers found",
+    },
+    ar: {
+        placeholder: "ابحث عن Exness أو XM...",
+        search: "بحث",
+        noResults: "لم يتم العثور على نتائج",
+    },
+    de: {
+        placeholder: "Suche Exness, XM...",
+        search: "Suchen",
+        noResults: "Keine Broker gefunden",
+    },
+    fr: {
+        placeholder: "Rechercher Exness, XM...",
+        search: "Rechercher",
+        noResults: "Aucun broker trouvé",
+    },
+};
+
+export default function SearchBox({ lang = "en" }: Props) {
+    const router = useRouter();
+
+    const t = text[lang] || text.en;
+
     const [query, setQuery] = useState("");
     const [open, setOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
 
-    const router = useRouter();
     const inputRef = useRef<HTMLDivElement>(null);
 
+    /* =========================
+       FILTER
+    ========================= */
     const filtered = brokers.filter((b) =>
         b.name.toLowerCase().includes(query.toLowerCase())
     );
 
-    /* 🔥 SMART NAVIGATION */
+    /* =========================
+       NAVIGATION (FIXED ROUTES)
+    ========================= */
     const handleSearch = (value?: string) => {
         const q = value || query;
         if (!q) return;
@@ -33,15 +78,17 @@ export default function SearchBox() {
         );
 
         if (exact) {
-            router.push(`/broker/${exact.slug}`); // 👉 HIGH CONVERSION
+            router.push(`/${lang}/brokers/${exact.slug}`); // ✅ FIXED
         } else {
-            router.push(`/search?q=${encodeURIComponent(q)}`);
+            router.push(`/${lang}/search?q=${encodeURIComponent(q)}`); // ✅ FIXED
         }
 
         setOpen(false);
     };
 
-    /* 🔥 KEYBOARD UX */
+    /* =========================
+       KEYBOARD NAV
+    ========================= */
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (!open) return;
 
@@ -68,11 +115,13 @@ export default function SearchBox() {
         }
     };
 
-    /* 🔥 HIGHLIGHT */
-    const highlight = (text: string) => {
-        if (!query) return text;
+    /* =========================
+       HIGHLIGHT
+    ========================= */
+    const highlight = (textValue: string) => {
+        if (!query) return textValue;
 
-        const parts = text.split(new RegExp(`(${query})`, "gi"));
+        const parts = textValue.split(new RegExp(`(${query})`, "gi"));
 
         return parts.map((part, i) =>
             part.toLowerCase() === query.toLowerCase() ? (
@@ -85,10 +134,12 @@ export default function SearchBox() {
         );
     };
 
-    /* 🔥 OUTSIDE CLICK */
+    /* =========================
+       OUTSIDE CLICK
+    ========================= */
     useEffect(() => {
-        const handleClick = (e: any) => {
-            if (!inputRef.current?.contains(e.target)) {
+        const handleClick = (e: MouseEvent) => {
+            if (!inputRef.current?.contains(e.target as Node)) {
                 setOpen(false);
                 setActiveIndex(-1);
             }
@@ -106,7 +157,7 @@ export default function SearchBox() {
 
                 <input
                     type="text"
-                    placeholder="Search Exness, XM, Deriv..."
+                    placeholder={t.placeholder}
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value);
@@ -122,7 +173,7 @@ export default function SearchBox() {
                     className="bg-yellow-500 text-black px-6 py-4 font-semibold flex items-center gap-2 hover:scale-105 transition"
                 >
                     <Search size={18} />
-                    Search
+                    {t.search}
                 </button>
             </div>
 
@@ -136,8 +187,8 @@ export default function SearchBox() {
                                 key={broker.slug}
                                 onClick={() => handleSearch(broker.name)}
                                 className={`px-4 py-3 cursor-pointer transition ${i === activeIndex
-                                    ? "bg-yellow-500/20"
-                                    : "hover:bg-white/10"
+                                        ? "bg-yellow-500/20"
+                                        : "hover:bg-white/10"
                                     }`}
                             >
                                 {highlight(broker.name)}
@@ -145,7 +196,7 @@ export default function SearchBox() {
                         ))
                     ) : (
                         <div className="p-4 text-gray-400 text-sm">
-                            No brokers found
+                            {t.noResults}
                         </div>
                     )}
                 </div>

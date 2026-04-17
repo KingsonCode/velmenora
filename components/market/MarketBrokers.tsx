@@ -1,22 +1,33 @@
 "use client";
 
-import { getTopBrokers, BrokerCategory } from "@/lib/brokers";
+import { getAllBrokers, getTopBrokers } from "@/lib/brokers";
+import type { Category, CountryCode } from "@/lib/types/broker";
 
 /* ================= CATEGORY ================= */
-function getCategory(pair: string): BrokerCategory {
-    if (pair.includes("XAU") || pair.includes("XAG")) return "gold";
-    if (pair.includes("BTC") || pair.includes("ETH")) return "crypto";
-    return "forex";
+function getCategory(pair: string): Category {
+    if (pair.includes("XAU") || pair.includes("XAG")) return "CFD";
+    if (pair.includes("BTC") || pair.includes("ETH")) return "CRYPTO";
+    return "FOREX";
 }
 
 export default function MarketBrokers({ pair }: { pair: string }) {
     const category = getCategory(pair);
-    const country = "TZ";
+    const country: CountryCode = "TZ";
 
-    const list = getTopBrokers(category, country);
+    const list = getAllBrokers()
+        .filter((broker) => broker.category.includes(category))
+        .filter((broker) =>
+            !broker.countries ||
+            broker.countries.includes(country) ||
+            broker.countries.includes("GLOBAL")
+        )
+        .slice(0, 4);
+
+    const fallback = getTopBrokers(country, 4);
+    const brokers = list.length > 0 ? list : fallback;
 
     /* ✅ HARD TYPE NARROWING (TS TRUSTS THIS) */
-    if (!Array.isArray(list) || list.length === 0) {
+    if (!Array.isArray(brokers) || brokers.length === 0) {
         return (
             <div id="brokers" className="space-y-4">
                 <h2 className="text-xl font-semibold">
@@ -30,7 +41,7 @@ export default function MarketBrokers({ pair }: { pair: string }) {
     }
 
     /* 🔥 DESTRUCTURING (SAFE + NARROWED) */
-    const [top, ...rest] = list;
+    const [top, ...rest] = brokers;
 
     /* 🚨 EXTRA SAFETY (TS 100% GUARANTEED) */
     if (!top) return null;
@@ -58,9 +69,9 @@ export default function MarketBrokers({ pair }: { pair: string }) {
                 <div className="flex items-center justify-between">
                     <p className="text-lg font-semibold">{top.name}</p>
 
-                    {top.badge && (
+                    {top.tags?.[0] && (
                         <span className="text-xs bg-blue-500 px-2 py-1 rounded">
-                            {top.badge}
+                            {top.tags[0]}
                         </span>
                     )}
                 </div>

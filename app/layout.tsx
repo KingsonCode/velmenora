@@ -3,12 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
-/* NAV + FOOTER */
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 /* =========================
-   FONTS
+   FONTS (OPTIMIZED)
 ========================= */
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -23,28 +22,27 @@ const geistMono = Geist_Mono({
 });
 
 /* =========================
-   SEO (PRO MAX)
+   SEO (UPGRADED)
 ========================= */
 export const metadata: Metadata = {
     metadataBase: new URL("https://www.velmenora.com"),
 
     title: {
-        default: "Velmenora — Best Forex Brokers in Tanzania",
+        default: "Velmenora — Best Forex Brokers in Africa",
         template: "%s | Velmenora",
     },
 
     description:
-        "Compare the best forex brokers in Tanzania. Trade with verified platforms, fast withdrawals, and low spreads.",
+        "Compare the best forex brokers in Africa. Trade with trusted platforms, low spreads, and fast withdrawals.",
 
     keywords: [
-        "forex brokers Tanzania",
-        "best forex brokers Africa",
-        "Exness Tanzania",
-        "XM broker review",
-        "forex trading for beginners",
+        "forex brokers Africa",
+        "best forex brokers",
+        "Exness review",
+        "XM broker",
+        "forex trading beginners",
     ],
 
-    /* 🔥 FAVICON */
     icons: {
         icon: "/logo.svg",
         shortcut: "/logo.svg",
@@ -52,17 +50,17 @@ export const metadata: Metadata = {
     },
 
     openGraph: {
-        title: "Velmenora — Best Forex Brokers in Tanzania",
+        title: "Velmenora — Best Forex Brokers",
         description:
-            "Find trusted forex brokers with fast withdrawals and low spreads.",
+            "Find top forex brokers with fast withdrawals and low spreads.",
         url: "https://www.velmenora.com",
         siteName: "Velmenora",
         images: [
             {
-                url: "/og-image.jpg", // 👉 add later
+                url: "/og-image.jpg",
                 width: 1200,
                 height: 630,
-                alt: "Velmenora Forex Platform",
+                alt: "Velmenora",
             },
         ],
         locale: "en_US",
@@ -73,7 +71,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "Velmenora — Best Forex Brokers",
         description:
-            "Compare top forex brokers and trade safely.",
+            "Compare forex brokers and trade safely.",
         images: ["/og-image.jpg"],
     },
 
@@ -92,11 +90,18 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html
+            lang="en"
+            data-scroll-behavior="smooth"
+            suppressHydrationWarning
+        >
             <head>
                 {/* 🔥 PERFORMANCE BOOST */}
                 <link rel="preconnect" href="https://www.googletagmanager.com" />
                 <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+                {/* 🔥 PRELOAD (OPTIONAL FUTURE HERO IMAGE) */}
+                {/* <link rel="preload" as="image" href="/hero.jpg" /> */}
             </head>
 
             <body
@@ -107,21 +112,20 @@ export default function RootLayout({
                     {/* 🔝 NAVBAR */}
                     <Navbar />
 
-                    {/* 🔥 MAIN CONTENT */}
-                    <main className="flex-1 flex justify-center">
-                        <div className="w-full max-w-7xl px-6">
+                    {/* 🔥 MAIN CONTENT (WIDER + BETTER) */}
+                    <main className="flex-1 w-full">
+                        <div className="max-w-7xl mx-auto px-6">
                             {children}
                         </div>
                     </main>
 
                     {/* 🔻 FOOTER */}
                     <Footer />
-
                 </div>
 
                 {/* =========================
-                   GOOGLE ANALYTICS (CLEAN)
-                ========================= */}
+           GOOGLE ANALYTICS (CLEAN)
+        ========================= */}
                 <Script
                     src="https://www.googletagmanager.com/gtag/js?id=G-VMWD4KBDS7"
                     strategy="afterInteractive"
@@ -129,17 +133,18 @@ export default function RootLayout({
 
                 <Script id="gtag-init" strategy="afterInteractive">
                     {`
-                        window.dataLayer = window.dataLayer || [];
-                        function gtag(){dataLayer.push(arguments);}
-                        window.gtag = gtag;
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            window.gtag = gtag;
 
-                        gtag('js', new Date());
-                        gtag('config', 'G-VMWD4KBDS7', {
-                          anonymize_ip: true,
-                          page_path: window.location.pathname,
-                        });
-                    `}
+            gtag('js', new Date());
+            gtag('config', 'G-VMWD4KBDS7', {
+              anonymize_ip: true,
+              page_path: window.location.pathname,
+            });
+          `}
                 </Script>
+
             </body>
         </html>
     );

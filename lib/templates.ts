@@ -1,6 +1,6 @@
 // 📁 /lib/templates.ts
 
-import type { Country } from "./countries";
+import type { CountryMeta as Country } from "@/lib/geo";
 
 /* =========================================================
    🔥 TEMPLATE TYPE (FULL POWER)

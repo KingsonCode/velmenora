@@ -1,9 +1,21 @@
-// /app/api/market-news/[pair]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 
-/* 🔥 MOCK / AI GENERATOR (replace later with real API) */
-function generateNews(pair: string) {
+/* ================= TYPES ================= */
+type NewsItem = {
+    title: string;
+    summary: string;
+    source: string;
+    time: string;
+    url: string;
+};
+
+/* ================= VALIDATION ================= */
+function isValidPair(pair: string) {
+    return /^[A-Z]{6,10}$/.test(pair);
+}
+
+/* ================= PRIMARY GENERATOR ================= */
+function generateNews(pair: string): NewsItem[] {
     return [
         {
             title: `${pair} rallies as traders react to economic data`,
@@ -29,18 +41,59 @@ function generateNews(pair: string) {
     ];
 }
 
-/* 🔥 NEXT 15 CORRECT HANDLER */
-export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ pair: string }> }
-) {
-    const { pair } = await params;
-
-    const news = generateNews(pair.toUpperCase());
-
-    return NextResponse.json(news, {
-        headers: {
-            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+/* ================= FALLBACK ================= */
+function fallbackNews(pair: string): NewsItem[] {
+    return [
+        {
+            title: `Latest news for ${pair}`,
+            summary: "Market moving updates and insights.",
+            source: "Velmenora",
+            time: new Date().toISOString(),
+            url: "#",
         },
-    });
+    ];
+}
+
+/* ================= ROUTE ================= */
+export async function GET(
+    _req: NextRequest,
+    context: { params: Promise<{ pair: string }> }
+) {
+    try {
+        const { pair } = await context.params;
+
+        if (!pair) {
+            return NextResponse.json(
+                { error: "Pair is required" },
+                { status: 400 }
+            );
+        }
+
+        const normalized = pair.toUpperCase();
+
+        if (!isValidPair(normalized)) {
+            return NextResponse.json(
+                { error: "Invalid pair format" },
+                { status: 400 }
+            );
+        }
+
+        /* 🔥 MAIN ENGINE */
+        const news = generateNews(normalized);
+
+        return NextResponse.json(news, {
+            status: 200,
+            headers: {
+                "Cache-Control":
+                    "public, s-maxage=60, stale-while-revalidate=120",
+            },
+        });
+    } catch (error) {
+        console.error("❌ Market News Error:", error);
+
+        return NextResponse.json(
+            fallbackNews("UNKNOWN"),
+            { status: 200 }
+        );
+    }
 }

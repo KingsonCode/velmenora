@@ -1,117 +1,110 @@
-"use client";
+import { getTopBrokers } from "@/lib/brokers";
+import { resolveGeo } from "@/lib/geo";
+import type { Broker, CountryCode } from "@/lib/types/broker";
 
-import BrokerCard from "components/BrokerCard";
-import { brokers } from "@/data/brokers";
+const BROKER_COUNTRIES = new Set<CountryCode>([
+    "TZ",
+    "KE",
+    "NG",
+    "ZA",
+    "UG",
+    "GH",
+    "GLOBAL",
+]);
 
-/* 🔥 CONFIG */
-const USER_COUNTRY = "tanzania";
+function toBrokerCountry(code?: string | null): CountryCode {
+    return code && BROKER_COUNTRIES.has(code as CountryCode)
+        ? (code as CountryCode)
+        : "GLOBAL";
+}
 
 export default function BrokerGrid() {
-    /* =========================================================
-       🔥 STEP 1: GEO FILTER
-    ========================================================= */
-    const geoFiltered = brokers.filter(
-        (b) =>
-            !b.countries || b.countries.includes(USER_COUNTRY)
-    );
+    const geo = resolveGeo();
 
-    /* =========================================================
-       🔥 STEP 2: SMART SORT (RANKING ENGINE)
-       score = rating + reviews weight
-    ========================================================= */
-    const sorted = [...geoFiltered].sort((a, b) => {
-        const scoreA = a.rating + (a.reviews || 0) / 10000;
-        const scoreB = b.rating + (b.reviews || 0) / 10000;
-        return scoreB - scoreA;
-    });
-
-    /* =========================================================
-       🔥 TOP BROKER (HIGH CONVERSION TRICK)
-    ========================================================= */
-    const topBroker = sorted[0];
-    const rest = sorted.slice(1);
+    const brokers: Broker[] = getTopBrokers(toBrokerCountry(geo.country), 5);
 
     return (
-        <section id="brokers" className="py-20 px-6 bg-dark text-white">
+        <div className="grid md:grid-cols-2 gap-6">
+            {brokers.map((broker, i) => {
+                const isTop = i === 0;
 
-            {/* 🔥 HEADER (SEO) */}
-            <div className="max-w-6xl mx-auto text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                    Best Forex Brokers in Tanzania (2026)
-                </h2>
+                return (
+                    <div
+                        key={broker.slug}
+                        className={`relative p-5 border rounded-xl text-white transition ${isTop
+                                ? "border-yellow-400 bg-gradient-to-b from-yellow-400/10 to-transparent"
+                                : "border-gray-700 hover:border-yellow-400"
+                            }`}
+                    >
+                        {/* 🔥 BADGE */}
+                        {isTop && (
+                            <div className="absolute top-3 right-3 text-xs bg-yellow-400 text-black px-2 py-1 rounded">
+                                #1 Recommended
+                            </div>
+                        )}
 
-                <p className="text-gray-400 max-w-2xl mx-auto">
-                    Compare top-rated forex brokers with low spreads, fast withdrawals, and strong regulation.
-                </p>
-            </div>
-
-            {/* =========================================================
-         🥇 TOP BROKER (FEATURED)
-      ========================================================= */}
-            {topBroker && (
-                <div className="max-w-5xl mx-auto mb-14">
-
-                    <div className="relative bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/20 rounded-2xl p-8 shadow-premium backdrop-blur-md">
-
-                        <div className="absolute top-4 left-4 bg-gradient-primary px-4 py-1 text-sm rounded-full font-semibold shadow-glow">
-                            #1 Recommended
+                        {/* 🔥 RANK */}
+                        <div className="text-xs text-gray-500 mb-1">
+                            #{i + 1} in {geo.meta?.name || "your region"}
                         </div>
 
-                        <div className="text-center mt-6">
-                            <h3 className="text-2xl font-bold mb-2">
-                                {topBroker.name}
-                            </h3>
+                        {/* 🔥 NAME */}
+                        <h3 className="text-lg font-semibold mb-2">
+                            {broker.name}
+                        </h3>
 
-                            <p className="text-gray-300 mb-6 max-w-xl mx-auto">
-                                {topBroker.description}
-                            </p>
+                        {/* 🔥 FEATURES / DESCRIPTION */}
+                        <p className="text-sm text-gray-400 mb-3">
+                            {broker.category.join(" • ")}
+                        </p>
 
-                            <div className="flex flex-wrap justify-center gap-3 mb-6 text-sm text-gray-300">
-                                {topBroker.features.slice(0, 3).map((f, i) => (
-                                    <span
-                                        key={i}
-                                        className="bg-white/10 px-3 py-1 rounded-full"
-                                    >
-                                        {f}
-                                    </span>
-                                ))}
+                        {/* 🔥 RATING + TRUST */}
+                        <div className="flex items-center justify-between text-sm mb-3">
+                            <span>⭐ {broker.rating ?? 4.5}</span>
+                            <span className="text-green-400">
+                                Trusted Broker
+                            </span>
+                        </div>
+
+                        {/* 🔥 REGIONS */}
+                        <div className="text-xs text-gray-500 mb-4">
+                            Available in: {broker.regions?.join(", ") || "Global"}
+                        </div>
+
+                        {/* 🔥 PAYMENTS (FROM GEO) */}
+                        {geo.payments.length > 0 && (
+                            <div className="text-xs text-gray-400 mb-4">
+                                Payments: {geo.payments.join(", ")}
                             </div>
+                        )}
 
-                            {/* 🔥 CTA */}
+                        {/* 🔥 CTA STACK */}
+                        <div className="flex gap-3">
                             <a
-                                href={topBroker.link}
-                                className="inline-block bg-gradient-primary shadow-glow hover:shadow-glow-lg px-8 py-4 rounded-xl font-semibold transition"
+                                href={broker.url}
+                                target="_blank"
+                                className="flex-1 text-center bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold"
                             >
-                                Open Account →
+                                Trade Now
+                            </a>
+
+                            <a
+                                href={`/brokers/${broker.slug}`}
+                                className="flex-1 text-center border border-gray-600 px-4 py-2 rounded-lg text-sm"
+                            >
+                                Review
                             </a>
                         </div>
+
+                        {/* 🔥 URGENCY (CONVERSION BOOST) */}
+                        {isTop && (
+                            <div className="mt-3 text-xs text-yellow-400">
+                                🔥 High signup rate in your region
+                            </div>
+                        )}
                     </div>
-                </div>
-            )}
-
-            {/* =========================================================
-         🔥 GRID (REST OF BROKERS)
-      ========================================================= */}
-            <div className="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rest.map((broker, i) => (
-                    <BrokerCard
-                        key={broker.id}
-                        broker={broker}
-                        rank={i + 2} // because #1 is featured
-                        country={USER_COUNTRY}
-                    />
-                ))}
-            </div>
-
-            {/* =========================================================
-         🔍 SEO PARAGRAPH (VERY IMPORTANT)
-      ========================================================= */}
-            <div className="max-w-4xl mx-auto mt-16 text-gray-400 text-sm leading-relaxed text-center">
-                Choosing the best forex broker in Tanzania depends on spreads, withdrawal speed, and regulation.
-                Our rankings are based on real trader feedback, platform reliability, and overall trading conditions.
-                Always trade responsibly and verify broker regulations before opening an account.
-            </div>
-
-        </section>
+                );
+            })}
+        </div>
     );
 }

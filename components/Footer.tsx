@@ -1,132 +1,137 @@
-import Link from "next/link";
-import { africaCountries } from "@/lib/countries";
+"use client";
+
+import { usePathname } from "next/navigation";
+import { countries, resolveGeo } from "@/lib/geo";
+
+const SUPPORTED_LANGS = new Set(["en", "de", "fr", "ar"]);
+
+/* ================= GROUP COUNTRIES ================= */
+const grouped = countries.reduce((acc, c) => {
+    const clusterList = acc[c.cluster] ?? ([] as typeof countries);
+    clusterList.push(c);
+    acc[c.cluster] = clusterList;
+    return acc;
+}, {} as Record<string, typeof countries>);
 
 export default function Footer() {
+    const pathname = usePathname();
+    const geo = resolveGeo();
+    const firstSegment = pathname?.split("/")[1] || "";
+    const langPrefix = SUPPORTED_LANGS.has(firstSegment)
+        ? `/${firstSegment}`
+        : "";
+    const compareHref = langPrefix
+        ? `${langPrefix}/best-forex-brokers`
+        : "/compare";
+
     return (
-        <footer className="border-t border-[#1f2a36] bg-[#020617] text-gray-400 text-sm mt-20">
+        <footer className="bg-black border-t border-white/10 text-white">
 
-            {/* ================= MAIN GRID ================= */}
-            <div className="max-w-6xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
+            <div className="max-w-7xl mx-auto px-6 py-14">
 
-                {/* 🔥 BRAND + TRUST */}
-                <div>
-                    <h3 className="text-white text-lg font-semibold mb-4">
-                        Velmenora
-                    </h3>
+                {/* 🔥 TOP GRID */}
+                <div className="grid md:grid-cols-5 gap-10">
 
-                    <p className="leading-relaxed">
-                        Helping traders across Africa find trusted forex brokers,
-                        fast withdrawals, and powerful trading platforms.
-                    </p>
+                    {/* ================= BRAND ================= */}
+                    <div>
+                        <h3 className="text-lg font-bold mb-4">
+                            Velmenora
+                        </h3>
 
-                    {/* 🔥 TRUST BADGES */}
-                    <div className="mt-6 flex flex-wrap gap-3 text-xs text-gray-500">
-                        <span className="border border-white/10 px-3 py-1 rounded-full">
-                            ✔ Verified Brokers
-                        </span>
-                        <span className="border border-white/10 px-3 py-1 rounded-full">
-                            ✔ Fast Withdrawals
-                        </span>
-                        <span className="border border-white/10 px-3 py-1 rounded-full">
-                            ✔ Low Spreads
-                        </span>
+                        <p className="text-sm text-gray-400 mb-4">
+                            Compare the best forex brokers globally and trade with confidence.
+                        </p>
+
+                        {/* 🔥 TRUST SIGNAL */}
+                        <div className="text-xs text-gray-500">
+                            Trusted by traders in {geo.meta?.name || "your region"}
+                        </div>
                     </div>
+
+                    {/* ================= GEO CLUSTERS ================= */}
+                    {Object.entries(grouped).map(([cluster, list]) => (
+                        <div key={cluster}>
+                            <h4 className="text-sm font-semibold mb-3">
+                                {cluster}
+                            </h4>
+
+                            <ul className="space-y-2 text-sm text-gray-400">
+                                {list.slice(0, 6).map((c) => (
+                                    <li key={c.code}>
+                                        <a
+                                            href={`/blog/best-brokers-in-${c.slug}`}
+                                            className="hover:text-white transition"
+                                        >
+                                            {c.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+
+                    {/* ================= QUICK LINKS ================= */}
+                    <div>
+                        <h4 className="text-sm font-semibold mb-3">
+                            Quick Links
+                        </h4>
+
+                        <ul className="space-y-2 text-sm text-gray-400">
+                            <li>
+                                <a href={compareHref} className="hover:text-white">
+                                    Compare Brokers
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/blog" className="hover:text-white">
+                                    Trading Guides
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/brokers" className="hover:text-white">
+                                    All Brokers
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
                 </div>
 
-                {/* 🔥 COUNTRIES (SEO ENGINE) */}
-                <div>
-                    <h4 className="text-white font-semibold mb-4">Top Markets</h4>
+                {/* ================= SEO INTERNAL LINKS (HIDDEN POWER) ================= */}
+                <div className="mt-12 border-t border-white/10 pt-6">
 
-                    <div className="flex flex-col gap-2">
-                        {africaCountries.slice(0, 6).map((c) => (
-                            <Link
+                    <div className="text-xs text-gray-500 mb-4 text-center">
+                        Popular Markets
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-400">
+                        {countries.slice(0, 20).map((c) => (
+                            <a
                                 key={c.code}
-                                href={`/${c.slug}`}
-                                className="hover:text-white transition"
+                                href={`/blog/best-brokers-in-${c.slug}`}
+                                className="hover:text-white"
                             >
-                                Trade in {c.name}
-                            </Link>
+                                {c.name}
+                            </a>
                         ))}
                     </div>
+
                 </div>
 
-                {/* 🔥 QUICK LINKS */}
-                <div>
-                    <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+                {/* ================= LEGAL ================= */}
+                <div className="border-t border-white/10 mt-10 pt-6 text-center text-xs text-gray-500 space-y-2">
 
-                    <ul className="space-y-2">
-                        <li>
-                            <Link href="/" className="hover:text-white transition">
-                                Home
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/blog" className="hover:text-white transition">
-                                Blog
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/blog/best-brokers" className="hover:text-white transition">
-                                Best Brokers
-                            </Link>
-                        </li>
-                    </ul>
+                    <p>
+                        © {new Date().getFullYear()} Velmenora. All rights reserved.
+                    </p>
+
+                    <p className="max-w-2xl mx-auto">
+                        Trading forex carries a high level of risk and may not be suitable for all investors.
+                        Ensure you understand the risks involved before trading.
+                    </p>
+
                 </div>
 
-                {/* 🔥 LEGAL + CTA */}
-                <div>
-                    <h4 className="text-white font-semibold mb-4">Legal</h4>
-
-                    <ul className="space-y-2">
-                        <li>
-                            <Link href="/privacy-policy" className="hover:text-white transition">
-                                Privacy Policy
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/terms" className="hover:text-white transition">
-                                Terms of Service
-                            </Link>
-                        </li>
-                    </ul>
-
-                    {/* 🔥 CTA INSIDE FOOTER */}
-                    <div className="mt-6">
-                        <Link
-                            href="/compare"
-                            className="block text-center bg-yellow-400 text-black py-2 rounded-lg font-semibold hover:scale-105 transition-all"
-                        >
-                            Start Trading →
-                        </Link>
-                    </div>
-
-                    {/* 🔥 EXTRA SEO LINK */}
-                    <div className="mt-4">
-                        <Link
-                            href="/blog/forex-for-beginners"
-                            className="text-xs hover:text-white transition"
-                        >
-                            Forex for Beginners
-                        </Link>
-                    </div>
-                </div>
-
-            </div>
-
-            {/* ================= TRUST STRIP ================= */}
-            <div className="border-t border-[#1f2a36] py-6 text-center text-xs text-gray-500 px-6">
-                Trusted by traders worldwide • Independent broker reviews • Real withdrawal testing
-            </div>
-
-            {/* ================= DISCLAIMER ================= */}
-            <div className="px-6 py-6 text-center text-xs text-gray-500 max-w-4xl mx-auto leading-relaxed">
-                Trading forex involves significant risk and may not be suitable for all investors.
-                Velmenora may receive commissions from affiliate partners. Always trade responsibly.
-            </div>
-
-            {/* ================= COPYRIGHT ================= */}
-            <div className="text-center text-xs text-gray-600 pb-6">
-                © {new Date().getFullYear()} Velmenora. All rights reserved.
             </div>
 
         </footer>

@@ -1,38 +1,34 @@
 import { NextResponse } from "next/server";
 
+/* ================= TYPES ================= */
 type Params = Promise<{ pair: string }>;
 
-/* ================= MOCK ENGINE (SMART BASELINE) ================= */
-
+/* ================= SMART BASELINE ================= */
 function generateSmartSentiment(pair: string) {
-    const base = pair.charCodeAt(0) + pair.charCodeAt(pair.length - 1);
+    const base =
+        pair.charCodeAt(0) +
+        pair.charCodeAt(pair.length - 1);
 
     const bull = (base % 40) + 30; // 30 → 70
     const bear = 100 - bull;
 
-    return {
-        bull,
-        bear,
-        signal:
-            bull > 60
-                ? "strong_buy"
-                : bull > 52
-                    ? "buy"
-                    : bull < 40
-                        ? "strong_sell"
-                        : bull < 48
-                            ? "sell"
-                            : "neutral",
-    };
+    const signal =
+        bull > 60
+            ? "strong_buy"
+            : bull > 52
+                ? "buy"
+                : bull < 40
+                    ? "strong_sell"
+                    : bull < 48
+                        ? "sell"
+                        : "neutral";
+
+    return { bull, bear, signal };
 }
 
-/* ================= OPTIONAL: REAL API (FUTURE READY) ================= */
-
+/* ================= OPTIONAL EXTERNAL ================= */
 async function fetchExternalSentiment(pair: string) {
     try {
-        // 🔥 unaweza replace na API yako (Forex, Crypto, etc)
-        // mfano: AlphaVantage, TwelveData, au custom ML endpoint
-
         const res = await fetch(
             `https://api.example.com/sentiment/${pair}`,
             { cache: "no-store" }
@@ -52,35 +48,49 @@ async function fetchExternalSentiment(pair: string) {
     }
 }
 
-/* ================= ROUTE ================= */
+/* ================= VALIDATION ================= */
+function isValidPair(pair: string) {
+    return /^[A-Z]{6,10}$/.test(pair);
+}
 
+/* ================= ROUTE ================= */
 export async function GET(
     _req: Request,
-    { params }: { params: Params }
+    context: { params: Params }
 ) {
     try {
-        const resolvedParams = await params;
+        const { pair } = await context.params;
 
-        if (!resolvedParams?.pair) {
+        if (!pair) {
             return NextResponse.json(
                 { error: "Pair is required" },
                 { status: 400 }
             );
         }
 
-        const pair = resolvedParams.pair.toUpperCase();
+        const normalized = pair.toUpperCase();
 
-        /* 🔥 TRY REAL DATA FIRST */
-        const external = await fetchExternalSentiment(pair);
+        if (!isValidPair(normalized)) {
+            return NextResponse.json(
+                { error: "Invalid pair format" },
+                { status: 400 }
+            );
+        }
+
+        /* 🔥 TRY REAL API FIRST */
+        const external = await fetchExternalSentiment(
+            normalized
+        );
 
         const sentiment =
-            external ?? generateSmartSentiment(pair);
+            external ?? generateSmartSentiment(normalized);
 
         return NextResponse.json(
             {
-                pair,
+                pair: normalized,
                 ...sentiment,
                 timestamp: Date.now(),
+                source: external ? "external" : "internal",
             },
             {
                 status: 200,
@@ -100,6 +110,7 @@ export async function GET(
                 bear: 50,
                 signal: "neutral",
                 fallback: true,
+                timestamp: Date.now(),
             },
             { status: 200 }
         );

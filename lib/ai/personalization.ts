@@ -1,4 +1,4 @@
-import { Broker } from "@/data/brokers";
+import type { Broker } from "@/lib/types/broker";
 import { scoreBroker } from "./recommendBroker";
 
 /* ================= STORAGE ================= */
@@ -92,26 +92,26 @@ export function getPersonalizedScore(b: Broker): number {
     let boost = 0;
 
     /* 🔁 FREQUENCY */
-    const clicks = profile.clicks[b.id] || 0;
+    const clicks = profile.clicks[b.slug] || 0;
     boost += Math.min(clicks * 2, 10); // cap
 
     /* 👁 LAST VIEWED */
-    if (profile.lastViewed === b.id) {
+    if (profile.lastViewed === b.slug) {
         boost += 3;
     }
 
     /* 📱 PLATFORM SIGNAL */
-    if (b.platforms?.includes("MT5")) {
+    if (b.features.some((feature) => feature.includes("MT5"))) {
         boost += 1;
     }
 
-    /* 🌍 GEO SIGNAL (TANZANIA BIAS) */
-    if ((b as any).supportsTanzania) {
+    /* 🌍 GEO SIGNAL (TANZANIA / AFRICA BIAS) */
+    if (b.regions?.includes("AFRICA")) {
         boost += 2;
     }
 
     /* 💰 BUSINESS PRIORITY SIGNAL */
-    if ((b as any).priority === "high") {
+    if ((b.priority || 0) >= 9) {
         boost += 2;
     }
 

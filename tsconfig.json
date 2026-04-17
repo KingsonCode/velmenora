@@ -11,14 +11,14 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    /* 🔥 REACT / NEXT */
+    /* 🔥 NEXT / REACT */
     "jsx": "react-jsx",
     "plugins": [
       {
         "name": "next"
       }
     ],
-    /* 🔥 STRICTNESS (KEEP THIS STRONG) */
+    /* 🔥 STRICT MODE (KEEP THIS) */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -28,7 +28,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    /* 🔥 PATH ALIAS */
+    /* 🔥 PATHS */
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -39,7 +39,7 @@
     "forceConsistentCasingInFileNames": true,
     /* 🔥 PERFORMANCE */
     "incremental": true,
-    /* 🔥 NEXT.JS IMPORTANT */
+    /* 🔥 TYPES (IMPORTANT) */
     "types": [
       "node"
     ]
