@@ -1,212 +1,222 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-import { getBroker } from "@/lib/brokerEngine";
-import {
-    buildComparisonTitle,
-    buildComparisonDescription,
-    generateCanonical,
-} from "@/lib/seo";
+import { getBroker } from "@/lib/brokers";
+import { getCompareSlugs } from "@/lib/compare";
 
-import { buildComparisonSections } from "@/lib/contentEngine";
-import {
-    buildComparisonSchema,
-    buildFAQSchema,
-} from "@/lib/schemaEngine";
+/* =========================================================
+   🔥 CONFIG
+========================================================= */
 
-import { buildComparisonFAQs } from "@/lib/faqEngine";
+export const revalidate = 3600;
 
-import { getAffiliateLink } from "@/lib/brokerEngine";
+/* =========================================================
+   🔥 STATIC BUILD (LIMITED)
+========================================================= */
 
-/* 🔥 COMPONENTS */
-import ComparisonHero from "@/components/comparison/ComparisonHero";
-import ComparisonTable from "@/components/comparison/ComparisonTable";
-import ComparisonWinner from "@/components/comparison/ComparisonWinner";
+export async function generateStaticParams() {
+    const slugs = getCompareSlugs({ limit: 50 });
 
-import TrackingView from "@/components/tracking/TrackingView";
-import TrackedCTA from "@/components/tracking/TrackedCTA";
-
-import SchemaMarkup from "@/components/SchemaMarkup";
-import FAQ from "@/components/FAQ";
-
-/* ================= NORMALIZER ================= */
-
-function normalizeBroker(b: any) {
-    return {
-        ...b,
-        platforms: b?.platforms ?? [],
-        features: b?.features ?? [],
-        payments: b?.payments ?? [],
-        intent: b?.intent ?? [],
-        category: b?.category ?? [],
-        rating: b?.rating ?? 0,
-        minDeposit: b?.minDeposit ?? 0,
-    };
+    return slugs.map((slug) => ({ slug }));
 }
 
-/* ================= STATIC ================= */
+/* =========================================================
+   🔥 PARSER
+========================================================= */
 
-import { generateComparisonPairs } from "@/lib/comparisonEngine";
-import { getComparisonSlug } from "@/lib/seo";
+function parseSlug(slug: string) {
+    const parts = slug.split("-vs-");
+    if (parts.length !== 2) return null;
 
-export function generateStaticParams() {
-    return generateComparisonPairs().map(([a, b]) => ({
-        slug: getComparisonSlug(a, b),
-    }));
+    const [a, b] = parts;
+
+    if (!a || !b) return null;
+
+    return { a, b };
 }
 
-/* ================= METADATA (SEO BOOST) ================= */
+/* =========================================================
+   🔥 SCORING ENGINE (UPGRADE 🔥)
+========================================================= */
+
+function scoreBroker(b: any) {
+    let score = 0;
+
+    score += (b.rating || 0) * 2;
+
+    if (b.priority) score += b.priority;
+
+    if (b.features?.length) score += b.features.length * 0.3;
+
+    return score;
+}
+
+function getWinner(a: any, b: any) {
+    return scoreBroker(a) >= scoreBroker(b) ? a : b;
+}
+
+/* =========================================================
+   🔥 SEO
+========================================================= */
 
 export async function generateMetadata({
     params,
 }: {
-    params: Promise<{ lang: string; slug: string }>;
-}) {
-    const { slug } = await params;
+    params: { slug: string; lang: string };
+}): Promise<Metadata> {
+    const parsed = parseSlug(params.slug);
 
-    const parts = slug.split("-vs-");
-    const a = parts[0];
-    const b = parts[1];
+    if (!parsed) return notFound();
 
-    if (!a || !b) {
-        return {
-            alternates: {
-                canonical: generateCanonical(`/compare/${slug}`),
-            },
-        };
-    }
+    const { a, b } = parsed;
+
+    const brokerA = getBroker(a);
+    const brokerB = getBroker(b);
+
+    if (!brokerA || !brokerB) return notFound();
+
+    const title = `${brokerA.name} vs ${brokerB.name} (2026) – Full Comparison`;
+
+    const description = `Compare ${brokerA.name} vs ${brokerB.name} in spreads, fees, platforms, features and overall performance. Find the best broker for your trading strategy.`;
 
     return {
-        title: buildComparisonTitle(a, b),
-        description: buildComparisonDescription(a, b),
+        title,
+        description,
         alternates: {
-            canonical: generateCanonical(`/compare/${slug}`),
+            canonical: `https://velmenora.com/${params.lang}/compare/${params.slug}`,
+        },
+        openGraph: {
+            title,
+            description,
+            images: ["/og-default.jpg"],
         },
     };
 }
 
-/* ================= PAGE ================= */
+/* =========================================================
+   🔥 PAGE
+========================================================= */
 
-export default async function ComparisonPage({
+export default function ComparePage({
     params,
 }: {
-    params: Promise<{ lang: string; slug: string }>;
+    params: { slug: string; lang: string };
 }) {
-    const { slug } = await params;
+    const parsed = parseSlug(params.slug);
 
-    if (!slug) return notFound();
+    if (!parsed) return notFound();
 
-    const parts = slug.split("-vs-");
-    if (parts.length !== 2) return notFound();
+    const brokerA = getBroker(parsed.a);
+    const brokerB = getBroker(parsed.b);
 
-    const slugA = parts[0];
-    const slugB = parts[1];
+    if (!brokerA || !brokerB) return notFound();
 
-    if (!slugA || !slugB) return notFound();
-
-    const rawA = getBroker(slugA);
-    const rawB = getBroker(slugB);
-
-    if (!rawA || !rawB) return notFound();
-
-    const a = normalizeBroker(rawA);
-    const b = normalizeBroker(rawB);
-
-    /* 🔥 MONEY LOGIC (UPGRADE READY) */
-    const winner = a.rating >= b.rating ? a : b;
-    const loser = winner.slug === a.slug ? b : a;
-
-    const comparisonKey = `${a.slug}_vs_${b.slug}`;
-
-    const content = buildComparisonSections(a, b, winner);
-    const faq = buildComparisonFAQs(a, b);
-
-    const winnerLink = getAffiliateLink(winner);
-    const loserLink = getAffiliateLink(loser);
+    const winner = getWinner(brokerA, brokerB);
 
     return (
-        <>
-            {/* 🔥 TRACKING */}
-            <TrackingView
-                page="comparison"
-                comparisonKey={comparisonKey}
-            />
+        <main className="max-w-5xl mx-auto py-20 px-6 text-white">
 
-            {/* 🔥 SCHEMA */}
-            <SchemaMarkup data={buildComparisonSchema(a, b)} />
-            <SchemaMarkup data={buildFAQSchema(faq)} />
+            {/* TITLE */}
+            <h1 className="text-4xl font-bold mb-6 text-center">
+                {brokerA.name} vs {brokerB.name}
+            </h1>
 
-            {/* 🔥 HERO */}
-            <ComparisonHero brokerA={a} brokerB={b} />
-
-            {/* 🔥 TITLE */}
-            <div className="max-w-3xl mx-auto px-6 mt-10">
-                <h1 className="text-3xl font-bold mb-4">
-                    {buildComparisonTitle(a.name, b.name)}
-                </h1>
-
-                <p className="text-gray-400">
-                    {buildComparisonDescription(a.name, b.name)}
-                </p>
+            {/* WINNER BADGE */}
+            <div className="text-center mb-10">
+                <span className="px-4 py-2 bg-yellow-400 text-black rounded-full font-semibold">
+                    🏆 Best Overall: {winner.name}
+                </span>
             </div>
 
-            {/* 🔥 WINNER */}
-            <ComparisonWinner broker={winner} />
-
-            {/* 🔥 CTA (AB TEST READY) */}
-            <div className="text-center my-10 space-y-4">
-
-                <TrackedCTA
-                    href={winnerLink}
-                    broker={winner}
-                    page="comparison"
-                    cta="winner_primary"
-                    className="bg-green-600 px-6 py-3 rounded-xl"
-                >
-                    🚀 Start Trading with {winner.name}
-                </TrackedCTA>
-
-                <TrackedCTA
-                    href={loserLink}
-                    broker={loser}
-                    page="comparison"
-                    cta="loser_alt"
-                    className="bg-gray-800 px-4 py-2 rounded-lg"
-                >
-                    Trade {loser.name}
-                </TrackedCTA>
-
+            {/* CTA TOP (ORDERED BY WINNER) */}
+            <div className="grid md:grid-cols-2 gap-6 mb-12">
+                {[brokerA, brokerB]
+                    .sort((x, y) =>
+                        winner.slug === x.slug ? -1 : 1
+                    )
+                    .map((broker) => (
+                        <Link
+                            key={broker.slug}
+                            href={`/go/${broker.slug}`}
+                            className={`block p-6 rounded-xl text-center font-semibold transition hover:scale-105 ${broker.slug === winner.slug
+                                ? "bg-yellow-500 text-black"
+                                : "bg-white/10"
+                                }`}
+                        >
+                            Trade with {broker.name} →
+                        </Link>
+                    ))}
             </div>
 
-            {/* 🔥 TABLE */}
-            <ComparisonTable brokerA={a} brokerB={b} />
+            {/* COMPARISON TABLE */}
+            <div className="overflow-x-auto mb-12">
+                <table className="w-full border border-white/10 rounded-xl">
+                    <thead>
+                        <tr className="bg-white/10">
+                            <th className="p-4 text-left">Feature</th>
+                            <th className="p-4">{brokerA.name}</th>
+                            <th className="p-4">{brokerB.name}</th>
+                        </tr>
+                    </thead>
 
-            {/* 🔥 SEO CONTENT (EXPANDED) */}
-            <div className="max-w-3xl mx-auto px-6 py-12 space-y-6">
+                    <tbody className="text-gray-300">
+                        <tr>
+                            <td className="p-4">Rating</td>
+                            <td className="p-4">{brokerA.rating}</td>
+                            <td className="p-4">{brokerB.rating}</td>
+                        </tr>
 
-                <h2>Trading Conditions</h2>
-                <p>{content.conditions}</p>
+                        <tr>
+                            <td className="p-4">Features</td>
+                            <td className="p-4">
+                                {brokerA.features?.join(", ")}
+                            </td>
+                            <td className="p-4">
+                                {brokerB.features?.join(", ")}
+                            </td>
+                        </tr>
 
-                <h2>Platforms</h2>
-                <p>{content.platforms}</p>
+                        <tr>
+                            <td className="p-4">Score</td>
+                            <td className="p-4">
+                                {scoreBroker(brokerA).toFixed(1)}
+                            </td>
+                            <td className="p-4">
+                                {scoreBroker(brokerB).toFixed(1)}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <h2>Features</h2>
-                <p>{content.features}</p>
+            {/* SEO CONTENT */}
+            <section className="prose prose-invert max-w-none mb-12">
+                <h2>{brokerA.name} vs {brokerB.name}: Full Comparison</h2>
 
-                <h2>Which One Should You Choose?</h2>
-                <p>{content.verdict}</p>
-
-                {/* 🔥 EXTRA SEO SECTION */}
-                <h2>{a.name} vs {b.name}: Final Decision</h2>
                 <p>
-                    If you prioritize speed and execution, choose <strong>{winner.name}</strong>.
-                    However, {loser.name} may still be suitable depending on your strategy.
+                    When comparing {brokerA.name} and {brokerB.name}, traders should evaluate
+                    spreads, execution quality, available platforms, and overall reliability.
                 </p>
 
+                <h2>Which Broker is Better?</h2>
+
+                <p>
+                    Based on our scoring system, <strong>{winner.name}</strong> ranks higher
+                    due to better overall performance, features, and trader experience.
+                </p>
+            </section>
+
+            {/* FINAL CTA */}
+            <div className="text-center">
+                <Link
+                    href={`/go/${winner.slug}`}
+                    className="inline-block px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold hover:scale-105 transition"
+                >
+                    Start Trading with {winner.name} →
+                </Link>
             </div>
 
-            {/* 🔥 FAQ */}
-            <FAQ items={faq} />
-
-        </>
+        </main>
     );
 }

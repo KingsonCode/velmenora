@@ -29,9 +29,19 @@ export default function robots(): MetadataRoute.Robots {
         rules: [
             {
                 userAgent: "*",
-                allow: "/",
 
-                /* 🔥 BLOCK LOW VALUE / SENSITIVE PATHS */
+                /* 🔓 ALLOW ALL IMPORTANT CONTENT */
+                allow: [
+                    "/",
+                    "/blog/",
+                    "/brokers/",
+                    "/compare/",
+                    "/markets/",
+                    "/academy/",
+                    "/news/",
+                ],
+
+                /* 🔒 BLOCK LOW VALUE / TECH PATHS */
                 disallow: [
                     "/api/",
                     "/admin/",
@@ -41,18 +51,12 @@ export default function robots(): MetadataRoute.Robots {
                     "/draft/",
                 ],
             },
-
-            /* 🔥 OPTIONAL: BOT-SPECIFIC CONTROL */
-            {
-                userAgent: "Googlebot",
-                allow: "/",
-            },
         ],
 
-        /* 🔥 SITEMAP (INDEX FILE) */
+        /* 🔥 ROOT SITEMAP ENTRY */
         sitemap: `${BASE_URL}/sitemap.xml`,
 
-        /* 🔥 CANONICAL HOST */
+        /* 🔥 HOST (OPTIONAL BUT GOOD FOR CLARITY) */
         host: BASE_URL,
     };
 }
