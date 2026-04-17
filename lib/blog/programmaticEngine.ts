@@ -1,171 +1,327 @@
-type GeneratedPost = {
-    slug: string;
-    title: string;
-    description: string;
-    country?: string;
-    content: string;
+/* =========================================================
+   🔥 IMPORTS
+========================================================= */
+import { BLOG_COUNTRIES, getBlogCountryBySlug } from "./countryRegistry";
+import { injectBrokerCards } from "./brokerCards";
+import {
+  injectInternalLinks,
+  appendRelatedLinksBlock,
+} from "./internalLinks";
+
+
+/* =========================================================
+   🔥 TYPES
+========================================================= */
+
+export type KeywordMeta = {
+  slug: string;
+  country: string;
+  type: string;
 };
 
-/* ================= HELPERS ================= */
+export type ProgrammaticPost = {
+  slug: string;
+  title: string;
+  description: string;
+  date?: string;
+  image?: string;
+  country?: string;
+  type?: string;
+  content?: string;
+};
 
-/* Extract country kutoka slug */
-function extractCountry(slug: string): string {
-    const parts = slug.split("-in-");
-    return parts[1] || "global";
+/* =========================================================
+   🔥 TEMPLATE ENGINE (SEO INTENTS)
+========================================================= */
+
+const TEMPLATES = [
+  { prefix: "best-brokers-in-", type: "best" },
+  { prefix: "low-spread-brokers-in-", type: "low-spread" },
+  { prefix: "high-leverage-brokers-in-", type: "high-leverage" },
+  { prefix: "how-to-trade-forex-in-", type: "guide" },
+  { prefix: "forex-trading-guide-in-", type: "guide" },
+  { prefix: "forex-brokers-for-beginners-in-", type: "beginner" },
+  { prefix: "forex-trading-apps-in-", type: "apps" },
+];
+
+/* =========================================================
+   🔥 CORE GENERATOR
+========================================================= */
+
+export function generateAllKeywords(): KeywordMeta[] {
+  const results: KeywordMeta[] = [];
+
+  for (const country of BLOG_COUNTRIES) {
+    for (const template of TEMPLATES) {
+      results.push({
+        slug: `${template.prefix}${country.slug}`,
+        country: country.slug,
+        type: template.type,
+      });
+    }
+  }
+
+  return results;
 }
 
-/* Format title */
-function formatTitle(slug: string): string {
-    return slug
-        .replace(/-/g, " ")
-        .replace(/\bin\b/, "in")
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+/* =========================================================
+   🔥 SLUG LIST (DEDUPED)
+========================================================= */
+
+export function generateAllSlugs(): string[] {
+  const keywords = generateAllKeywords();
+  const unique = new Set(keywords.map((k) => k.slug));
+
+  return Array.from(unique);
 }
 
-/* Detect type */
-function detectType(slug: string): string {
-    if (slug.includes("best-brokers")) return "best";
-    if (slug.includes("low-spread")) return "low-spread";
-    if (slug.includes("high-leverage")) return "high-leverage";
-    if (slug.includes("how-to-trade")) return "guide";
-    if (slug.includes("trading-guide")) return "guide";
-    return "general";
+/* =========================================================
+   🔥 LOOKUP HELPERS
+========================================================= */
+
+export function getKeywordMeta(slug: string): KeywordMeta | null {
+  const all = generateAllKeywords();
+  return all.find((k) => k.slug === slug) || null;
 }
 
-/* ================= MAIN ENGINE ================= */
+/* =========================================================
+   🔥 FILTERING
+========================================================= */
 
-export function generateProgrammaticPost(slug: string): GeneratedPost | null {
-    if (!slug) return null;
+export function generateSlugsByType(type: string): string[] {
+  return generateAllKeywords()
+    .filter((k) => k.type === type)
+    .map((k) => k.slug);
+}
 
-    const country = extractCountry(slug);
-    const title = formatTitle(slug);
-    const type = detectType(slug);
+export function generateSlugsByCountry(country: string): string[] {
+  return generateAllKeywords()
+    .filter((k) => k.country === country)
+    .map((k) => k.slug);
+}
 
-    let intro = "";
-    let body = "";
+/* =========================================================
+   🔥 PAGINATION
+========================================================= */
 
-    /* ================= CONTENT VARIANTS ================= */
+export function generatePaginatedSlugs(
+  page: number,
+  limit: number
+): string[] {
+  const all = generateAllSlugs();
 
-    if (type === "best") {
-        intro = `Looking for the best forex brokers in ${country}? In this guide, we compare top platforms based on spreads, withdrawals, and reliability.`;
+  const start = (page - 1) * limit;
+  const end = start + limit;
 
-        body = `
-      <h2>Top Forex Brokers in ${country}</h2>
-      <ul>
-        <li><strong>Exness</strong> – Instant withdrawals & ultra-low spreads</li>
-        <li><strong>XM</strong> – Best for beginners & bonuses</li>
-        <li><strong>Deriv</strong> – Flexible trading & synthetic indices</li>
-      </ul>
+  return all.slice(start, end);
+}
 
-      <p>These brokers are popular among traders in ${country} due to reliability and fast execution.</p>
-    `;
-    }
+/* =========================================================
+   🔥 RANDOM SAMPLING
+========================================================= */
 
-    else if (type === "low-spread") {
-        intro = `Finding low spread forex brokers in ${country} is essential for reducing trading costs.`;
+export function getRandomSlugs(count: number): string[] {
+  const all = generateAllSlugs();
 
-        body = `
-      <h2>Lowest Spread Brokers</h2>
-      <p>Top brokers offer spreads starting from 0.0 pips, making them ideal for scalping and high-frequency trading.</p>
-    `;
-    }
+  return [...all]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, count);
+}
 
-    else if (type === "high-leverage") {
-        intro = `High leverage forex brokers in ${country} allow traders to control larger positions with small capital.`;
+/* =========================================================
+   🔥 TITLE / DESCRIPTION BUILDERS
+========================================================= */
 
-        body = `
-      <h2>High Leverage Brokers</h2>
-      <p>Some brokers offer leverage up to 1:2000, giving traders more flexibility in capital management.</p>
-    `;
-    }
+function titleCaseCountry(slug: string): string {
+  const found = getBlogCountryBySlug(slug);
 
-    else if (type === "guide") {
-        intro = `This beginner-friendly guide explains how to start forex trading in ${country}.`;
+  if (found) return found.name;
 
-        body = `
-      <h2>Step-by-Step Guide</h2>
-      <ol>
-        <li>Choose a regulated broker</li>
-        <li>Open a trading account</li>
-        <li>Deposit funds securely</li>
-        <li>Start trading with a strategy</li>
-      </ol>
-    `;
-    }
+  return slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
-    else {
-        intro = `Learn about forex trading opportunities in ${country}.`;
+function buildTitle(type: string, countryName: string): string {
+  switch (type) {
+    case "best":
+      return `Best Forex Brokers in ${countryName} (2026)`;
 
-        body = `
-      <p>Discover brokers, strategies, and practical tips to succeed in forex trading.</p>
-    `;
-    }
+    case "low-spread":
+      return `Low Spread Forex Brokers in ${countryName} (2026)`;
 
-    /* ================= FINAL CONTENT ================= */
+    case "high-leverage":
+      return `High Leverage Forex Brokers in ${countryName} (2026)`;
 
-    const content = `
-    <h1>${title}</h1>
+    case "guide":
+      return `How to Trade Forex in ${countryName} (2026)`;
 
-    <p>${intro}</p>
+    case "beginner":
+      return `Best Forex Brokers for Beginners in ${countryName} (2026)`;
 
-    ${body}
+    case "apps":
+      return `Best Forex Trading Apps in ${countryName} (2026)`;
 
-    <!-- 🔥 INTERNAL LINKS CLUSTER -->
-    <h2>Related Guides</h2>
-    <ul>
-      <li>
-        <a href="/blog/best-brokers-in-${country}">
-          Best Forex Brokers in ${country}
-        </a>
-      </li>
-      <li>
-        <a href="/blog/low-spread-brokers-in-${country}">
-          Low Spread Brokers in ${country}
-        </a>
-      </li>
-      <li>
-        <a href="/blog/high-leverage-brokers-in-${country}">
-          High Leverage Brokers in ${country}
-        </a>
-      </li>
-      <li>
-        <a href="/blog/how-to-trade-forex-in-${country}">
-          How to Trade Forex in ${country}
-        </a>
-      </li>
-    </ul>
+    default:
+      return `Forex Trading in ${countryName} (2026)`;
+  }
+}
 
-    <!-- 🔥 EDUCATIONAL SECTION -->
-    <h2>How to Choose a Forex Broker</h2>
-    <ul>
-      <li>Regulation & safety</li>
-      <li>Spreads & commissions</li>
-      <li>Deposit & withdrawal speed</li>
-      <li>Trading platforms (MT4, MT5)</li>
-    </ul>
+function buildDescription(type: string, countryName: string): string {
+  switch (type) {
+    case "best":
+      return `Compare the best forex brokers in ${countryName}, including spreads, leverage, payments, and platform features.`;
 
-    <!-- 🔥 CTA (HIGH CONVERSION) -->
-    <div style="margin:25px 0;padding:20px;border:1px solid #ddd;border-radius:12px;background:#f9f9f9;">
-      <strong>🚀 Ready to start trading?</strong><br/><br/>
-      Compare trusted brokers available in ${country} and choose the best platform for your strategy.<br/><br/>
-      <a href="/compare" style="color:blue;font-weight:bold;">
-        Compare Forex Brokers →
-      </a>
-    </div>
+    case "low-spread":
+      return `Discover low spread forex brokers in ${countryName} for scalping, day trading, and lower trading costs.`;
 
-    <!-- 🔥 CONCLUSION -->
-    <h2>Conclusion</h2>
-    <p>
-      Choosing the right forex broker in ${country} is crucial for long-term success.
-      Focus on safety, trading conditions, and withdrawal reliability before making your decision.
-    </p>
-  `;
+    case "high-leverage":
+      return `Explore high leverage forex brokers in ${countryName} and learn about account features, risks, and trading conditions.`;
 
-    return {
-        slug,
-        title,
-        description: `Complete guide to ${title}. Compare forex brokers in ${country} and start trading today.`,
-        country,
-        content,
-    };
+    case "guide":
+      return `Learn how to trade forex in ${countryName} step by step, including broker selection, strategy basics, and risk management.`;
+
+    case "beginner":
+      return `Find beginner-friendly forex brokers in ${countryName} with simple platforms, education, and accessible account options.`;
+
+    case "apps":
+      return `Explore the best forex trading apps in ${countryName} for mobile trading, charting, and fast execution.`;
+
+    default:
+      return `Forex education and broker comparison content for traders in ${countryName}.`;
+  }
+}
+
+function buildContent(type: string, countryName: string): string {
+  switch (type) {
+    case "best":
+      return `
+<h2>Best Forex Brokers in ${countryName}</h2>
+<p>Choosing the right broker in ${countryName} depends on regulation, withdrawals, spreads, leverage, and platform quality.</p>
+
+<h2>What to Look For</h2>
+<p>Focus on broker trust, deposit methods, fast withdrawals, platform stability, and trading costs before opening an account.</p>
+
+<h2>Who This Is Best For</h2>
+<p>This guide helps traders in ${countryName} compare leading brokers and choose the best fit for their trading goals.</p>
+
+<h2>Conclusion</h2>
+<p>The best forex broker in ${countryName} will balance safety, cost efficiency, and ease of use.</p>
+`;
+    case "low-spread":
+      return `
+<h2>Low Spread Forex Brokers in ${countryName}</h2>
+<p>Low spread brokers matter most for scalpers, day traders, and anyone trying to reduce transaction costs.</p>
+
+<h2>Why Spreads Matter</h2>
+<p>Tighter spreads can improve execution efficiency, especially if you trade frequently or use short-term strategies.</p>
+
+<h2>What to Compare</h2>
+<p>Check raw spreads, commission structure, execution quality, and platform reliability before choosing a broker.</p>
+
+<h2>Conclusion</h2>
+<p>The right low spread broker in ${countryName} should combine pricing efficiency with strong execution and trust.</p>
+`;
+    case "high-leverage":
+      return `
+<h2>High Leverage Forex Brokers in ${countryName}</h2>
+<p>High leverage can increase market exposure, but it also increases risk significantly.</p>
+
+<h2>Important Risk Notes</h2>
+<p>Before using leverage, traders should understand margin requirements, stop-loss discipline, and position sizing.</p>
+
+<h2>How to Compare Brokers</h2>
+<p>Look at leverage limits, margin call policy, available instruments, and execution conditions.</p>
+
+<h2>Conclusion</h2>
+<p>The best high leverage broker in ${countryName} is one that offers flexibility without compromising reliability.</p>
+`;
+    case "guide":
+      return `
+<h2>How to Trade Forex in ${countryName}</h2>
+<p>Forex trading starts with learning the market, choosing a broker, opening an account, and using clear risk management.</p>
+
+<h2>Step-by-Step Basics</h2>
+<p>Start with a demo account, understand currency pairs, learn lot sizing, and practice with a structured trading plan.</p>
+
+<h2>Choosing a Broker</h2>
+<p>In ${countryName}, compare brokers based on withdrawals, platform quality, support, spreads, and trading tools.</p>
+
+<h2>Conclusion</h2>
+<p>Successful forex trading in ${countryName} depends on discipline, education, and choosing the right broker.</p>
+`;
+    case "beginner":
+      return `
+<h2>Forex Brokers for Beginners in ${countryName}</h2>
+<p>Beginner traders need simple platforms, educational tools, low minimum deposits, and reliable support.</p>
+
+<h2>What Beginners Should Prioritize</h2>
+<p>Look for easy onboarding, clear account types, low trading friction, and good learning materials.</p>
+
+<h2>How to Start Safely</h2>
+<p>Use a demo account first and focus on learning risk management before increasing position size.</p>
+
+<h2>Conclusion</h2>
+<p>The best beginner broker in ${countryName} is one that helps you learn while keeping trading simple.</p>
+`;
+    case "apps":
+      return `
+<h2>Best Forex Trading Apps in ${countryName}</h2>
+<p>Mobile trading apps are important for monitoring positions, charting, and executing trades on the go.</p>
+
+<h2>What Makes a Good App</h2>
+<p>Good apps offer stable execution, clear charting, fast login, and smooth account management.</p>
+
+<h2>How to Compare</h2>
+<p>Review app reliability, order speed, chart tools, and mobile usability before choosing a broker.</p>
+
+<h2>Conclusion</h2>
+<p>The best forex trading app in ${countryName} should make trading easier without sacrificing control.</p>
+`;
+    default:
+      return `
+<h2>Forex Trading in ${countryName}</h2>
+<p>This page provides educational forex content tailored for traders in ${countryName}.</p>
+`;
+  }
+}
+
+/* =========================================================
+   🔥 SINGLE PROGRAMMATIC POST
+========================================================= */
+
+export function generateProgrammaticPost(
+  slug: string
+): ProgrammaticPost | null {
+  const meta = getKeywordMeta(slug);
+
+  if (!meta) return null;
+
+  const country = getBlogCountryBySlug(meta.country);
+  const countryName = country?.name || titleCaseCountry(meta.country);
+
+  const rawContent = buildContent(meta.type, countryName);
+  const contentWithLinks = injectInternalLinks(rawContent, meta.country, slug);
+  const contentWithBrokers = injectBrokerCards(
+    contentWithLinks,
+    slug,
+    meta.country
+  );
+  const finalContent = appendRelatedLinksBlock(
+    contentWithBrokers,
+    meta.country,
+    slug
+  );
+
+  return {
+    slug,
+    title: buildTitle(meta.type, countryName),
+    description: buildDescription(meta.type, countryName),
+    date: "2026-04-17",
+    image: "/og-default.jpg",
+    country: meta.country,
+    type: meta.type,
+    content: finalContent,
+  };
 }

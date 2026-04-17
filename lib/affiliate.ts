@@ -1,6 +1,6 @@
 /* ================= TYPES ================= */
 
-import type { Broker } from "@/lib/types/broker";
+import type { Broker, CountryCode } from "@/lib/types/broker";
 
 type Device = "mobile" | "tablet" | "desktop";
 
@@ -9,17 +9,20 @@ type BuildAffiliateInput = {
     country?: string;
     device?: Device;
     source?: string;
+    blogSlug?: string;
 };
 
 /* ================= MONEY CONFIG ================= */
 
-/* 🔥 CORE MONEY CONTROL */
 const GLOBAL_MONEY_BROKER = "exness";
 
 const COUNTRY_TOP_BROKER: Record<string, string> = {
     TZ: "exness",
     KE: "exness",
     NG: "deriv",
+    UG: "exness",
+    GH: "exness",
+    ZA: "exness",
     IN: "exness",
     PK: "exness",
 };
@@ -34,82 +37,86 @@ function safeURL(raw: string): URL | null {
     }
 }
 
-/* ================= GEO HELPERS ================= */
+/* ================= NORMALIZATION ================= */
 
 function normalizeCountry(country?: string): string | undefined {
     if (!country) return undefined;
-    return country.toUpperCase();
+    return country.trim().toUpperCase();
 }
 
-function resolveRegion(country?: string): string | null {
+/* ================= REGION RESOLUTION ================= */
+
+function resolveRegion(country?: string): CountryCode | null {
     if (!country) return null;
 
     const AFRICA = ["TZ", "KE", "UG", "NG", "ZA", "GH"];
-    const EU = ["GB", "DE", "FR", "ES", "IT"];
-    const UAE = ["AE", "SA", "QA"];
+    const EUROPE = ["GB", "DE", "FR", "ES", "IT", "NL", "SE", "NO", "PL"];
+    const MIDDLE_EAST = ["AE", "SA", "QA", "KW", "OM"];
+    const ASIA = ["IN", "PK", "BD", "ID", "MY", "PH", "TH", "VN", "SG"];
+    const AMERICAS = ["US", "CA", "BR", "MX", "AR", "CO", "CL"];
 
-    if (AFRICA.includes(country)) return "AFRICA";
-    if (EU.includes(country)) return "EU";
-    if (UAE.includes(country)) return "MIDDLE_EAST";
+    if (AFRICA.includes(country)) return "AFRICA" as CountryCode;
+    if (EUROPE.includes(country)) return "EUROPE" as CountryCode;
+    if (MIDDLE_EAST.includes(country)) return "MIDDLE_EAST" as CountryCode;
+    if (ASIA.includes(country)) return "ASIA" as CountryCode;
+    if (AMERICAS.includes(country)) return "GLOBAL" as CountryCode;
 
-    return "GLOBAL";
+    return "GLOBAL" as CountryCode;
 }
 
 /* ================= MONEY FALLBACK ================= */
 
 function getMoneyFallback(country?: string): string {
-    const c = normalizeCountry(country);
+    const normalized = normalizeCountry(country);
 
     const brokerSlug =
-        (c && COUNTRY_TOP_BROKER[c]) || GLOBAL_MONEY_BROKER;
+        (normalized && COUNTRY_TOP_BROKER[normalized]) || GLOBAL_MONEY_BROKER;
 
     return `https://www.velmenora.com/go/${brokerSlug}`;
 }
 
-/* ================= CORE ROUTING ENGINE ================= */
+/* ================= GEO ROUTING ================= */
 
 function resolveBrokerURL(
     broker: Broker,
     country?: string
 ): string {
-    const c = normalizeCountry(country);
-
+    const normalizedCountry = normalizeCountry(country);
     const affiliate = broker.affiliate;
     const geo = affiliate?.geo;
 
-    /* ================= 0. NO AFFILIATE ================= */
-    if (!affiliate) {
-        console.warn(`❌ NO AFFILIATE → ${broker.slug}`);
-        return getMoneyFallback(c);
+    /* 0. EXACT COUNTRY GEO */
+    if (normalizedCountry) {
+        const exactCountryUrl = geo?.[normalizedCountry as CountryCode];
+        if (exactCountryUrl) return exactCountryUrl;
     }
 
-    /* ================= 1. EXACT COUNTRY ================= */
-    if (c && geo && c in geo) {
-        const url = geo[c as keyof typeof geo];
-        if (url) return url;
+    /* 1. REGION GEO */
+    const region = resolveRegion(normalizedCountry);
+    if (region) {
+        const regionUrl = geo?.[region];
+        if (regionUrl) return regionUrl;
     }
 
-    /* ================= 2. REGION ================= */
-    const region = resolveRegion(c);
+    /* 2. GLOBAL GEO */
+    const globalGeoUrl = geo?.["GLOBAL" as CountryCode];
+    if (globalGeoUrl) return globalGeoUrl;
 
-    if (region && geo && region in geo) {
-        const url = geo[region as keyof typeof geo];
-        if (url) return url;
+    /* 3. DEFAULT AFFILIATE */
+    const defaultAffiliate = affiliate?.default;
+    if (defaultAffiliate) return defaultAffiliate;
+
+    /* 4. LEGACY ALT URL */
+    if (normalizedCountry) {
+        const legacyGeoUrl = broker.alt_urls?.[normalizedCountry as CountryCode];
+        if (legacyGeoUrl) return legacyGeoUrl;
     }
 
-    /* ================= 3. GLOBAL ================= */
-    if (geo?.GLOBAL) {
-        return geo.GLOBAL;
-    }
+    /* 5. DIRECT URL */
+    if (broker.url) return broker.url;
 
-    /* ================= 4. DEFAULT ================= */
-    if (affiliate.default) {
-        return affiliate.default;
-    }
-
-    /* ================= 5. LAST RESORT ================= */
-    console.warn(`⚠️ NO GEO/DEFAULT → ${broker.slug}`);
-    return getMoneyFallback(c);
+    /* 6. MONEY FALLBACK */
+    return getMoneyFallback(normalizedCountry);
 }
 
 /* ================= MAIN ================= */
@@ -117,38 +124,14 @@ function resolveBrokerURL(
 export function buildAffiliateLink({
     broker,
     country,
-    device,
-    source,
 }: BuildAffiliateInput): string {
     const rawUrl = resolveBrokerURL(broker, country);
-
     const url = safeURL(rawUrl);
 
-    /* 🔴 HARD FAIL SAFE */
+    /* HARD FAIL SAFE */
     if (!url) {
         return "https://www.velmenora.com";
     }
-
-    /* ================= TRACKING ================= */
-
-    url.searchParams.set("utm_source", "velmenora");
-    url.searchParams.set("utm_medium", "affiliate");
-    url.searchParams.set("utm_campaign", broker.slug);
-
-    if (source) {
-        url.searchParams.set("utm_content", source);
-    }
-
-    if (country) {
-        url.searchParams.set("geo", country);
-    }
-
-    if (device) {
-        url.searchParams.set("device", device);
-    }
-
-    /* 🔥 CACHE BUSTER */
-    url.searchParams.set("ts", Date.now().toString());
 
     return url.toString();
 }

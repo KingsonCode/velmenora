@@ -1,217 +1,271 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import type { CountryCode } from "@/lib/types/broker";
+import { getAllPostsData, getPost } from "@/lib/blog/posts";
+import { getRandomSlugs } from "@/lib/blog/programmaticEngine";
 
-import { getPost, getAllPostsData } from "@/lib/blog/posts";
-import { generateProgrammaticPost } from "@/lib/blog/programmaticEngine";
-import { generateAllSlugs } from "@/lib/blog/keywords";
+export const revalidate = 3600;
 
-/* 🔥 COMPONENTS */
-import CTAButton from "@/components/CTAButton";
-import BrokerCard from "@/components/BrokerCard";
-
-/* ✅ NEW SOURCE OF TRUTH */
-import { getAllBrokers } from "@/lib/brokers";
-
-/* 🔥 ENGINES */
-import { injectInternalLinks } from "@/lib/blog/internalLinks";
-import { injectBrokerCards } from "@/lib/blog/brokerCards";
-
-const BLOG_COUNTRY_TO_CODE: Record<string, CountryCode> = {
-    global: "GLOBAL",
-    tanzania: "TZ",
-    kenya: "KE",
-    nigeria: "NG",
-    "south-africa": "ZA",
-    uganda: "UG",
-    ghana: "GH",
-};
-
-/* =========================================================
-   🔥 SSG
-========================================================= */
+/* ================= STATIC PATHS ================= */
 export async function generateStaticParams() {
-    return generateAllSlugs().map((slug) => ({ slug }));
+    const manualPosts = getAllPostsData()
+        .filter((post) => !post.country)
+        .map((post) => ({
+            slug: post.slug,
+        }));
+
+    const sampledProgrammatic = getRandomSlugs(100).map((slug) => ({
+        slug,
+    }));
+
+    return [...manualPosts, ...sampledProgrammatic];
 }
 
-/* =========================================================
-   🔥 SEO METADATA
-========================================================= */
-export async function generateMetadata({ params }: any) {
-    let post = getPost(params.slug);
+/* ================= SEO ================= */
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+    const { slug } = await params;
+    const post = getPost(slug);
 
     if (!post) {
-        post = generateProgrammaticPost(params.slug);
+        return {
+            title: "Blog Post Not Found | Velmenora",
+            description: "The requested blog post could not be found.",
+            robots: {
+                index: false,
+                follow: false,
+            },
+        };
     }
 
-    if (!post) {
-        return { title: "Article Not Found" };
-    }
+    const title = `${post.title} | Velmenora`;
+    const description =
+        post.description || "Forex trading guides and broker comparisons.";
+    const image = post.image || "/og-default.jpg";
+    const canonical = `https://www.velmenora.com/blog/${post.slug}`;
 
     return {
-        title: `${post.title} (2026 Guide)`,
-        description: post.description,
+        title,
+        description,
+        alternates: {
+            canonical,
+        },
         openGraph: {
-            title: post.title,
-            description: post.description,
-            url: `https://velmenora.com/blog/${post.slug}`,
+            title,
+            description,
+            url: canonical,
             siteName: "Velmenora",
+            type: "article",
+            images: [
+                {
+                    url: image,
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: [image],
         },
     };
 }
 
-/* =========================================================
-   🔥 PAGE
-========================================================= */
-export default function BlogPostPage({ params }: any) {
-    let post = getPost(params.slug);
+/* ================= PAGE ================= */
+export default async function BlogPostPage({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}) {
+    const { slug } = await params;
+    const post = getPost(slug);
 
     if (!post) {
-        post = generateProgrammaticPost(params.slug);
+        notFound();
     }
 
-    if (!post) return notFound();
-
-    const allPosts = getAllPostsData();
-
-    const related = allPosts
-        .filter((p) => p.slug !== post.slug)
-        .slice(0, 3);
-
-    const country = post.country || "global";
-    const brokerCountry = BLOG_COUNTRY_TO_CODE[country] ?? "GLOBAL";
-    const slug = post.slug;
-
-    /* ================= CONTENT PIPELINE ================= */
-
-    let html = post.content || "";
-
-    html = injectInternalLinks(html, country);
-    html = injectBrokerCards(html, slug, country);
-
-    /* ================= BROKERS (FIXED) ================= */
-
-    const brokers = getAllBrokers();
-
-    const broker = brokers.find((b) => b.slug === slug);
-
-    /* ========================================================= */
-
     return (
-        <main className="bg-[#0B0F14] text-white">
+        <main className="min-h-screen bg-[#050816] text-white">
+            {/* HERO */}
+            <section className="relative border-b border-white/10 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
 
-            {/* BACK */}
-            <div className="max-w-3xl mx-auto px-6 pt-10">
-                <Link
-                    href="/blog"
-                    className="text-sm text-gray-400 hover:text-white"
-                >
-                    ← Back to Blog
-                </Link>
-            </div>
+                <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+                    {/* BREADCRUMB */}
+                    <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-400 mb-6">
+                        <Link
+                            href="/"
+                            className="hover:text-yellow-300 transition"
+                        >
+                            Home
+                        </Link>
+                        <span>/</span>
+                        <Link
+                            href="/blog"
+                            className="hover:text-yellow-300 transition"
+                        >
+                            Blog
+                        </Link>
+                        <span>/</span>
+                        <span className="text-gray-500 truncate max-w-[220px] md:max-w-none">
+                            {post.title}
+                        </span>
+                    </nav>
 
-            <article className="max-w-3xl mx-auto px-6 py-16">
-
-                {/* TITLE */}
-                <h1 className="text-4xl md:text-5xl font-extrabold mb-6">
-                    {post.title}
-                </h1>
-
-                {/* DESCRIPTION */}
-                <p className="text-lg text-gray-400 mb-8">
-                    {post.description}
-                </p>
-
-                {/* TOP CTA */}
-                <div className="mb-10 p-6 rounded-xl bg-blue-500/10 border border-blue-500/30">
-                    <p className="font-semibold mb-3">
-                        🚀 Start Trading with Trusted Brokers
-                    </p>
-
-                    <CTAButton
-                        broker="exness"
-                        country={country}
-                        text="Compare Brokers →"
-                    />
-                </div>
-
-                {/* 🔥 BROKER GRID */}
-                <section className="mb-12">
-                    <h2 className="text-2xl font-bold mb-6">
-                        Recommended Brokers
-                    </h2>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {brokers.map((b, i) => (
-                            <BrokerCard
-                                key={b.slug}
-                                broker={b}
-                                country={brokerCountry}
-                                rank={i + 1}
-                                allBrokers={brokers}
-                            />
-                        ))}
+                    {/* EYEBROW */}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-yellow-300 mb-6">
+                        <span className="h-2 w-2 rounded-full bg-yellow-300" />
+                        Forex Guide
                     </div>
-                </section>
 
-                {/* CONTENT */}
-                <article
-                    className="prose prose-invert max-w-none mb-12"
-                    dangerouslySetInnerHTML={{ __html: html }}
-                />
+                    {/* TITLE */}
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                        {post.title}
+                    </h1>
 
-                {/* MID CTA */}
-                <div className="mb-12 p-6 bg-white/5 border border-white/10 rounded-xl text-center">
-                    <h3 className="text-xl font-semibold mb-2">
-                        ⚡ Open Your Trading Account
-                    </h3>
+                    {/* DESCRIPTION */}
+                    {post.description ? (
+                        <p className="text-lg md:text-xl text-gray-300 max-w-3xl leading-relaxed mb-8">
+                            {post.description}
+                        </p>
+                    ) : null}
 
-                    <CTAButton
-                        broker="exness"
-                        country={country}
-                        text="Open Account →"
-                    />
-                </div>
+                    {/* META */}
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+                        {post.date ? (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                                Updated: {post.date}
+                            </span>
+                        ) : null}
 
-                {/* RELATED */}
-                <section className="mt-16">
-                    <h3 className="text-xl font-semibold mb-6">
-                        Related Articles
-                    </h3>
+                        {post.country ? (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                                Market: {post.country}
+                            </span>
+                        ) : null}
 
-                    <div className="grid md:grid-cols-3 gap-4">
-                        {related.map((p) => (
-                            <Link
-                                key={p.slug}
-                                href={`/blog/${p.slug}`}
-                                className="p-4 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10"
-                            >
-                                <h4 className="text-sm font-semibold line-clamp-2">
-                                    {p.title}
-                                </h4>
-                            </Link>
-                        ))}
+                        {post.type ? (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase">
+                                {post.type}
+                            </span>
+                        ) : null}
+
+                        <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                            Velmenora Research
+                        </span>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                {/* FINAL CTA */}
-                <section className="mt-16 text-center p-10 bg-blue-500/10 rounded-xl border border-blue-500/30">
-                    <h3 className="text-2xl font-semibold mb-3">
-                        💰 Ready to Trade Forex?
-                    </h3>
+            {/* CONTENT */}
+            <section className="max-w-4xl mx-auto px-6 py-12 md:py-16">
+                <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
+                    {/* ARTICLE */}
+                    <article className="min-w-0">
+                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm shadow-2xl p-6 md:p-10">
+                            {post.content ? (
+                                <div
+                                    className="
+                                        prose prose-invert max-w-none
+                                        prose-headings:text-white
+                                        prose-headings:scroll-mt-24
+                                        prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-4
+                                        prose-h3:text-xl prose-h3:font-semibold
+                                        prose-p:text-gray-300 prose-p:leading-8
+                                        prose-li:text-gray-300
+                                        prose-strong:text-yellow-200
+                                        prose-a:text-yellow-300 hover:prose-a:text-yellow-200
+                                        prose-blockquote:border-yellow-400/40 prose-blockquote:text-gray-300
+                                        prose-ul:marker:text-yellow-300
+                                    "
+                                    dangerouslySetInnerHTML={{ __html: post.content }}
+                                />
+                            ) : (
+                                <div className="text-gray-400">
+                                    No content available for this post yet.
+                                </div>
+                            )}
+                        </div>
 
-                    <p className="text-gray-400 mb-6">
-                        Compare top brokers and start trading today.
-                    </p>
+                        {/* BOTTOM CTA */}
+                        <div className="mt-10 rounded-3xl border border-yellow-400/15 bg-gradient-to-br from-yellow-400/10 via-white/[0.02] to-transparent p-6 md:p-8">
+                            <h2 className="text-2xl font-bold mb-3">
+                                Ready to compare brokers?
+                            </h2>
 
-                    <CTAButton
-                        broker="exness"
-                        country={country}
-                        text="Compare Brokers →"
-                    />
-                </section>
+                            <p className="text-gray-300 mb-6 max-w-2xl">
+                                Explore broker comparisons, trading guides, and market-focused content built to help traders choose better platforms.
+                            </p>
 
-            </article>
+                            <div className="flex flex-wrap gap-4">
+                                <Link
+                                    href="/compare"
+                                    className="inline-flex items-center justify-center rounded-xl bg-yellow-400 text-black px-6 py-3 font-semibold hover:scale-[1.02] transition"
+                                >
+                                    Compare Brokers
+                                </Link>
+
+                                <Link
+                                    href="/blog"
+                                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold hover:bg-white/10 transition"
+                                >
+                                    More Guides
+                                </Link>
+                            </div>
+                        </div>
+                    </article>
+
+                    {/* SIDEBAR */}
+                    <aside className="space-y-6">
+                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+                            <h3 className="text-lg font-semibold mb-4">
+                                Quick Navigation
+                            </h3>
+
+                            <div className="space-y-3 text-sm">
+                                <Link
+                                    href="/blog"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                >
+                                    All Trading Guides
+                                </Link>
+
+                                <Link
+                                    href="/compare"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                >
+                                    Broker Comparison
+                                </Link>
+
+                                <Link
+                                    href="/brokers"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                >
+                                    Browse Brokers
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-6">
+                            <h3 className="text-lg font-semibold mb-3 text-yellow-200">
+                                Why Velmenora?
+                            </h3>
+
+                            <ul className="space-y-3 text-sm text-gray-300">
+                                <li>• Market-focused forex education</li>
+                                <li>• Broker comparison with clear intent</li>
+                                <li>• Content built for real trader decisions</li>
+                            </ul>
+                        </div>
+                    </aside>
+                </div>
+            </section>
         </main>
     );
 }

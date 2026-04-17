@@ -1,12 +1,10 @@
-// lib/blog/posts.ts
-
-import "server-only"; // 🔥 muhimu sana
+import "server-only";
 
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import { generateProgrammaticPost } from "./programmaticEngine";
-import { getMarkets } from "./markets";
+import { BLOG_COUNTRIES } from "./countryRegistry";
 
 /* ================= PATH ================= */
 const postsDirectory = path.join(process.cwd(), "content/blog");
@@ -19,6 +17,7 @@ export type BlogPost = {
     date?: string;
     image?: string;
     country?: string;
+    type?: string;
     content?: string;
 };
 
@@ -62,6 +61,7 @@ export function getAllPosts(): BlogPost[] {
                 date: data.date || "",
                 image: data.image || "",
                 country: data.country || "global",
+                type: data.type || "",
             });
         } catch (err) {
             console.error(`❌ Error parsing file: ${fileName}`, err);
@@ -88,8 +88,6 @@ export function getPost(slug: string): BlogPost | null {
 
 /* ================= PROGRAMMATIC ENGINE ================= */
 function generateProgrammaticPosts(): BlogPost[] {
-    const markets = getMarkets();
-
     const TYPES = [
         "best-brokers",
         "low-spread-brokers",
@@ -100,9 +98,9 @@ function generateProgrammaticPosts(): BlogPost[] {
 
     const posts: BlogPost[] = [];
 
-    for (const market of markets) {
+    for (const country of BLOG_COUNTRIES) {
         for (const type of TYPES) {
-            const slug = `${type}-in-${market.slug}`;
+            const slug = `${type}-in-${country.slug}`;
 
             try {
                 const generated = generateProgrammaticPost(slug);
@@ -137,7 +135,6 @@ export function getAllPostsData(): BlogPost[] {
         const programmaticPosts = generateProgrammaticPosts();
 
         const merged = [...manualPosts, ...programmaticPosts];
-
         const unique = dedupePosts(merged);
 
         return sortPosts(unique);

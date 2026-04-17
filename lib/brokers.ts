@@ -66,16 +66,12 @@ export function getTopBrokers(
         if (local.length > 0) {
             list = local;
         } else {
-            const regional = getBrokersByRegion("AFRICA");
-
-            if (regional.length > 0) {
-                list = regional;
-            } else {
-                list = getBrokersByRegion("GLOBAL");
-            }
+            const global = getBrokersByRegion("GLOBAL");
+            list = global.length > 0 ? global : BROKERS;
         }
     } else {
-        list = getBrokersByRegion("GLOBAL");
+        const global = getBrokersByRegion("GLOBAL");
+        list = global.length > 0 ? global : BROKERS;
     }
 
     return list
@@ -92,27 +88,26 @@ export function getRelatedBrokers(
     const current = getBroker(slug);
     if (!current) return [];
 
+    const currentCategories = current.category ?? [];
+    const currentRegions = current.regions ?? [];
+
     return BROKERS
         .filter((b) => b.slug !== slug)
         .map((b) => {
             let score = scoreBroker(b);
 
-            // 🎯 CATEGORY BOOST (ARRAY SAFE)
+            /* 🎯 CATEGORY BOOST */
             if (
-                current.category &&
-                b.category?.some((c) =>
-                    current.category.includes(c)
-                )
+                currentCategories.length > 0 &&
+                b.category?.some((c) => currentCategories.includes(c))
             ) {
                 score += 5;
             }
 
-            // 🌍 REGION BOOST
+            /* 🌍 REGION BOOST */
             if (
-                current.regions &&
-                b.regions?.some((r) =>
-                    current.regions!.includes(r)
-                )
+                currentRegions.length > 0 &&
+                b.regions?.some((r) => currentRegions.includes(r))
             ) {
                 score += 3;
             }
@@ -130,22 +125,18 @@ export function getBrokerLink(
     broker: Broker,
     country?: CountryCode
 ): string {
-    // 🎯 1. GEO AFFILIATE
-    if (country && broker.affiliate?.geo?.[country]) {
-        return broker.affiliate.geo[country]!;
-    }
+    const geoUrl = country ? broker.affiliate?.geo?.[country] : undefined;
+    if (geoUrl) return geoUrl;
 
-    // 🌍 2. DEFAULT AFFILIATE
-    if (broker.affiliate?.default) {
-        return broker.affiliate.default;
-    }
+    const defaultAffiliate = broker.affiliate?.default;
+    if (defaultAffiliate) return defaultAffiliate;
 
-    // 🧯 3. LEGACY FALLBACK
-    if (country && broker.alt_urls?.[country]) {
-        return broker.alt_urls[country];
-    }
+    const legacyGeoUrl = country ? broker.alt_urls?.[country] : undefined;
+    if (legacyGeoUrl) return legacyGeoUrl;
 
-    return broker.url ?? "#";
+    if (broker.url) return broker.url;
+
+    return "/";
 }
 
 /* ================= SMART PICK ================= */

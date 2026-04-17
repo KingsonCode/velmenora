@@ -33,8 +33,8 @@ function isBot(ua: string): boolean {
 
 /* ================= DEVICE DETECTION ================= */
 function getDevice(ua: string): "mobile" | "tablet" | "desktop" {
-    if (/mobile/i.test(ua)) return "mobile";
     if (/tablet/i.test(ua)) return "tablet";
+    if (/mobile/i.test(ua)) return "mobile";
     return "desktop";
 }
 
@@ -68,24 +68,26 @@ export async function GET(
 
     /* ================= CONTEXT ================= */
     const device = getDevice(ua);
-    const country =
-        req.headers.get("x-vercel-ip-country") || "unknown";
+    const country = req.headers.get("x-vercel-ip-country") || undefined;
 
     const { searchParams } = new URL(req.url);
     const source = searchParams.get("src") || "direct";
+    const blogSlug = searchParams.get("slug") || "";
+    const brokerParam = searchParams.get("broker") || slug;
 
     /* ================= AFFILIATE LINK ================= */
-    const finalUrl = buildAffiliateLink({
-        broker,
-        country,
-        device,
-        source,
-    });
+    const finalUrl = buildAffiliateLink(
+        country
+            ? { broker, country }
+            : { broker }
+    );
 
     /* ================= NON-BLOCKING LOG ================= */
     const payload = {
         broker: slug,
-        country,
+        brokerParam,
+        blogSlug,
+        country: country || "unknown",
         device,
         source,
         ts: Date.now(),

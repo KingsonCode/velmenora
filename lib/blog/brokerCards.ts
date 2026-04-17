@@ -4,9 +4,8 @@ type Broker = {
     rating: number;
     features: string[];
     affiliateLink: string;
-
-    tags: string[]; // 🔥 muhimu kwa matching
-    priority?: string[]; // 🔥 geo targeting
+    tags: string[];
+    priority?: string[];
 };
 
 /* ================= BROKER DATABASE ================= */
@@ -19,7 +18,7 @@ const BROKERS: Broker[] = [
         features: ["Instant withdrawals", "Low spreads", "High leverage"],
         affiliateLink: "/go/exness",
         tags: ["best", "low-spread", "high-leverage"],
-        priority: ["tanzania", "kenya"],
+        priority: ["tanzania", "kenya", "uganda", "ghana", "nigeria"],
     },
     {
         name: "XM",
@@ -27,7 +26,8 @@ const BROKERS: Broker[] = [
         rating: 4.7,
         features: ["Beginner friendly", "Bonuses", "MT4/MT5"],
         affiliateLink: "/go/xm",
-        tags: ["best", "beginner"],
+        tags: ["best", "beginner", "guide"],
+        priority: ["kenya", "nigeria", "ghana"],
     },
     {
         name: "Deriv",
@@ -35,7 +35,8 @@ const BROKERS: Broker[] = [
         rating: 4.6,
         features: ["Synthetic indices", "Flexible trading", "Low deposit"],
         affiliateLink: "/go/deriv",
-        tags: ["best", "synthetic"],
+        tags: ["best", "guide"],
+        priority: ["tanzania", "kenya", "uganda"],
     },
 ];
 
@@ -45,8 +46,17 @@ function detectIntent(slug: string): string {
     if (slug.includes("best-brokers")) return "best";
     if (slug.includes("low-spread")) return "low-spread";
     if (slug.includes("high-leverage")) return "high-leverage";
-    if (slug.includes("how-to-trade")) return "guide";
-    return "general";
+
+    if (
+        slug.includes("how-to-trade") ||
+        slug.includes("forex-trading-guide")
+    ) {
+        return "guide";
+    }
+
+    if (slug.includes("beginners")) return "beginner";
+
+    return "best";
 }
 
 /* ================= SMART BROKER SELECTOR ================= */
@@ -54,47 +64,58 @@ function detectIntent(slug: string): string {
 function selectBrokers(slug: string, country: string): Broker[] {
     const intent = detectIntent(slug);
 
-    let filtered = BROKERS.filter((b) =>
-        b.tags.includes(intent)
+    let filtered = BROKERS.filter((broker) =>
+        broker.tags.includes(intent)
     );
 
-    // fallback kama hakuna match
-    if (filtered.length === 0) filtered = BROKERS;
+    if (filtered.length === 0) {
+        filtered = BROKERS.filter((broker) =>
+            broker.tags.includes("best")
+        );
+    }
 
-    /* 🔥 GEO PRIORITY BOOST */
     filtered = filtered.sort((a, b) => {
         const aPriority = a.priority?.includes(country) ? 1 : 0;
         const bPriority = b.priority?.includes(country) ? 1 : 0;
-        return bPriority - aPriority;
+
+        if (aPriority !== bPriority) {
+            return bPriority - aPriority;
+        }
+
+        return b.rating - a.rating;
     });
 
-    return filtered.slice(0, 3); // max 3 cards
+    return filtered.slice(0, 3);
 }
 
 /* ================= CARD TEMPLATE ================= */
 
-function renderBrokerCard(
-    broker: Broker,
-    slug: string
-): string {
+function renderBrokerCard(broker: Broker, slug: string): string {
     return `
-    <div class="broker-card" style="border:1px solid #ddd;padding:16px;border-radius:12px;margin:20px 0;">
-      
-      <h3>${broker.name} ⭐ ${broker.rating}</h3>
+    <div style="border:1px solid rgba(255,255,255,0.10); background:rgba(255,255,255,0.03); padding:20px; border-radius:20px; margin:20px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+            <h3 style="margin:0; font-size:22px; color:white;">
+                ${broker.name}
+            </h3>
 
-      <ul>
-        ${broker.features.map((f) => `<li>${f}</li>`).join("")}
-      </ul>
+            <span style="display:inline-block; padding:6px 12px; border-radius:999px; background:rgba(250,204,21,0.12); color:#fde68a; font-size:14px; font-weight:600;">
+                ⭐ ${broker.rating}
+            </span>
+        </div>
 
-      <a 
-        href="${broker.affiliateLink}?src=blog&slug=${slug}&broker=${broker.slug}"
-        data-track="broker-click"
-        style="display:inline-block;margin-top:10px;padding:10px 15px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;"
-      >
-        Start Trading →
-      </a>
+        <ul style="margin:0 0 16px 18px; padding:0; color:#cbd5e1; line-height:1.8;">
+            ${broker.features.map((feature) => `<li>${feature}</li>`).join("")}
+        </ul>
+
+        <a
+            href="${broker.affiliateLink}?src=blog&slug=${slug}&broker=${broker.slug}"
+            data-track="broker-click"
+            style="display:inline-block; padding:12px 18px; background:#facc15; color:#000; border-radius:12px; text-decoration:none; font-weight:700;"
+        >
+            Start Trading →
+        </a>
     </div>
-  `;
+    `;
 }
 
 /* ================= MAIN INJECTION ================= */
@@ -108,15 +129,27 @@ export function injectBrokerCards(
 
     const brokers = selectBrokers(slug, country);
 
+    if (brokers.length === 0) return content;
+
     const cardsHTML = `
-    <div class="broker-cards">
-      ${brokers.map((b) => renderBrokerCard(b, slug)).join("")}
-    </div>
-  `;
+    <section style="margin:32px 0;">
+        <div style="margin-bottom:16px;">
+            <h2 style="color:white; font-size:28px; margin-bottom:8px;">
+                Recommended Brokers
+            </h2>
+            <p style="color:#94a3b8; margin:0;">
+                These brokers match this guide’s trading intent and market focus.
+            </p>
+        </div>
+
+        <div>
+            ${brokers.map((broker) => renderBrokerCard(broker, slug)).join("")}
+        </div>
+    </section>
+    `;
 
     let updated = content;
 
-    /* 🎯 AFTER FIRST H2 */
     const firstH2Index = updated.indexOf("</h2>");
     if (firstH2Index !== -1) {
         updated =
@@ -125,13 +158,9 @@ export function injectBrokerCards(
             updated.slice(firstH2Index + 5);
     }
 
-    /* 🎯 BEFORE CONCLUSION */
     updated = updated.replace(
         /<h2>Conclusion<\/h2>/i,
-        `
-    ${cardsHTML}
-    <h2>Conclusion</h2>
-    `
+        `${cardsHTML}<h2>Conclusion</h2>`
     );
 
     return updated;
