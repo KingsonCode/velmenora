@@ -7,7 +7,8 @@ export const BROKERS: Broker[] = [
         logo: "/logos/exness.png",
 
         affiliate: {
-            default: "https://one.exnessonelink.com/boarding/sign-up/303589/a/tmodpmod",
+            default:
+                "https://one.exnessonelink.com/boarding/sign-up/303589/a/tmodpmod",
         },
 
         rating: 4.8,
@@ -15,11 +16,21 @@ export const BROKERS: Broker[] = [
         active: true,
 
         category: ["FOREX", "CRYPTO"],
-        features: ["LOW_SPREAD", "FAST_EXECUTION", "INSTANT_WITHDRAWALS"],
+        features: [
+            "LOW_SPREAD",
+            "FAST_EXECUTION",
+            "INSTANT_WITHDRAWALS",
+            "HIGH_LEVERAGE", // 🔥 ADDED
+        ],
         payments: ["MPESA", "BANK", "CARD", "CRYPTO"],
 
         countries: ["TZ", "KE", "UG"],
         regions: ["AFRICA", "GLOBAL"],
+
+        conversion: {
+            trustLevel: 9,
+            bestFor: ["Scalping", "Fast withdrawals"],
+        },
     },
 
     {
@@ -41,6 +52,11 @@ export const BROKERS: Broker[] = [
 
         countries: ["TZ", "NG", "ZA"],
         regions: ["AFRICA", "GLOBAL"],
+
+        conversion: {
+            trustLevel: 8,
+            bestFor: ["Beginners", "Bonuses"],
+        },
     },
 
     {
@@ -58,11 +74,20 @@ export const BROKERS: Broker[] = [
         active: true,
 
         category: ["FOREX", "CFD"],
-        features: ["FAST_EXECUTION", "BEGINNER_FRIENDLY"],
+        features: [
+            "FAST_EXECUTION",
+            "BEGINNER_FRIENDLY",
+            "HIGH_LEVERAGE", // 🔥 ADDED
+        ],
         payments: ["MPESA", "BANK", "CRYPTO"],
 
         countries: ["TZ", "KE", "UG"],
         regions: ["AFRICA", "GLOBAL"],
+
+        conversion: {
+            trustLevel: 8,
+            bestFor: ["Synthetic trading", "Beginners"],
+        },
     },
 
     {
@@ -84,6 +109,10 @@ export const BROKERS: Broker[] = [
 
         countries: ["TZ", "KE"],
         regions: ["AFRICA"],
+
+        conversion: {
+            trustLevel: 7,
+        },
     },
 
     {
@@ -100,11 +129,20 @@ export const BROKERS: Broker[] = [
         active: true,
 
         category: ["FOREX"],
-        features: ["COPY_TRADING", "BEGINNER_FRIENDLY"],
+        features: [
+            "COPY_TRADING",
+            "BEGINNER_FRIENDLY",
+            "HIGH_LEVERAGE", // 🔥 ADDED
+        ],
         payments: ["MPESA", "BANK"],
 
         countries: ["TZ", "KE", "NG"],
         regions: ["AFRICA"],
+
+        conversion: {
+            trustLevel: 8,
+            bestFor: ["Copy trading", "Beginners"],
+        },
     },
 
     {
@@ -126,6 +164,10 @@ export const BROKERS: Broker[] = [
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 7,
+        },
     },
 
     {
@@ -147,6 +189,10 @@ export const BROKERS: Broker[] = [
         payments: ["CARD", "BANK"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 8,
+        },
     },
 
     {
@@ -167,6 +213,10 @@ export const BROKERS: Broker[] = [
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 7,
+        },
     },
 
     {
@@ -188,6 +238,11 @@ export const BROKERS: Broker[] = [
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 8,
+            bestFor: ["Scalping"],
+        },
     },
 
     {
@@ -209,6 +264,11 @@ export const BROKERS: Broker[] = [
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 9,
+            bestFor: ["Professional trading"],
+        },
     },
 
     {
@@ -229,6 +289,10 @@ export const BROKERS: Broker[] = [
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 7,
+        },
     },
 
     {
@@ -246,9 +310,18 @@ export const BROKERS: Broker[] = [
         active: true,
 
         category: ["FOREX"],
-        features: ["RAW_SPREAD", "LOW_SPREAD"],
+        features: [
+            "RAW_SPREAD",
+            "LOW_SPREAD",
+            "FAST_EXECUTION", // 🔥 ADDED (realistic)
+        ],
         payments: ["BANK", "CARD"],
 
         regions: ["GLOBAL"],
+
+        conversion: {
+            trustLevel: 9,
+            bestFor: ["Scalping", "Raw spread trading"],
+        },
     },
 ];

@@ -1,3 +1,9 @@
+import { BlogCategory } from "@/lib/blog/categories";
+
+/* =========================================
+   TYPES
+========================================= */
+
 type LinkRule = {
     key: string;
     patterns: RegExp[];
@@ -6,7 +12,9 @@ type LinkRule = {
     limit: number;
 };
 
-/* ================= CONFIG ================= */
+/* =========================================
+   CONFIG
+========================================= */
 
 const LINK_RULES: LinkRule[] = [
     {
@@ -73,39 +81,48 @@ const LINK_RULES: LinkRule[] = [
     },
 ];
 
-/* ================= HELPERS ================= */
+/* =========================================
+   HELPERS
+========================================= */
 
 function pickVariation(variations: string[], seed: string): string {
-    if (variations.length === 0) return "";
+    if (!variations.length) return "";
 
     let hash = 0;
-
     for (let i = 0; i < seed.length; i++) {
         hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
     }
 
-    const selected = variations[hash % variations.length];
-
-    return selected ?? "";
+    return variations[hash % variations.length] || variations[0] || "";
 }
 
-/* ================= CORE ENGINE ================= */
+function isInsideAnchor(text: string): boolean {
+    return /<a\s/i.test(text);
+}
+
+function formatCountryName(country: string): string {
+    return country
+        .split("-")
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ");
+}
+
+/* =========================================
+   CORE ENGINE
+========================================= */
 
 export function injectInternalLinks(
     content: string,
     country: string,
     currentSlug?: string
 ): string {
-    if (!content) return content;
-    if (!country) return content;
+    if (!content || !country) return content;
 
     const linkCount: Record<string, number> = {};
-
     for (const rule of LINK_RULES) {
         linkCount[rule.key] = 0;
     }
 
-    /* 🔒 SPLIT BY HTML TAGS */
     const parts = content.split(/(<[^>]+>)/g);
 
     const processed = parts.map((part) => {
@@ -116,34 +133,25 @@ export function injectInternalLinks(
         for (const rule of LINK_RULES) {
             if ((linkCount[rule.key] ?? 0) >= rule.limit) continue;
 
-            const targetHref = rule.href(country);
+            const href = rule.href(country);
 
-            /* 🚫 avoid self-linking */
-            if (currentSlug && targetHref === `/blog/${currentSlug}`) {
-                continue;
-            }
-
-            /* 🚫 avoid linking same href repeatedly in same text node */
-            if (text.includes(`href="${targetHref}"`)) {
-                continue;
-            }
+            if (currentSlug && href.includes(currentSlug)) continue;
 
             for (const pattern of rule.patterns) {
                 if ((linkCount[rule.key] ?? 0) >= rule.limit) break;
 
                 text = text.replace(pattern, (match) => {
                     if ((linkCount[rule.key] ?? 0) >= rule.limit) return match;
+                    if (isInsideAnchor(match)) return match;
 
-                    if (match.includes("<a ")) return match;
-
-                    const anchorText = pickVariation(
+                    const anchor = pickVariation(
                         rule.variations,
-                        `${country}:${rule.key}:${match}:${currentSlug || ""}`
+                        `${country}:${rule.key}:${match}:${currentSlug ?? ""}`
                     );
 
                     linkCount[rule.key] = (linkCount[rule.key] ?? 0) + 1;
 
-                    return `<a href="${targetHref}" class="text-yellow-300 underline underline-offset-4 hover:text-yellow-200 transition-colors">${anchorText}</a>`;
+                    return `<a href="${href}" class="text-yellow-300 underline underline-offset-4 hover:text-yellow-200 transition-colors">${anchor}</a>`;
                 });
             }
         }
@@ -154,7 +162,9 @@ export function injectInternalLinks(
     return processed.join("");
 }
 
-/* ================= OPTIONAL RELATED LINKS BLOCK ================= */
+/* =========================================
+   RELATED BLOCK
+========================================= */
 
 export function appendRelatedLinksBlock(
     content: string,
@@ -163,53 +173,66 @@ export function appendRelatedLinksBlock(
 ): string {
     if (!content || !country) return content;
 
-    const countryName = country
-        .split("-")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
+    const countryName = formatCountryName(country);
 
     const links = [
-        {
-            label: "Best Forex Brokers",
-            href: `/blog/best-brokers-in-${country}`,
-        },
-        {
-            label: "Low Spread Brokers",
-            href: `/blog/low-spread-brokers-in-${country}`,
-        },
-        {
-            label: "High Leverage Brokers",
-            href: `/blog/high-leverage-brokers-in-${country}`,
-        },
-        {
-            label: "How to Trade Forex",
-            href: `/blog/how-to-trade-forex-in-${country}`,
-        },
-    ].filter((item) => {
-        if (!currentSlug) return true;
-        return item.href !== `/blog/${currentSlug}`;
-    });
+        { label: "Best Forex Brokers", href: `/blog/best-brokers-in-${country}` },
+        { label: "Low Spread Brokers", href: `/blog/low-spread-brokers-in-${country}` },
+        { label: "High Leverage Brokers", href: `/blog/high-leverage-brokers-in-${country}` },
+        { label: "How to Trade Forex", href: `/blog/how-to-trade-forex-in-${country}` },
+    ].filter((l) => !currentSlug || !l.href.includes(currentSlug));
 
-    const relatedHTML = `
-    <section style="margin:40px 0 16px 0; padding:24px; border:1px solid rgba(255,255,255,0.10); border-radius:20px; background:rgba(255,255,255,0.03);">
-        <h2 style="color:white; font-size:28px; margin:0 0 10px 0;">
-            Related Guides
-        </h2>
+    const html = `
+<section class="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+  <h2 class="text-2xl font-semibold text-white mb-2">
+    Related Guides
+  </h2>
 
-        <p style="color:#94a3b8; margin:0 0 16px 0;">
-            Explore more trading guides for ${countryName}.
-        </p>
+  <p class="text-gray-400 mb-4">
+    Explore more trading guides for ${countryName}.
+  </p>
 
-        <ul style="margin:0; padding-left:18px; color:#cbd5e1; line-height:1.9;">
-            ${links
+  <ul class="space-y-2 text-sm">
+    ${links
             .map(
-                (item) =>
-                    `<li><a href="${item.href}" style="color:#fde68a; text-decoration:underline; text-underline-offset:4px;">${item.label}</a></li>`
+                (l) =>
+                    `<li><a href="${l.href}" class="text-yellow-300 underline underline-offset-4 hover:text-yellow-200">${l.label}</a></li>`
             )
             .join("")}
-        </ul>
-    </section>
-    `;
+  </ul>
+</section>
+`;
 
-    return `${content}${relatedHTML}`;
+    return content + html;
+}
+
+/* =========================================
+   CATEGORY CLUSTER
+========================================= */
+
+export function getCategoryInternalLinks(
+    lang: string,
+    current: BlogCategory
+) {
+    const all: Array<{ slug: BlogCategory; label: string }> = [
+        { slug: "ecn-brokers", label: "Best ECN Forex Brokers" },
+        { slug: "low-spread-brokers", label: "Lowest Spread Forex Brokers" },
+        { slug: "high-leverage-brokers", label: "High Leverage Forex Brokers" },
+        {
+            slug: "best-forex-brokers-for-beginners",
+            label: "Best Forex Brokers for Beginners",
+        },
+        {
+            slug: "fast-withdrawal-forex-brokers",
+            label: "Fast Withdrawal Forex Brokers",
+        },
+    ];
+
+    return all
+        .filter((item) => item.slug !== current)
+        .map((item) => ({
+            slug: item.slug,
+            label: item.label,
+            href: `/${lang}/blog/${item.slug}`,
+        }));
 }

@@ -1,7 +1,13 @@
+/* ================= IMPORTS ================= */
+
 import { getAllBrokers } from "./brokers";
 import { getComparisonSlug, getReviewSlug } from "./seo";
 import { scoreBroker } from "./rankingEngine";
-import { CountryCode, Intent } from "./types/broker";
+import {
+    CountryCode,
+    Intent,
+} from "./types/broker";
+import { COUNTRY_NAMES } from "./countryEngine";
 
 /* ================= TYPES ================= */
 
@@ -16,6 +22,10 @@ function unique<T>(arr: T[]): T[] {
     return Array.from(new Set(arr));
 }
 
+function formatCountrySlug(name: string): string {
+    return name.toLowerCase().replace(/\s+/g, "-");
+}
+
 /* ================= REVIEW LINKS (SMART) ================= */
 
 export function getReviewLinks(options?: {
@@ -23,21 +33,20 @@ export function getReviewLinks(options?: {
     intent?: Intent;
     limit?: number;
 }): LinkItem[] {
-    const list = getAllBrokers()
+    return getAllBrokers()
         .map((b) => ({
             broker: b,
             score: scoreBroker(b, options),
         }))
         .sort((a, b) => b.score - a.score)
-        .slice(0, options?.limit ?? 5);
-
-    return list.map(({ broker }) => ({
-        title: `${broker.name} Review`,
-        href: `/${getReviewSlug(broker.slug)}`,
-    }));
+        .slice(0, options?.limit ?? 5)
+        .map(({ broker }) => ({
+            title: `${broker.name} Review`,
+            href: `/${getReviewSlug(broker.slug)}`,
+        }));
 }
 
-/* ================= COMPARISON LINKS (RANKED) ================= */
+/* ================= COMPARISON LINKS ================= */
 
 export function getComparisonLinks(options?: {
     country?: CountryCode;
@@ -75,28 +84,25 @@ export function getComparisonLinks(options?: {
         .map((x) => x.link);
 }
 
-/* ================= COUNTRY LINKS (SMART LABELS) ================= */
+/* ================= COUNTRY LINKS (FIXED + GEO SAFE) ================= */
 
-const COUNTRY_NAMES: Record<CountryCode, string> = {
-    TZ: "Tanzania",
-    KE: "Kenya",
-    NG: "Nigeria",
-    ZA: "South Africa",
-    UG: "Uganda",
-    GH: "Ghana",
-    GLOBAL: "Global",
-};
-
-export function getCountryLinks(): LinkItem[] {
+export function getCountryLinks(options?: {
+    limit?: number;
+}): LinkItem[] {
     return Object.entries(COUNTRY_NAMES)
         .filter(([code]) => code !== "GLOBAL")
-        .map(([code, name]) => ({
-            title: `Best Brokers in ${name}`,
-            href: `/best-brokers-in/${name.toLowerCase().replace(/\s+/g, "-")}`,
-        }));
+        .slice(0, options?.limit ?? 6)
+        .map(([code, name]) => {
+            const safeName = name ?? "Global";
+
+            return {
+                title: `Best Brokers in ${safeName}`,
+                href: `/best-brokers-in/${formatCountrySlug(safeName)}`,
+            };
+        });
 }
 
-/* ================= RELATED COMPARISONS (CONTEXTUAL) ================= */
+/* ================= RELATED COMPARISONS ================= */
 
 export function getRelatedComparisons(
     slug: string,
@@ -108,9 +114,8 @@ export function getRelatedComparisons(
     const base = getAllBrokers().find((b) => b.slug === slug);
     if (!base) return [];
 
-    const others = getAllBrokers().filter((b) => b.slug !== slug);
-
-    return others
+    return getAllBrokers()
+        .filter((b) => b.slug !== slug)
         .map((b) => ({
             broker: b,
             score: scoreBroker(b, options),
