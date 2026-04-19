@@ -4,7 +4,7 @@ import type { Broker, CountryCode } from "@/lib/types/broker";
 
 type Device = "mobile" | "tablet" | "desktop";
 
-type BuildAffiliateInput = {
+export type BuildAffiliateInput = {
     broker: Broker;
     country?: string;
     device?: Device;
@@ -14,6 +14,7 @@ type BuildAffiliateInput = {
 
 /* ================= MONEY CONFIG ================= */
 
+const VELMENORA_BASE_URL = "https://www.velmenora.com";
 const GLOBAL_MONEY_BROKER = "exness";
 
 const COUNTRY_TOP_BROKER: Record<string, string> = {
@@ -41,7 +42,11 @@ function safeURL(raw: string): URL | null {
 
 function normalizeCountry(country?: string): string | undefined {
     if (!country) return undefined;
-    return country.trim().toUpperCase();
+
+    const normalized = country.trim().toUpperCase();
+
+    if (!normalized) return undefined;
+    return normalized;
 }
 
 /* ================= REGION RESOLUTION ================= */
@@ -64,23 +69,41 @@ function resolveRegion(country?: string): CountryCode | null {
     return "GLOBAL" as CountryCode;
 }
 
-/* ================= MONEY FALLBACK ================= */
+/* ================= INTERNAL FALLBACK ================= */
 
-function getMoneyFallback(country?: string): string {
-    const normalized = normalizeCountry(country);
+function buildInternalGoUrl(
+    brokerSlug: string,
+    context: {
+        source?: string;
+        blogSlug?: string;
+        device?: Device;
+    }
+): string {
+    const url = new URL(`/go/${brokerSlug}`, VELMENORA_BASE_URL);
+
+    if (context.source) url.searchParams.set("src", context.source);
+    if (context.blogSlug) url.searchParams.set("slug", context.blogSlug);
+    if (context.device) url.searchParams.set("device", context.device);
+
+    return url.toString();
+}
+
+function getMoneyFallback(input: BuildAffiliateInput): string {
+    const normalized = normalizeCountry(input.country);
 
     const brokerSlug =
         (normalized && COUNTRY_TOP_BROKER[normalized]) || GLOBAL_MONEY_BROKER;
 
-    return `https://www.velmenora.com/go/${brokerSlug}`;
+    return buildInternalGoUrl(brokerSlug, {
+        ...(input.source ? { source: input.source } : {}),
+        ...(input.blogSlug ? { blogSlug: input.blogSlug } : {}),
+        ...(input.device ? { device: input.device } : {}),
+    });
 }
 
 /* ================= GEO ROUTING ================= */
 
-function resolveBrokerURL(
-    broker: Broker,
-    country?: string
-): string {
+function resolveBrokerURL(broker: Broker, country?: string): string {
     const normalizedCountry = normalizeCountry(country);
     const affiliate = broker.affiliate;
     const geo = affiliate?.geo;
@@ -115,22 +138,21 @@ function resolveBrokerURL(
     /* 5. DIRECT URL */
     if (broker.url) return broker.url;
 
-    /* 6. MONEY FALLBACK */
-    return getMoneyFallback(normalizedCountry);
+    /* 6. NO DIRECT URL */
+    return "";
 }
 
 /* ================= MAIN ================= */
 
-export function buildAffiliateLink({
-    broker,
-    country,
-}: BuildAffiliateInput): string {
+export function buildAffiliateLink(input: BuildAffiliateInput): string {
+    const { broker, country } = input;
+
     const rawUrl = resolveBrokerURL(broker, country);
     const url = safeURL(rawUrl);
 
     /* HARD FAIL SAFE */
     if (!url) {
-        return "https://www.velmenora.com";
+        return getMoneyFallback(input);
     }
 
     return url.toString();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,31 +13,43 @@ const SUPPORTED_LANGS = new Set(["en", "de", "fr", "ar"]);
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
-    const pathname = usePathname();
+    const pathname = usePathname() || "/";
 
     const geo = resolveGeo();
-    const firstSegment = pathname?.split("/")[1] || "";
-    const langPrefix = SUPPORTED_LANGS.has(firstSegment)
-        ? `/${firstSegment}`
-        : "";
-    const homeHref = langPrefix || "/";
-    const compareHref = langPrefix
-        ? `${langPrefix}/best-forex-brokers`
-        : "/compare";
 
-    /* ================= SMART COUNTRY PRIORITY ================= */
-    const topCountries: CountryMeta[] = [
-        ...countries.filter((c: CountryMeta) => c.code === geo.country),
-        ...countries.filter(
-            (c: CountryMeta) =>
-                c.cluster === geo.cluster && c.code !== geo.country
-        ),
-        ...countries.filter(
-            (c: CountryMeta) => c.cluster !== geo.cluster
-        ),
-    ].slice(0, 8);
+    const firstSegment = pathname.split("/")[1] || "";
+    const hasLangPrefix = SUPPORTED_LANGS.has(firstSegment);
+    const langPrefix = hasLangPrefix ? `/${firstSegment}` : "/en";
 
-    /* ================= MOCK LIVE MARKETS ================= */
+    const homeHref = langPrefix;
+    const explorerHref = `${langPrefix}/explorer`;
+    const compareHref = `${langPrefix}/compare`;
+    const academyHref = `${langPrefix}/academy`;
+    const guidesHref = "/blog";
+
+    const isActive = (href: string) => {
+        if (href === langPrefix) {
+            return pathname === href;
+        }
+
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
+
+    const topCountries: CountryMeta[] = useMemo(
+        () =>
+            [
+                ...countries.filter((c: CountryMeta) => c.code === geo.country),
+                ...countries.filter(
+                    (c: CountryMeta) =>
+                        c.cluster === geo.cluster && c.code !== geo.country
+                ),
+                ...countries.filter(
+                    (c: CountryMeta) => c.cluster !== geo.cluster
+                ),
+            ].slice(0, 8),
+        [geo.country, geo.cluster]
+    );
+
     const [prices, setPrices] = useState([
         { pair: "EUR/USD", value: 1.0852 },
         { pair: "GBP/USD", value: 1.2731 },
@@ -57,12 +69,15 @@ export default function Navbar() {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname]);
+
     return (
         <nav className="w-full border-b border-white/10 bg-black text-white">
-
-            {/* 🔥 MARKET TICKER */}
+            {/* MARKET TICKER */}
             <div className="bg-white/5 text-xs py-1 px-6 overflow-hidden whitespace-nowrap">
-                <div className="flex gap-6 animate-pulse">
+                <div className="flex gap-6">
                     {prices.map((p) => (
                         <span key={p.pair} className="text-gray-300">
                             {p.pair}:{" "}
@@ -73,132 +88,159 @@ export default function Navbar() {
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-                {/* ================= LOGO ================= */}
+                {/* LOGO */}
                 <Link href={homeHref} className="font-bold text-lg">
                     Velmenora
                 </Link>
 
-                {/* ================= DESKTOP MENU ================= */}
+                {/* DESKTOP MENU */}
                 <div className="hidden md:flex items-center gap-6">
-
-                    <Link href={homeHref} className="hover:text-yellow-400">
+                    <Link
+                        href={homeHref}
+                        className={
+                            isActive(homeHref)
+                                ? "text-yellow-400"
+                                : "hover:text-yellow-400"
+                        }
+                    >
                         Home
                     </Link>
 
-                    <Link href={compareHref} className="hover:text-yellow-400">
+                    <Link
+                        href={explorerHref}
+                        className={
+                            isActive(explorerHref)
+                                ? "text-yellow-400"
+                                : "hover:text-yellow-400"
+                        }
+                    >
+                        Explorer
+                    </Link>
+
+                    <Link
+                        href={compareHref}
+                        className={
+                            isActive(compareHref)
+                                ? "text-yellow-400"
+                                : "hover:text-yellow-400"
+                        }
+                    >
                         Compare
                     </Link>
 
-                    <Link href="/academy" className="hover:text-yellow-400">
+                    <Link
+                        href={academyHref}
+                        className={
+                            isActive(academyHref)
+                                ? "text-yellow-400"
+                                : "hover:text-yellow-400"
+                        }
+                    >
                         Academy
                     </Link>
 
-                    <Link href="/blog" className="hover:text-yellow-400">
+                    <Link
+                        href={guidesHref}
+                        className={
+                            isActive(guidesHref)
+                                ? "text-yellow-400"
+                                : "hover:text-yellow-400"
+                        }
+                    >
                         Guides
                     </Link>
 
-                    {/* ================= MARKETS DROPDOWN ================= */}
+                    {/* MARKETS DROPDOWN */}
                     <div className="relative group">
-
-                        <button className="hover:text-yellow-400">
+                        <button
+                            type="button"
+                            className="hover:text-yellow-400"
+                        >
                             Markets
                         </button>
 
-                        <div className="absolute top-full left-0 mt-2 bg-black border border-white/10 rounded shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none group-hover:pointer-events-auto">
-
-                            <div className="p-4 grid grid-cols-2 gap-3 min-w-[260px]">
-
+                        <div className="absolute top-full left-0 mt-2 rounded-xl border border-white/10 bg-black shadow-lg opacity-0 transition pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-50">
+                            <div className="grid grid-cols-1 gap-2 p-4 min-w-[260px]">
                                 {topCountries.map((c: CountryMeta) => (
                                     <Link
                                         key={c.code}
                                         href={`/blog/best-brokers-in-${c.slug}`}
-                                        className="text-sm text-gray-400 hover:text-white flex items-center gap-2"
+                                        className="flex items-center gap-2 whitespace-nowrap rounded-lg px-2 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-white"
                                     >
                                         {c.code === geo.country && (
-                                            <span className="text-yellow-400">
-                                                🔥
-                                            </span>
+                                            <span className="text-yellow-400">🔥</span>
                                         )}
                                         {c.name}
                                     </Link>
                                 ))}
-
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-                {/* ================= MOBILE BUTTON ================= */}
+                {/* MOBILE BUTTON */}
                 <button
-                    onClick={() => setOpen(!open)}
+                    type="button"
+                    onClick={() => setOpen((prev) => !prev)}
                     className="md:hidden text-xl"
+                    aria-label={open ? "Close menu" : "Open menu"}
+                    aria-controls="mobile-menu"
+                    aria-haspopup="dialog"
                 >
                     ☰
                 </button>
-
             </div>
 
-            {/* ================= MOBILE MENU (PRO MAX++) ================= */}
+            {/* MOBILE MENU */}
             {open && (
-                <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
-
+                <div
+                    id="mobile-menu"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile navigation"
+                    className="fixed inset-0 z-50 bg-black text-white flex flex-col md:hidden"
+                >
                     {/* TOP BAR */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                         <span className="font-bold">Menu</span>
 
-                        <button onClick={() => setOpen(false)}>
+                        <button
+                            type="button"
+                            onClick={() => setOpen(false)}
+                            aria-label="Close menu"
+                        >
                             ✕
                         </button>
                     </div>
 
                     {/* NAV LINKS */}
                     <div className="flex flex-col px-6 py-6 space-y-6 text-lg">
-
-                        <Link href={homeHref} onClick={() => setOpen(false)}>
-                            Home
-                        </Link>
-
-                        <Link href={compareHref} onClick={() => setOpen(false)}>
-                            Compare
-                        </Link>
-
-                        <Link href="/academy" onClick={() => setOpen(false)}>
-                            Academy
-                        </Link>
-
-                        <Link href="/blog" onClick={() => setOpen(false)}>
-                            Guides
-                        </Link>
-
+                        <Link href={homeHref}>Home</Link>
+                        <Link href={explorerHref}>Explorer</Link>
+                        <Link href={compareHref}>Compare</Link>
+                        <Link href={academyHref}>Academy</Link>
+                        <Link href={guidesHref}>Guides</Link>
                     </div>
 
                     {/* MARKETS */}
                     <div className="px-6 pb-8">
-
                         <div className="text-sm text-gray-400 mb-3">
                             Popular Markets
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-
                             {topCountries.map((c: CountryMeta) => (
                                 <Link
                                     key={c.code}
                                     href={`/blog/best-brokers-in-${c.slug}`}
-                                    onClick={() => setOpen(false)}
                                     className="text-sm bg-white/5 px-3 py-2 rounded hover:bg-white/10"
                                 >
                                     {c.code === geo.country && "🔥 "}
                                     {c.name}
                                 </Link>
                             ))}
-
                         </div>
-
                     </div>
-
                 </div>
             )}
         </nav>

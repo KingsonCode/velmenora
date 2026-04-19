@@ -18,6 +18,16 @@ const BROKER_MAP = new Map<string, Broker>(
     BROKERS.map((b) => [b.slug, b])
 );
 
+/* ================= COUNTRY GUARD ================= */
+
+const COUNTRY_SET = new Set<CountryCode>(
+    BROKERS.flatMap((b) => b.countries ?? [])
+);
+
+export function isValidCountry(value: string): value is CountryCode {
+    return COUNTRY_SET.has(value.toUpperCase() as CountryCode);
+}
+
 /* ================= HELPERS ================= */
 
 function scoreBroker(b: Broker): number {
@@ -36,20 +46,12 @@ export function getAllBrokers(): Broker[] {
 
 /* ================= GEO ================= */
 
-export function getBrokersByCountry(
-    country: CountryCode
-): Broker[] {
-    return BROKERS.filter((b) =>
-        b.countries?.includes(country)
-    );
+export function getBrokersByCountry(country: CountryCode): Broker[] {
+    return BROKERS.filter((b) => b.countries?.includes(country));
 }
 
-export function getBrokersByRegion(
-    region: Region
-): Broker[] {
-    return BROKERS.filter((b) =>
-        b.regions?.includes(region)
-    );
+export function getBrokersByRegion(region: Region): Broker[] {
+    return BROKERS.filter((b) => b.regions?.includes(region));
 }
 
 /* ================= TOP (FULL GEO FALLBACK) ================= */
@@ -74,7 +76,7 @@ export function getTopBrokers(
         list = global.length > 0 ? global : BROKERS;
     }
 
-    return list
+    return [...list]
         .sort((a, b) => scoreBroker(b) - scoreBroker(a))
         .slice(0, limit);
 }
@@ -96,7 +98,6 @@ export function getRelatedBrokers(
         .map((b) => {
             let score = scoreBroker(b);
 
-            /* 🎯 CATEGORY BOOST */
             if (
                 currentCategories.length > 0 &&
                 b.category?.some((c) => currentCategories.includes(c))
@@ -104,7 +105,6 @@ export function getRelatedBrokers(
                 score += 5;
             }
 
-            /* 🌍 REGION BOOST */
             if (
                 currentRegions.length > 0 &&
                 b.regions?.some((r) => currentRegions.includes(r))

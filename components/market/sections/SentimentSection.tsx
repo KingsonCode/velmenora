@@ -1,14 +1,18 @@
 import MarketSentiment from "@/components/market/MarketSentiment";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 async function getSentiment(pair: string) {
     try {
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/api/market-sentiment/${pair}`,
+            `${getBaseUrl()}/api/market-sentiment/${pair}`,
             { next: { revalidate: 60 } }
         );
 
-        if (!res.ok) throw new Error();
-        return res.json();
+        if (!res.ok) {
+            throw new Error(`Failed to fetch sentiment: ${res.status}`);
+        }
+
+        return await res.json();
     } catch {
         return { bull: 50, bear: 50 };
     }

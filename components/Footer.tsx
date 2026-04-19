@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { countries, resolveGeo } from "@/lib/geo";
 
@@ -13,127 +14,218 @@ const grouped = countries.reduce((acc, c) => {
     return acc;
 }, {} as Record<string, typeof countries>);
 
+/* ================= TOP BROKER CATEGORIES ================= */
+const brokerCategories = [
+    {
+        label: "Best Forex Brokers",
+        href: "best-forex-brokers",
+    },
+    {
+        label: "ECN Brokers",
+        href: "ecn-brokers",
+    },
+    {
+        label: "Low Spread Brokers",
+        href: "low-spread-brokers",
+    },
+    {
+        label: "High Leverage Brokers",
+        href: "high-leverage-brokers",
+    },
+    {
+        label: "Beginner-Friendly Brokers",
+        href: "best-forex-brokers-for-beginners",
+    },
+    {
+        label: "Fast Withdrawal Brokers",
+        href: "fast-withdrawal-forex-brokers",
+    },
+];
+
 export default function Footer() {
-    const pathname = usePathname();
+    const pathname = usePathname() || "/";
     const geo = resolveGeo();
-    const firstSegment = pathname?.split("/")[1] || "";
-    const langPrefix = SUPPORTED_LANGS.has(firstSegment)
-        ? `/${firstSegment}`
-        : "";
-    const compareHref = langPrefix
-        ? `${langPrefix}/best-forex-brokers`
-        : "/compare";
+
+    const firstSegment = pathname.split("/")[1] || "";
+    const hasLangPrefix = SUPPORTED_LANGS.has(firstSegment);
+    const langPrefix = hasLangPrefix ? `/${firstSegment}` : "/en";
+
+    const homeHref = langPrefix;
+    const explorerHref = `${langPrefix}/explorer`;
+    const compareHref = `${langPrefix}/compare`;
+    const blogHref = `${langPrefix}/blog`;
+    const brokersHref = `${langPrefix}/brokers`;
+    const academyHref = `${langPrefix}/academy`;
 
     return (
-        <footer className="bg-black border-t border-white/10 text-white">
-
+        <footer className="border-t border-white/10 bg-black text-white">
             <div className="max-w-7xl mx-auto px-6 py-14">
-
-                {/* 🔥 TOP GRID */}
-                <div className="grid md:grid-cols-5 gap-10">
-
-                    {/* ================= BRAND ================= */}
-                    <div>
-                        <h3 className="text-lg font-bold mb-4">
+                {/* TOP GRID */}
+                <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
+                    {/* BRAND */}
+                    <div className="lg:col-span-2">
+                        <h3 className="mb-4 text-lg font-bold">
                             Velmenora
                         </h3>
 
-                        <p className="text-sm text-gray-400 mb-4">
-                            Compare the best forex brokers globally and trade with confidence.
+                        <p className="mb-4 max-w-sm text-sm text-gray-400">
+                            Compare trusted forex brokers, learn trading step by step,
+                            and choose the right platform for your goals and region.
                         </p>
 
-                        {/* 🔥 TRUST SIGNAL */}
                         <div className="text-xs text-gray-500">
                             Trusted by traders in {geo.meta?.name || "your region"}
                         </div>
                     </div>
 
-                    {/* ================= GEO CLUSTERS ================= */}
-                    {Object.entries(grouped).map(([cluster, list]) => (
-                        <div key={cluster}>
-                            <h4 className="text-sm font-semibold mb-3">
-                                {cluster}
-                            </h4>
+                    {/* GEO CLUSTERS */}
+                    {Object.entries(grouped)
+                        .slice(0, 3)
+                        .map(([cluster, list]) => (
+                            <div key={cluster}>
+                                <h4 className="mb-3 text-sm font-semibold">
+                                    {cluster.replaceAll("_", " ")}
+                                </h4>
 
-                            <ul className="space-y-2 text-sm text-gray-400">
-                                {list.slice(0, 6).map((c) => (
-                                    <li key={c.code}>
-                                        <a
-                                            href={`/blog/best-brokers-in-${c.slug}`}
-                                            className="hover:text-white transition"
-                                        >
-                                            {c.name}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
+                                <ul className="space-y-2 text-sm text-gray-400">
+                                    {list.slice(0, 6).map((c) => (
+                                        <li key={c.code}>
+                                            <Link
+                                                href={`${langPrefix}/blog/best-brokers-in-${c.slug}`}
+                                                className="transition hover:text-white"
+                                            >
+                                                {c.name}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
 
-                    {/* ================= QUICK LINKS ================= */}
+                    {/* QUICK LINKS */}
                     <div>
-                        <h4 className="text-sm font-semibold mb-3">
+                        <h4 className="mb-3 text-sm font-semibold">
                             Quick Links
                         </h4>
 
                         <ul className="space-y-2 text-sm text-gray-400">
                             <li>
-                                <a href={compareHref} className="hover:text-white">
+                                <Link href={homeHref} className="transition hover:text-white">
+                                    Home
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href={explorerHref} className="transition hover:text-white">
+                                    Broker Explorer
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href={compareHref} className="transition hover:text-white">
                                     Compare Brokers
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="/blog" className="hover:text-white">
+                                <Link href={academyHref} className="transition hover:text-white">
+                                    Forex Academy
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href={blogHref} className="transition hover:text-white">
                                     Trading Guides
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="/brokers" className="hover:text-white">
+                                <Link href={brokersHref} className="transition hover:text-white">
                                     All Brokers
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>
-
                 </div>
 
-                {/* ================= SEO INTERNAL LINKS (HIDDEN POWER) ================= */}
+                {/* TOP BROKER CATEGORIES */}
                 <div className="mt-12 border-t border-white/10 pt-6">
+                    <div className="mb-4 text-center text-xs text-gray-500">
+                        Top Broker Categories
+                    </div>
 
-                    <div className="text-xs text-gray-500 mb-4 text-center">
+                    <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-400">
+                        {brokerCategories.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={`${langPrefix}/blog/${item.href}`}
+                                className="rounded-full border border-white/10 bg-white/5 px-3 py-2 transition hover:bg-white/10 hover:text-white"
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* POPULAR MARKETS */}
+                <div className="mt-10 border-t border-white/10 pt-6">
+                    <div className="mb-4 text-center text-xs text-gray-500">
                         Popular Markets
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-400">
                         {countries.slice(0, 20).map((c) => (
-                            <a
+                            <Link
                                 key={c.code}
-                                href={`/blog/best-brokers-in-${c.slug}`}
-                                className="hover:text-white"
+                                href={`${langPrefix}/blog/best-brokers-in-${c.slug}`}
+                                className="transition hover:text-white"
                             >
                                 {c.name}
-                            </a>
+                            </Link>
                         ))}
                     </div>
-
                 </div>
 
-                {/* ================= LEGAL ================= */}
-                <div className="border-t border-white/10 mt-10 pt-6 text-center text-xs text-gray-500 space-y-2">
+                {/* LEARNING + CONVERSION STRIP */}
+                <div className="mt-10 border-t border-white/10 pt-6">
+                    <div className="flex flex-col items-center justify-center gap-3 text-center md:flex-row md:gap-6">
+                        <Link
+                            href={`${langPrefix}/academy/what-is-forex`}
+                            className="text-sm text-gray-400 transition hover:text-white"
+                        >
+                            Learn Forex Basics
+                        </Link>
 
+                        <Link
+                            href={`${langPrefix}/academy/forex-demo-account`}
+                            className="text-sm text-gray-400 transition hover:text-white"
+                        >
+                            Practice on Demo
+                        </Link>
+
+                        <Link
+                            href={`${langPrefix}/academy/forex-risk-management`}
+                            className="text-sm text-gray-400 transition hover:text-white"
+                        >
+                            Learn Risk Management
+                        </Link>
+
+                        <Link
+                            href={explorerHref}
+                            className="text-sm text-gray-400 transition hover:text-white"
+                        >
+                            Explore Brokers
+                        </Link>
+                    </div>
+                </div>
+
+                {/* LEGAL */}
+                <div className="mt-10 border-t border-white/10 pt-6 space-y-2 text-center text-xs text-gray-500">
                     <p>
                         © {new Date().getFullYear()} Velmenora. All rights reserved.
                     </p>
 
-                    <p className="max-w-2xl mx-auto">
+                    <p className="mx-auto max-w-2xl">
                         Trading forex carries a high level of risk and may not be suitable for all investors.
                         Ensure you understand the risks involved before trading.
                     </p>
-
                 </div>
-
             </div>
-
         </footer>
     );
 }

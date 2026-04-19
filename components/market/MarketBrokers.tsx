@@ -10,13 +10,18 @@ function getCategory(pair: string): Category {
     return "FOREX";
 }
 
-export default function MarketBrokers({ pair }: { pair: string }) {
+type Props = {
+    pair: string;
+    country?: CountryCode;
+};
+
+export default function MarketBrokers({ pair, country }: Props) {
     const category = getCategory(pair);
-    const country: CountryCode = "TZ";
 
     const list = getAllBrokers()
         .filter((broker) => broker.category.includes(category))
         .filter((broker) =>
+            !country ||
             !broker.countries ||
             broker.countries.includes(country) ||
             broker.countries.includes("GLOBAL")
@@ -26,7 +31,6 @@ export default function MarketBrokers({ pair }: { pair: string }) {
     const fallback = getTopBrokers(country, 4);
     const brokers = list.length > 0 ? list : fallback;
 
-    /* ✅ HARD TYPE NARROWING (TS TRUSTS THIS) */
     if (!Array.isArray(brokers) || brokers.length === 0) {
         return (
             <div id="brokers" className="space-y-4">
@@ -40,80 +44,74 @@ export default function MarketBrokers({ pair }: { pair: string }) {
         );
     }
 
-    /* 🔥 DESTRUCTURING (SAFE + NARROWED) */
     const [top, ...rest] = brokers;
-
-    /* 🚨 EXTRA SAFETY (TS 100% GUARANTEED) */
     if (!top) return null;
 
     const visible = rest.slice(0, 3);
 
     return (
         <div id="brokers" className="space-y-6 scroll-mt-24">
-
             {/* HEADER */}
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">
                     Best Brokers for {pair}
                 </h2>
+
                 <span className="text-xs text-gray-500">
-                    Ranked for {country}
+                    {country ? `Ranked for ${country}` : "Global ranking"}
                 </span>
             </div>
 
-            {/* 🔥 TOP BROKER */}
+            {/* TOP BROKER */}
             <a
                 href={`/go/${top.slug}?src=market_${pair}`}
-                className="block p-5 rounded-xl border border-blue-500 bg-[#0B0F1A] hover:scale-[1.02] transition"
+                className="block rounded-xl border border-blue-500 bg-[#0B0F1A] p-5 transition hover:scale-[1.02]"
             >
                 <div className="flex items-center justify-between">
                     <p className="text-lg font-semibold">{top.name}</p>
 
                     {top.tags?.[0] && (
-                        <span className="text-xs bg-blue-500 px-2 py-1 rounded">
+                        <span className="rounded bg-blue-500 px-2 py-1 text-xs">
                             {top.tags[0]}
                         </span>
                     )}
                 </div>
 
-                <p className="text-sm text-gray-400 mt-1">
+                <p className="mt-1 text-sm text-gray-400">
                     Trade {pair} with top-tier conditions
                 </p>
 
-                {/* ⭐ RATING */}
-                <p className="text-yellow-400 text-sm mt-2">
+                <p className="mt-2 text-sm text-yellow-400">
                     ⭐ {top.rating} / 5
                 </p>
 
-                {/* FEATURES */}
-                <ul className="text-xs text-gray-400 mt-2 space-y-1">
+                <ul className="mt-2 space-y-1 text-xs text-gray-400">
                     {top.features.map((f, i) => (
                         <li key={i}>✔ {f}</li>
                     ))}
                 </ul>
 
-                {/* CTA */}
-                <button className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-black py-2 rounded-lg text-sm font-semibold">
+                <button className="mt-4 w-full rounded-lg bg-blue-500 py-2 text-sm font-semibold text-black hover:bg-blue-600">
                     Start Trading →
                 </button>
             </a>
 
-            {/* 🧱 OTHER BROKERS */}
+            {/* OTHER BROKERS */}
             {visible.length > 0 && (
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid gap-4 md:grid-cols-3">
                     {visible.map((b) => (
                         <a
                             key={b.slug}
                             href={`/go/${b.slug}?src=market_${pair}`}
-                            className="p-4 border border-gray-800 rounded-xl hover:border-blue-500 transition"
+                            className="rounded-xl border border-gray-800 p-4 transition hover:border-blue-500"
                         >
                             <p className="font-semibold">{b.name}</p>
 
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="mt-1 text-xs text-gray-400">
                                 ⭐ {b.rating} / 5
                             </p>
 
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="mt-2 text-xs text-gray-500">
                                 Trade {pair} with low spreads
                             </p>
                         </a>

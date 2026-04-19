@@ -4,12 +4,16 @@ import { buildAffiliateLink } from "@/lib/affiliate";
 
 /* ================= RATE LIMIT ================= */
 const RATE_LIMIT = new Map<string, number>();
+const RATE_LIMIT_WINDOW_MS = 1000;
 
+/* ================= RATE LIMIT ================= */
 function isRateLimited(ip: string): boolean {
     const now = Date.now();
     const last = RATE_LIMIT.get(ip) || 0;
 
-    if (now - last < 1000) return true;
+    if (now - last < RATE_LIMIT_WINDOW_MS) {
+        return true;
+    }
 
     RATE_LIMIT.set(ip, now);
     return false;
@@ -38,37 +42,42 @@ function getDevice(ua: string): "mobile" | "tablet" | "desktop" {
     return "desktop";
 }
 
+/* ================= FALLBACK ================= */
+function getFallbackUrl(req: NextRequest): URL {
+    return new URL("/brokers", req.url);
+}
+
 /* ================= MAIN ================= */
 export async function GET(
     req: NextRequest,
     context: { params: Promise<{ slug: string }> }
 ) {
     const { slug } = await context.params;
-
     const broker = getBroker(slug);
 
     /* ================= FAIL SAFE ================= */
     if (!broker) {
-        return NextResponse.redirect(new URL("/", req.url));
+        return NextResponse.redirect(getFallbackUrl(req));
     }
 
     const ip = getIP(req);
 
     /* ================= RATE LIMIT ================= */
     if (isRateLimited(ip)) {
-        return NextResponse.redirect(new URL("/", req.url));
+        return NextResponse.redirect(getFallbackUrl(req));
     }
 
     const ua = req.headers.get("user-agent") || "";
 
     /* ================= BOT BLOCK ================= */
     if (isBot(ua)) {
-        return NextResponse.redirect(new URL("/", req.url));
+        return NextResponse.redirect(getFallbackUrl(req));
     }
 
     /* ================= CONTEXT ================= */
     const device = getDevice(ua);
-    const country = req.headers.get("x-vercel-ip-country") || undefined;
+    const rawCountry = req.headers.get("x-vercel-ip-country");
+    const country = rawCountry?.trim().toUpperCase() || undefined;
 
     const { searchParams } = new URL(req.url);
     const source = searchParams.get("src") || "direct";
@@ -76,12 +85,13 @@ export async function GET(
     const brokerParam = searchParams.get("broker") || slug;
 
     /* ================= AFFILIATE LINK ================= */
-    const finalUrl = buildAffiliateLink(
-        country
-            ? { broker, country }
-            : { broker }
-    );
-
+    const finalUrl = buildAffiliateLink({
+        broker,
+        device,
+        source,
+        blogSlug,
+        ...(country ? { country } : {}),
+    });
     /* ================= NON-BLOCKING LOG ================= */
     const payload = {
         broker: slug,
