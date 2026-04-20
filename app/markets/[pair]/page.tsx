@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { MARKETS } from "@/data/markets";
 import type { CountryCode } from "@/lib/types/broker";
+import type { Lang } from "@/lib/i18n";
 
 import MarketHeader from "@/components/market/MarketHeader";
 import MarketChart from "@/components/market/MarketChart";
@@ -20,6 +21,9 @@ export const revalidate = 60;
 
 /* ================= TYPES ================= */
 type RouteParams = Promise<{ pair: string }>;
+
+/* ================= DEFAULT LANG ================= */
+const DEFAULT_LANG: Lang = "en";
 
 /* ================= COUNTRY SUPPORT ================= */
 const SUPPORTED_MARKET_COUNTRIES = [
@@ -108,12 +112,13 @@ export default async function MarketPage({
 
     const cookieStore = await cookies();
     const country = resolveMarketCountry(cookieStore.get("user_country")?.value);
+    const lang: Lang = DEFAULT_LANG;
 
     const copy = getMarketIntentCopy(pair, market.name);
 
     return (
         <main className="min-h-screen bg-black text-white">
-            <MarketHeader pair={pair} name={market.name} />
+            <MarketHeader lang={lang} pair={pair} name={market.name} />
 
             <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 md:py-10">
                 <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
@@ -208,7 +213,7 @@ export default async function MarketPage({
                 </section>
 
                 <Suspense fallback={<SkeletonBlock title="Loading sentiment..." />}>
-                    <SentimentSection pair={pair} />
+                    <SentimentSection lang={lang} pair={pair} />
                 </Suspense>
 
                 <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
@@ -242,7 +247,7 @@ export default async function MarketPage({
                 </section>
 
                 <Suspense fallback={<SkeletonBlock title="Loading news..." />}>
-                    <NewsSection pair={pair} />
+                    <NewsSection lang={lang} pair={pair} />
                 </Suspense>
 
                 <section className="space-y-4">
@@ -256,6 +261,7 @@ export default async function MarketPage({
                     </div>
 
                     <MarketBrokers
+                        lang={lang}
                         pair={pair}
                         {...(country ? { country } : {})}
                     />
@@ -289,6 +295,7 @@ export default async function MarketPage({
                 </section>
 
                 <MarketCTA
+                    lang={lang}
                     pair={pair}
                     {...(country ? { country } : {})}
                 />

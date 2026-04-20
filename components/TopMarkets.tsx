@@ -1,15 +1,21 @@
-"use client";
-
 import Link from "next/link";
-import { getContent, Lang } from "@/lib/i18n";
+import type { Lang } from "@/lib/i18n";
 
-/* ================= TYPES ================= */
 type Props = {
     lang?: Lang;
 };
 
-/* ================= DATA ================= */
-const markets = [
+type MarketTrend = "bullish" | "bearish";
+
+type MarketItem = {
+    pair: string;
+    name: Record<Lang, string>;
+    trend: MarketTrend;
+    change: string;
+    volume: string;
+};
+
+const markets: MarketItem[] = [
     {
         pair: "GBPUSD",
         name: {
@@ -48,8 +54,19 @@ const markets = [
     },
 ];
 
-/* ================= I18N ================= */
-const text = {
+const text: Record<
+    Lang,
+    {
+        title: string;
+        subtitle: string;
+        viewAll: string;
+        bullish: string;
+        bearish: string;
+        vol: string;
+        analysis: string;
+        trade: string;
+    }
+> = {
     en: {
         title: "Popular Markets",
         subtitle:
@@ -73,8 +90,7 @@ const text = {
     },
     de: {
         title: "Beliebte Märkte",
-        subtitle:
-            "Entdecke die meistgehandelten Forex-Paare mit Einblicken",
+        subtitle: "Entdecke die meistgehandelten Forex-Paare mit Einblicken",
         viewAll: "Alle anzeigen →",
         bullish: "Steigend",
         bearish: "Fallend",
@@ -84,8 +100,7 @@ const text = {
     },
     fr: {
         title: "Marchés populaires",
-        subtitle:
-            "Découvrez les paires forex les plus échangées",
+        subtitle: "Découvrez les paires forex les plus échangées",
         viewAll: "Voir tout →",
         bullish: "Haussier",
         bearish: "Baissier",
@@ -95,103 +110,89 @@ const text = {
     },
 };
 
-/* ================= HELPERS ================= */
 function formatPair(pair: string) {
     return `${pair.slice(0, 3)}/${pair.slice(3)}`;
 }
 
-/* ================= COMPONENT ================= */
 export default function TopMarkets({ lang = "en" }: Props) {
-    const t = text[lang] || text.en;
+    const t = text[lang];
 
     return (
-        <section className="relative max-w-6xl mx-auto px-4 py-12">
+        <section className="relative mx-auto max-w-7xl px-4 py-12">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-indigo-500/10 blur-2xl" />
 
-            {/* 🔥 BACKGROUND */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-indigo-500/10 blur-2xl pointer-events-none" />
+            <div className="relative z-10">
+                <div className="mb-8 flex items-end justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight">{t.title}</h2>
+                        <p className="mt-2 text-sm text-gray-400">{t.subtitle}</p>
+                    </div>
 
-            {/* 🔹 HEADER */}
-            <div className="flex items-end justify-between mb-8">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">
-                        {t.title}
-                    </h2>
-                    <p className="text-gray-400 text-sm mt-1">
-                        {t.subtitle}
-                    </p>
+                    <Link
+                        href={`/${lang}/markets`}
+                        className="shrink-0 text-sm text-blue-400 hover:text-blue-300"
+                    >
+                        {t.viewAll}
+                    </Link>
                 </div>
 
-                <Link
-                    href={`/${lang}/markets`}
-                    className="text-sm text-blue-400 hover:underline"
-                >
-                    {t.viewAll}
-                </Link>
-            </div>
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {markets.map((m) => {
+                        const isUp = m.trend === "bullish";
 
-            {/* 🔹 GRID */}
-            <div className="grid md:grid-cols-3 gap-5">
+                        return (
+                            <Link
+                                key={m.pair}
+                                href={`/${lang}/markets/${m.pair.toLowerCase()}`}
+                                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0B0F1A] p-5 transition duration-300 hover:-translate-y-1 hover:border-blue-500/50"
+                            >
+                                <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-blue-500/10 to-indigo-500/10" />
 
-                {markets.map((m) => {
-                    const isUp = m.trend === "bullish";
+                                <div className="relative z-10">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <h3 className="text-xl font-semibold">
+                                            {formatPair(m.pair)}
+                                        </h3>
 
-                    return (
-                        <Link
-                            key={m.pair}
-                            href={`/${lang}/markets/${m.pair.toLowerCase()}`}
-                            className="group relative p-5 rounded-2xl border border-gray-800 bg-[#0B0F1A] hover:border-blue-500 transition-all duration-300 overflow-hidden"
-                        >
-                            {/* 🔥 HOVER GLOW */}
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-r from-blue-500/10 to-indigo-500/10" />
+                                        <span
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${isUp
+                                                    ? "bg-green-500/10 text-green-400"
+                                                    : "bg-red-500/10 text-red-400"
+                                                }`}
+                                        >
+                                            {isUp ? t.bullish : t.bearish}
+                                        </span>
+                                    </div>
 
-                            {/* 🔹 TOP */}
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-lg font-semibold">
-                                    {formatPair(m.pair)}
-                                </h3>
+                                    <p className="mb-5 text-sm text-gray-400">
+                                        {m.name[lang]}
+                                    </p>
 
-                                <span
-                                    className={`text-xs px-2 py-1 rounded-full ${isUp
-                                            ? "bg-green-500/10 text-green-400"
-                                            : "bg-red-500/10 text-red-400"
-                                        }`}
-                                >
-                                    {isUp ? t.bullish : t.bearish}
-                                </span>
-                            </div>
+                                    <div className="mb-5 flex items-center justify-between text-sm">
+                                        <span
+                                            className={`font-semibold ${isUp ? "text-green-400" : "text-red-400"
+                                                }`}
+                                        >
+                                            {m.change}
+                                        </span>
 
-                            {/* 🔹 DESCRIPTION */}
-                            <p className="text-sm text-gray-400 mb-4">
-                                {m.name[lang] || m.name.en}
-                            </p>
+                                        <span className="text-gray-400">
+                                            {t.vol}: {m.volume}
+                                        </span>
+                                    </div>
 
-                            {/* 🔹 STATS */}
-                            <div className="flex items-center justify-between text-sm mb-4">
-                                <span
-                                    className={`font-medium ${isUp ? "text-green-400" : "text-red-400"
-                                        }`}
-                                >
-                                    {m.change}
-                                </span>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-gray-500">{t.analysis}</span>
 
-                                <span className="text-gray-400">
-                                    {t.vol}: {m.volume}
-                                </span>
-                            </div>
-
-                            {/* 🔹 CTA */}
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-500">
-                                    {t.analysis}
-                                </span>
-
-                                <span className="text-xs bg-blue-600 px-3 py-1 rounded-md font-medium">
-                                    {t.trade}
-                                </span>
-                            </div>
-                        </Link>
-                    );
-                })}
+                                        <span className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white">
+                                            {t.trade}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
             </div>
         </section>
     );

@@ -5,7 +5,7 @@ import FinalCTA from "@/components/FinalCTA";
 import TopBrokers from "@/components/TopBrokers";
 import MarketHeroChart from "@/components/MarketHeroChart";
 import TopMarkets from "@/components/TopMarkets";
-import NewsSection from "@/components/NewsSection";
+import HomeCalendar from "@/components/home/HomeCalendar";
 
 export type HomeLang = "en" | "ar" | "de" | "fr";
 
@@ -16,31 +16,25 @@ type Props = {
 /* ================= SHARED HOME SHELL ================= */
 export default function HomeShell({ lang }: Props) {
     return (
-        <main className="bg-black text-white overflow-hidden">
-            {/* HERO */}
+        <main className="overflow-hidden bg-black text-white">
             <Hero lang={lang} />
 
-            {/* LIVE MARKET */}
-            <MarketHeroChart />
+            <MarketHeroChart lang={lang} />
 
-            {/* TOP MARKETS */}
             <section className="border-y border-white/10">
                 <TopMarkets lang={lang} />
             </section>
 
-            {/* TOP BROKERS */}
+            <section className="mx-auto max-w-7xl px-4 py-12 lg:px-6">
+                <HomeCalendar />
+            </section>
+
             <TopBrokers />
 
-            {/* WHY VELMENORA */}
             <WhyVelmenora lang={lang} />
 
-            {/* LEARN FOREX */}
             <LearnForex lang={lang} />
 
-            {/* NEWS */}
-            <NewsSection />
-
-            {/* FINAL CTA */}
             <FinalCTA lang={lang} />
         </main>
     );

@@ -1,99 +1,106 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { fetchLatestNews, toSafeArray } from "@/lib/markets/provider";
+import { PAIR_EVENT_MAP, type MarketPair } from "@/lib/markets/pair-map";
+import {
+    dedupeNewsItems,
+    normalizeNewsItem,
+    sortNews,
+    type NewsItem,
+} from "@/lib/markets/feed-normalizers";
 
-/* ================= TYPES ================= */
-type NewsItem = {
-    title: string;
-    summary: string;
-    source: string;
-    time: string;
-    url: string;
-};
+type Params = Promise<{ pair: string }>;
 
-/* ================= VALIDATION ================= */
-function isValidPair(pair: string) {
-    return /^[A-Z]{6,10}$/.test(pair);
+export const revalidate = 300;
+
+function isPair(value: string): value is MarketPair {
+    return value in PAIR_EVENT_MAP;
 }
 
-/* ================= PRIMARY GENERATOR ================= */
-function generateNews(pair: string): NewsItem[] {
-    return [
-        {
-            title: `${pair} rallies as traders react to economic data`,
-            summary: `${pair} gains momentum following recent macroeconomic developments impacting currency strength.`,
-            source: "Velmenora AI",
-            time: "2h ago",
-            url: `/news/${pair.toLowerCase()}-rally`,
-        },
-        {
-            title: `${pair} approaches key resistance level`,
-            summary: `Technical analysts highlight a major resistance zone that could determine the next move for ${pair}.`,
-            source: "Market Watch",
-            time: "5h ago",
-            url: `/news/${pair.toLowerCase()}-resistance`,
-        },
-        {
-            title: `${pair} outlook remains mixed`,
-            summary: `Conflicting indicators suggest indecision among traders as ${pair} consolidates.`,
-            source: "FX Daily",
-            time: "1d ago",
-            url: `/news/${pair.toLowerCase()}-outlook`,
-        },
-    ];
-}
-
-/* ================= FALLBACK ================= */
-function fallbackNews(pair: string): NewsItem[] {
-    return [
-        {
-            title: `Latest news for ${pair}`,
-            summary: "Market moving updates and insights.",
-            source: "Velmenora",
-            time: new Date().toISOString(),
-            url: "#",
-        },
-    ];
-}
-
-/* ================= ROUTE ================= */
-export async function GET(
-    _req: NextRequest,
-    context: { params: Promise<{ pair: string }> }
+function getMatchScore(
+    item: NewsItem,
+    config: (typeof PAIR_EVENT_MAP)[MarketPair]
 ) {
+    const text = `${item.title} ${item.summary} ${item.source}`.toLowerCase();
+    let score = 0;
+
+    const keywordHits = config.keywords.filter((keyword) =>
+        text.includes(keyword.toLowerCase())
+    ).length;
+
+    score += keywordHits * 3;
+
+    const countryHits = (config.countries ?? []).filter((country) =>
+        text.includes(country.toLowerCase())
+    ).length;
+
+    score += countryHits * 2;
+
+    const categoryHits = config.categories.filter((category) =>
+        text.includes(category.toLowerCase())
+    ).length;
+
+    score += categoryHits * 2;
+
+    if (/interest rate|inflation|cpi|payrolls|fed|ecb|boj|boe|gdp|yield/i.test(text)) {
+        score += 1;
+    }
+
+    return score;
+}
+
+function sortPairNews(
+    a: NewsItem & { _score: number },
+    b: NewsItem & { _score: number }
+) {
+    if (b._score !== a._score) {
+        return b._score - a._score;
+    }
+
+    return sortNews(a, b);
+}
+
+export async function GET(
+    _req: Request,
+    { params }: { params: Params }
+) {
+    const { pair } = await params;
+
+    if (!isPair(pair)) {
+        return NextResponse.json([], { status: 200 });
+    }
+
     try {
-        const { pair } = await context.params;
+        const config = PAIR_EVENT_MAP[pair];
+        const data = await fetchLatestNews();
 
-        if (!pair) {
-            return NextResponse.json(
-                { error: "Pair is required" },
-                { status: 400 }
-            );
-        }
+        const normalized = dedupeNewsItems(
+            toSafeArray(data)
+                .map(normalizeNewsItem)
+                .filter((item): item is NewsItem => item !== null)
+        )
+            .map((item) => ({
+                ...item,
+                _score: getMatchScore(item, config),
+            }))
+            .filter((item) => item._score > 0)
+            .sort(sortPairNews)
+            .slice(0, 8)
+            .map(({ _score, ...item }) => item);
 
-        const normalized = pair.toUpperCase();
-
-        if (!isValidPair(normalized)) {
-            return NextResponse.json(
-                { error: "Invalid pair format" },
-                { status: 400 }
-            );
-        }
-
-        /* 🔥 MAIN ENGINE */
-        const news = generateNews(normalized);
-
-        return NextResponse.json(news, {
+        return NextResponse.json(normalized, {
             status: 200,
             headers: {
-                "Cache-Control":
-                    "public, s-maxage=60, stale-while-revalidate=120",
+                "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
             },
         });
     } catch (error) {
-        console.error("❌ Market News Error:", error);
+        console.error("pair market-news api error", error);
 
-        return NextResponse.json(
-            fallbackNews("UNKNOWN"),
-            { status: 200 }
-        );
+        return NextResponse.json([], {
+            status: 200,
+            headers: {
+                "Cache-Control": "s-maxage=60, stale-while-revalidate=120",
+            },
+        });
     }
 }

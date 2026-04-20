@@ -1,25 +1,28 @@
 import MarketNews from "@/components/market/MarketNews";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import type { Lang } from "@/lib/i18n";
 
-async function getNews(pair: string) {
-    try {
-        const res = await fetch(
-            `${getBaseUrl()}/api/market-news/${pair}`,
-            { next: { revalidate: 60 } }
-        );
+type Props = {
+    pair: string;
+    lang: Lang;
+    symbol?: string;
+    marketName?: string;
+    category?: string;
+};
 
-        if (!res.ok) {
-            throw new Error(`Failed to fetch news: ${res.status}`);
-        }
-
-        return await res.json();
-    } catch {
-        return [];
-    }
-}
-
-export default async function NewsSection({ pair }: { pair: string }) {
-    const news = await getNews(pair);
-
-    return <MarketNews news={news} pair={pair} />;
+export default async function NewsSection({
+    pair,
+    lang,
+    symbol,
+    marketName,
+    category,
+}: Props) {
+    return (
+        <MarketNews
+            pair={pair}
+            lang={lang}
+            {...(symbol ? { symbol } : {})}
+            {...(marketName ? { marketName } : {})}
+            {...(category ? { category } : {})}
+        />
+    );
 }

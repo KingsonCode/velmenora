@@ -1,60 +1,59 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-    countries,
-    resolveGeo,
-    type CountryMeta,
-} from "@/lib/geo";
 
 const SUPPORTED_LANGS = new Set(["en", "de", "fr", "ar"]);
+
+const MARKET_LINKS = [
+    { label: "EUR/USD", slug: "eurusd" },
+    { label: "GBP/USD", slug: "gbpusd" },
+    { label: "USD/JPY", slug: "usdjpy" },
+    { label: "XAU/USD", slug: "xauusd" },
+    { label: "BTC/USD", slug: "btcusd" },
+    { label: "ETH/USD", slug: "ethusd" },
+] as const;
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
     const pathname = usePathname() || "/";
 
-    const geo = resolveGeo();
-
     const firstSegment = pathname.split("/")[1] || "";
     const hasLangPrefix = SUPPORTED_LANGS.has(firstSegment);
     const langPrefix = hasLangPrefix ? `/${firstSegment}` : "/en";
 
-    const homeHref = langPrefix;
+    const homeHref = "/";
     const explorerHref = `${langPrefix}/explorer`;
     const compareHref = `${langPrefix}/compare`;
     const academyHref = `${langPrefix}/academy`;
     const guidesHref = "/blog";
+    const marketsHref = `${langPrefix}/markets`;
+    const watchlistHref = `${langPrefix}/watchlist`;
 
     const isActive = (href: string) => {
-        if (href === langPrefix) {
-            return pathname === href;
+        if (href === "/") {
+            return pathname === "/";
         }
 
         return pathname === href || pathname.startsWith(`${href}/`);
     };
-
-    const topCountries: CountryMeta[] = useMemo(
-        () =>
-            [
-                ...countries.filter((c: CountryMeta) => c.code === geo.country),
-                ...countries.filter(
-                    (c: CountryMeta) =>
-                        c.cluster === geo.cluster && c.code !== geo.country
-                ),
-                ...countries.filter(
-                    (c: CountryMeta) => c.cluster !== geo.cluster
-                ),
-            ].slice(0, 8),
-        [geo.country, geo.cluster]
-    );
 
     const [prices, setPrices] = useState([
         { pair: "EUR/USD", value: 1.0852 },
         { pair: "GBP/USD", value: 1.2731 },
         { pair: "USD/JPY", value: 151.22 },
     ]);
+
+    const marketLinks = useMemo(
+        () =>
+            MARKET_LINKS.map((market) => ({
+                ...market,
+                href: `${langPrefix}/markets/${market.slug}`,
+            })),
+        [langPrefix]
+    );
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -76,113 +75,111 @@ export default function Navbar() {
     return (
         <nav className="w-full border-b border-white/10 bg-black text-white">
             {/* MARKET TICKER */}
-            <div className="bg-white/5 text-xs py-1 px-6 overflow-hidden whitespace-nowrap">
+            <div className="overflow-hidden whitespace-nowrap bg-white/5 px-6 py-1 text-xs">
                 <div className="flex gap-6">
                     {prices.map((p) => (
                         <span key={p.pair} className="text-gray-300">
-                            {p.pair}:{" "}
-                            <span className="text-green-400">{p.value}</span>
+                            {p.pair}: <span className="text-green-400">{p.value}</span>
                         </span>
                     ))}
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
                 {/* LOGO */}
-                <Link href={homeHref} className="font-bold text-lg">
-                    Velmenora
+                <Link href={homeHref} className="flex items-center">
+                    <Image
+                        src="/logo.svg"
+                        alt="Velmenora"
+                        width={40}
+                        height={40}
+                        className="h-10 w-auto"
+                        priority
+                    />
                 </Link>
 
                 {/* DESKTOP MENU */}
-                <div className="hidden md:flex items-center gap-6">
+                <div className="hidden items-center gap-6 md:flex">
                     <Link
                         href={homeHref}
-                        className={
-                            isActive(homeHref)
-                                ? "text-yellow-400"
-                                : "hover:text-yellow-400"
-                        }
+                        className={isActive(homeHref) ? "text-yellow-400" : "hover:text-yellow-400"}
                     >
                         Home
                     </Link>
 
+                    <div className="group relative">
+                        <Link
+                            href={marketsHref}
+                            className={isActive(marketsHref) ? "text-yellow-400" : "hover:text-yellow-400"}
+                        >
+                            Markets
+                        </Link>
+
+                        <div className="pointer-events-none absolute left-0 top-full z-50 mt-2 rounded-xl border border-white/10 bg-black opacity-0 shadow-lg transition group-hover:pointer-events-auto group-hover:opacity-100">
+                            <div className="min-w-[260px] p-4">
+                                <Link
+                                    href={marketsHref}
+                                    className="mb-2 block rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-white transition hover:bg-white/5"
+                                >
+                                    View all markets →
+                                </Link>
+
+                                <div className="grid grid-cols-1 gap-2">
+                                    {marketLinks.map((market) => (
+                                        <Link
+                                            key={market.slug}
+                                            href={market.href}
+                                            className="whitespace-nowrap rounded-lg px-3 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-white"
+                                        >
+                                            {market.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <Link
                         href={explorerHref}
-                        className={
-                            isActive(explorerHref)
-                                ? "text-yellow-400"
-                                : "hover:text-yellow-400"
-                        }
+                        className={isActive(explorerHref) ? "text-yellow-400" : "hover:text-yellow-400"}
                     >
                         Explorer
                     </Link>
 
                     <Link
                         href={compareHref}
-                        className={
-                            isActive(compareHref)
-                                ? "text-yellow-400"
-                                : "hover:text-yellow-400"
-                        }
+                        className={isActive(compareHref) ? "text-yellow-400" : "hover:text-yellow-400"}
                     >
                         Compare
                     </Link>
 
                     <Link
                         href={academyHref}
-                        className={
-                            isActive(academyHref)
-                                ? "text-yellow-400"
-                                : "hover:text-yellow-400"
-                        }
+                        className={isActive(academyHref) ? "text-yellow-400" : "hover:text-yellow-400"}
                     >
                         Academy
                     </Link>
 
                     <Link
+                        href={watchlistHref}
+                        className={isActive(watchlistHref) ? "text-yellow-400" : "hover:text-yellow-400"}
+                    >
+                        Watchlist
+                    </Link>
+
+                    <Link
                         href={guidesHref}
-                        className={
-                            isActive(guidesHref)
-                                ? "text-yellow-400"
-                                : "hover:text-yellow-400"
-                        }
+                        className={isActive(guidesHref) ? "text-yellow-400" : "hover:text-yellow-400"}
                     >
                         Guides
                     </Link>
-
-                    {/* MARKETS DROPDOWN */}
-                    <div className="relative group">
-                        <button
-                            type="button"
-                            className="hover:text-yellow-400"
-                        >
-                            Markets
-                        </button>
-
-                        <div className="absolute top-full left-0 mt-2 rounded-xl border border-white/10 bg-black shadow-lg opacity-0 transition pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-50">
-                            <div className="grid grid-cols-1 gap-2 p-4 min-w-[260px]">
-                                {topCountries.map((c: CountryMeta) => (
-                                    <Link
-                                        key={c.code}
-                                        href={`/blog/best-brokers-in-${c.slug}`}
-                                        className="flex items-center gap-2 whitespace-nowrap rounded-lg px-2 py-2 text-sm text-gray-400 transition hover:bg-white/5 hover:text-white"
-                                    >
-                                        {c.code === geo.country && (
-                                            <span className="text-yellow-400">🔥</span>
-                                        )}
-                                        {c.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* MOBILE BUTTON */}
                 <button
                     type="button"
                     onClick={() => setOpen((prev) => !prev)}
-                    className="md:hidden text-xl"
+                    className="text-xl md:hidden"
                     aria-label={open ? "Close menu" : "Open menu"}
                     aria-controls="mobile-menu"
                     aria-haspopup="dialog"
@@ -198,10 +195,9 @@ export default function Navbar() {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Mobile navigation"
-                    className="fixed inset-0 z-50 bg-black text-white flex flex-col md:hidden"
+                    className="fixed inset-0 z-50 flex flex-col bg-black text-white md:hidden"
                 >
-                    {/* TOP BAR */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                         <span className="font-bold">Menu</span>
 
                         <button
@@ -213,30 +209,27 @@ export default function Navbar() {
                         </button>
                     </div>
 
-                    {/* NAV LINKS */}
-                    <div className="flex flex-col px-6 py-6 space-y-6 text-lg">
+                    <div className="flex flex-col space-y-6 px-6 py-6 text-lg">
                         <Link href={homeHref}>Home</Link>
+                        <Link href={marketsHref}>Markets</Link>
                         <Link href={explorerHref}>Explorer</Link>
                         <Link href={compareHref}>Compare</Link>
                         <Link href={academyHref}>Academy</Link>
+                        <Link href={watchlistHref}>Watchlist</Link>
                         <Link href={guidesHref}>Guides</Link>
                     </div>
 
-                    {/* MARKETS */}
                     <div className="px-6 pb-8">
-                        <div className="text-sm text-gray-400 mb-3">
-                            Popular Markets
-                        </div>
+                        <div className="mb-3 text-sm text-gray-400">Popular Markets</div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            {topCountries.map((c: CountryMeta) => (
+                            {marketLinks.map((market) => (
                                 <Link
-                                    key={c.code}
-                                    href={`/blog/best-brokers-in-${c.slug}`}
-                                    className="text-sm bg-white/5 px-3 py-2 rounded hover:bg-white/10"
+                                    key={market.slug}
+                                    href={market.href}
+                                    className="rounded bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                                 >
-                                    {c.code === geo.country && "🔥 "}
-                                    {c.name}
+                                    {market.label}
                                 </Link>
                             ))}
                         </div>
