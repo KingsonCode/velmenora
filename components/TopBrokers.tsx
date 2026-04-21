@@ -1,8 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import BrokerCard from "@/components/broker/BrokerCard";
 import { getTopBrokers } from "@/lib/brokers";
 import { resolveGeo } from "@/lib/geo";
+import {
+    getBrokerBadges,
+    getBrokerDescription,
+    getBrokerHighlights,
+    getTrustLabel,
+} from "@/lib/brokers/card";
 import type { Broker, CountryCode } from "@/lib/types/broker";
 
 const BROKER_COUNTRIES = new Set<CountryCode>([
@@ -35,10 +42,14 @@ export default function TopBrokers() {
 
     const sorted = [...brokers].sort((a, b) => {
         const scoreA =
-            (a.rating ?? 4.5) + (geo.brokers.includes(a.slug) ? 1 : 0);
+            (a.rating ?? 4.5) +
+            (geo.brokers.includes(a.slug) ? 1 : 0) +
+            ((a.priority ?? 0) * 0.05);
 
         const scoreB =
-            (b.rating ?? 4.5) + (geo.brokers.includes(b.slug) ? 1 : 0);
+            (b.rating ?? 4.5) +
+            (geo.brokers.includes(b.slug) ? 1 : 0) +
+            ((b.priority ?? 0) * 0.05);
 
         return scoreB - scoreA;
     });
@@ -46,6 +57,13 @@ export default function TopBrokers() {
     if (!sorted.length) return null;
 
     const [featured, ...rest] = sorted;
+
+    const regionLabel = geo.meta?.name || "Your Region";
+
+    const featuredBadges = featured ? getBrokerBadges(featured) : [];
+    const featuredHighlights = featured ? getBrokerHighlights(featured) : [];
+    const featuredDescription = featured ? getBrokerDescription(featured) : "";
+    const featuredTrustLabel = featured ? getTrustLabel(featured) : "Trusted";
 
     return (
         <section className="bg-black px-6 py-20 text-white">
@@ -56,7 +74,7 @@ export default function TopBrokers() {
                     </p>
 
                     <h2 className="mb-4 text-3xl font-bold md:text-5xl">
-                        Top Forex Brokers in {geo.meta?.name || "Your Region"}
+                        Top Forex Brokers in {regionLabel}
                     </h2>
 
                     <p className="text-base text-gray-400 md:text-lg">
@@ -83,34 +101,45 @@ export default function TopBrokers() {
                                 </h3>
 
                                 <p className="mt-3 max-w-2xl text-gray-300">
-                                    A strong choice for traders looking for reliable execution, broad market access, and competitive conditions in {geo.meta?.name || "their region"}.
+                                    {featuredDescription}
                                 </p>
 
                                 <div className="mt-5 flex flex-wrap gap-3 text-sm">
                                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-yellow-300">
-                                        ⭐ {featured.rating ?? 4.5} / 5
+                                        ⭐ {featured.rating?.toFixed(1) ?? "4.5"} / 5
                                     </span>
 
                                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-green-400">
-                                        Trusted broker
+                                        {featuredTrustLabel}
                                     </span>
 
-                                    {featured.regions?.length ? (
-                                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300">
-                                            {featured.regions.join(", ")}
-                                        </span>
-                                    ) : null}
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300">
+                                        Popular in {regionLabel}
+                                    </span>
                                 </div>
 
-                                {featured.features?.length > 0 && (
+                                {featuredBadges.length > 0 && (
                                     <div className="mt-6 flex flex-wrap gap-2">
-                                        {featured.features.slice(0, 4).map((feature) => (
+                                        {featuredBadges.map((badge) => (
                                             <span
-                                                key={feature}
+                                                key={badge}
                                                 className="rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-gray-300"
                                             >
-                                                {feature}
+                                                {badge}
                                             </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {featuredHighlights.length > 0 && (
+                                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                                        {featuredHighlights.map((item) => (
+                                            <div
+                                                key={item}
+                                                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-gray-300"
+                                            >
+                                                ✔ {item}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -151,10 +180,21 @@ export default function TopBrokers() {
 
                                     {geo.payments.length > 0 && (
                                         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                                            <span className="font-medium text-white">Popular payments:</span>{" "}
+                                            <span className="font-medium text-white">
+                                                Popular payments:
+                                            </span>{" "}
                                             {geo.payments.join(", ")}
                                         </div>
                                     )}
+
+                                    {featured.payments?.length ? (
+                                        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                                            <span className="font-medium text-white">
+                                                Broker supports:
+                                            </span>{" "}
+                                            {featured.payments.join(", ")}
+                                        </div>
+                                    ) : null}
 
                                     <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                                         Suitable for traders comparing broker quality before account opening.
@@ -167,62 +207,16 @@ export default function TopBrokers() {
 
                 {rest.length > 0 && (
                     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        {rest.map((broker) => (
-                            <div
+                        {rest.map((broker, index) => (
+                            <BrokerCard
                                 key={broker.slug}
-                                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-yellow-500/40 hover:bg-white/[0.05]"
-                            >
-                                <div className="mb-3 flex items-start justify-between gap-3">
-                                    <div>
-                                        <p className="text-lg font-semibold text-white">
-                                            {broker.name}
-                                        </p>
-                                        <p className="mt-1 text-sm text-gray-400">
-                                            {broker.category.join(" • ")}
-                                        </p>
-                                    </div>
-
-                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-yellow-300">
-                                        ⭐ {broker.rating ?? 4.5}
-                                    </span>
-                                </div>
-
-                                {broker.features?.length > 0 && (
-                                    <div className="mb-4 flex flex-wrap gap-2">
-                                        {broker.features.slice(0, 3).map((feature) => (
-                                            <span
-                                                key={feature}
-                                                className="rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-gray-300"
-                                            >
-                                                {feature}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-
-                                <p className="mb-4 text-sm text-gray-400">
-                                    Available in: {broker.regions?.join(", ") || "Global"}
-                                </p>
-
-                                <div className="flex gap-3">
-                                    <Link
-                                        href={`/go/${broker.slug}?src=${getBrokerSourceTag(
-                                            broker.slug,
-                                            false
-                                        )}`}
-                                        className="flex-1 rounded-xl bg-yellow-400 px-4 py-2.5 text-center text-sm font-semibold text-black transition hover:scale-[1.01]"
-                                    >
-                                        Trade Now
-                                    </Link>
-
-                                    <Link
-                                        href={`/brokers/${broker.slug}`}
-                                        className="flex-1 rounded-xl border border-white/15 px-4 py-2.5 text-center text-sm transition hover:bg-white/10"
-                                    >
-                                        Review
-                                    </Link>
-                                </div>
-                            </div>
+                                broker={broker}
+                                rank={index + 2}
+                                variant="compact"
+                                countryLabel={regionLabel}
+                                className="h-full"
+                                ctaSource={getBrokerSourceTag(broker.slug, false)}
+                            />
                         ))}
                     </div>
                 )}
