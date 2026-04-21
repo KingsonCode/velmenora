@@ -102,14 +102,14 @@ export default async function ComparePage({
                         </a>
 
                         <Link
-                            href={`/${lang}/brokers/${topBroker.slug}`}
+                            href={`/${lang}/country/brokers/${topBroker.slug}`}
                             className="rounded-xl border border-white/20 px-6 py-4 transition hover:bg-white/5"
                         >
                             Read Review
                         </Link>
 
                         <Link
-                            href={`/${lang}/explorer`}
+                            href={`/${lang}/country/explorer`}
                             className="rounded-xl border border-white/20 px-6 py-4 transition hover:bg-white/5"
                         >
                             Open Explorer
@@ -169,7 +169,7 @@ export default async function ComparePage({
                     {others.map((b) => (
                         <Link
                             key={b.slug}
-                            href={`/${lang}/compare/${topBroker.slug}-vs-${b.slug}`}
+                            href={`/${lang}/country/compare/${topBroker.slug}-vs-${b.slug}`}
                             className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center transition hover:border-yellow-500/30 hover:bg-white/10"
                         >
                             <h3 className="mb-2 text-lg font-semibold">
@@ -204,7 +204,7 @@ export default async function ComparePage({
                     {brokers.map((b, index) => (
                         <Link
                             key={b.slug}
-                            href={`/${lang}/brokers/${b.slug}`}
+                            href={`/${lang}/country/brokers/${b.slug}`}
                             className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center transition hover:border-yellow-500/30 hover:bg-white/10"
                         >
                             <div className="mb-3 text-xs uppercase tracking-wide text-gray-500">
@@ -226,7 +226,7 @@ export default async function ComparePage({
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-8 md:p-10">
                     <div className="grid gap-6 md:grid-cols-3">
                         <Link
-                            href={`/${lang}/academy/what-is-forex`}
+                            href={`/${lang}/country/academy/what-is-forex`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">New to forex?</h3>
@@ -236,7 +236,7 @@ export default async function ComparePage({
                         </Link>
 
                         <Link
-                            href={`/${lang}/academy/forex-for-beginners`}
+                            href={`/${lang}/country/academy/forex-for-beginners`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">Beginner guide</h3>
@@ -246,7 +246,7 @@ export default async function ComparePage({
                         </Link>
 
                         <Link
-                            href={`/${lang}/academy/forex-risk-management`}
+                            href={`/${lang}/country/academy/forex-risk-management`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">Risk management</h3>
@@ -280,7 +280,7 @@ export default async function ComparePage({
                         </a>
 
                         <Link
-                            href={`/${lang}/explorer`}
+                            href={`/${lang}/country/explorer`}
                             className="rounded-xl border border-white/20 px-8 py-5 transition hover:bg-white/5"
                         >
                             Explore More Brokers

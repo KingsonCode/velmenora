@@ -154,7 +154,7 @@ export default async function BrokerLangPage({ params }: Props) {
                         {related.map((b) => (
                             <a
                                 key={b.slug}
-                                href={`/${lang}/brokers/${b.slug}`}
+                                href={`/${lang}/country/brokers/${b.slug}`}
                                 className="bg-gray-900 p-6 rounded-2xl border border-gray-800 hover:border-gray-600 transition"
                             >
                                 <h3 className="font-semibold mb-2">

@@ -26,7 +26,7 @@ function getBaseUrl() {
 }
 
 function getCategoryHref(lang: Lang, category: BlogCategory) {
-    return `/${lang}/blog/${category}`;
+    return `/${lang}/country/blog/${category}`;
 }
 
 function getCategoryCards(lang: Lang) {
@@ -76,12 +76,12 @@ export async function generateMetadata({
         title,
         description,
         alternates: {
-            canonical: `/${lang}/blog`,
+            canonical: `/${lang}/country/blog`,
         },
         openGraph: {
             title,
             description,
-            url: `/${lang}/blog`,
+            url: `/${lang}/country/blog`,
             type: "website",
         },
         twitter: {
@@ -139,7 +139,7 @@ export default async function BlogPage({
                 "@type": "ListItem",
                 position: 2,
                 name: "Blog",
-                item: `${baseUrl}/${lang}/blog`,
+                item: `${baseUrl}/${lang}/country/blog`,
             },
         ],
     };
@@ -202,7 +202,7 @@ export default async function BlogPage({
                             </Link>
 
                             <Link
-                                href={`/${lang}/brokers`}
+                                href={`/${lang}/country/brokers`}
                                 className="inline-block rounded-lg border border-white/15 px-5 py-3 font-medium text-white"
                             >
                                 View Brokers

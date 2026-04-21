@@ -129,7 +129,7 @@ export default function TopMarkets({ lang = "en" }: Props) {
                     </div>
 
                     <Link
-                        href={`/${lang}/markets`}
+                        href={`/${lang}/country/markets`}
                         className="shrink-0 text-sm text-blue-400 hover:text-blue-300"
                     >
                         {t.viewAll}
@@ -143,7 +143,7 @@ export default function TopMarkets({ lang = "en" }: Props) {
                         return (
                             <Link
                                 key={m.pair}
-                                href={`/${lang}/markets/${m.pair.toLowerCase()}`}
+                                href={`/${lang}/country/markets/${m.pair.toLowerCase()}`}
                                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0B0F1A] p-5 transition duration-300 hover:-translate-y-1 hover:border-blue-500/50"
                             >
                                 <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-blue-500/10 to-indigo-500/10" />

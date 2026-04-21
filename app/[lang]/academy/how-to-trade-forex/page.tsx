@@ -174,14 +174,14 @@ export default async function HowToTradeForexPage({
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href={`/${lang}/explorer`}
+                            href={`/${lang}/country/explorer`}
                             className="inline-flex items-center justify-center rounded-xl bg-green-600 px-6 py-3.5 font-semibold text-white transition hover:bg-green-700"
                         >
                             Open Trading Account →
                         </Link>
 
                         <Link
-                            href={`/${lang}/academy`}
+                            href={`/${lang}/country/academy`}
                             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                         >
                             Back to Academy
@@ -224,7 +224,7 @@ export default async function HowToTradeForexPage({
                     <p className="text-gray-400 leading-relaxed">
                         If you are still learning the fundamentals, start with our{" "}
                         <Link
-                            href={`/${lang}/academy/forex-for-beginners`}
+                            href={`/${lang}/country/academy/forex-for-beginners`}
                             className="text-green-400 underline underline-offset-4 transition hover:text-green-300"
                         >
                             forex beginner guide
@@ -470,14 +470,14 @@ export default async function HowToTradeForexPage({
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
-                        href={`/${lang}/explorer`}
+                        href={`/${lang}/country/explorer`}
                         className="inline-flex items-center justify-center rounded-xl bg-green-600 px-7 py-3.5 font-semibold text-white transition hover:bg-green-700"
                     >
                         Open Trading Account →
                     </Link>
 
                     <Link
-                        href={`/${lang}/academy/forex-for-beginners`}
+                        href={`/${lang}/country/academy/forex-for-beginners`}
                         className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10"
                     >
                         Read Beginner Guide

@@ -209,7 +209,7 @@ export default function MarketHeroChart({ lang = "en" }: Props) {
                         return (
                             <Link
                                 key={p.symbol}
-                                href={`/${lang}/markets/${p.symbol.toLowerCase()}`}
+                                href={`/${lang}/country/markets/${p.symbol.toLowerCase()}`}
                                 className="group rounded-[22px] border border-white/10 bg-white/[0.02] p-4 transition hover:border-cyan-400/20 hover:bg-white/[0.04]"
                             >
                                 <div className="flex items-start justify-between gap-3">

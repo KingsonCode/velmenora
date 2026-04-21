@@ -78,9 +78,9 @@ export default function SearchBox({ lang = "en" }: Props) {
         );
 
         if (exact) {
-            router.push(`/${lang}/brokers/${exact.slug}`); // ✅ FIXED
+            router.push(`/${lang}/country/brokers/${exact.slug}`); // ✅ FIXED
         } else {
-            router.push(`/${lang}/search?q=${encodeURIComponent(q)}`); // ✅ FIXED
+            router.push(`/${lang}/country/search?q=${encodeURIComponent(q)}`); // ✅ FIXED
         }
 
         setOpen(false);

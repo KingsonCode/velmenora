@@ -63,7 +63,7 @@ export default function GeoBanner({ funnel }: { funnel: Funnel }) {
         document.cookie = `user_country=${upper}; path=/; max-age=31536000`;
 
         // 🚀 NAVIGATE
-        router.push(`/${lang}/${code}`);
+        router.push(`/${lang}/country/${code}`);
     }
 
     return (

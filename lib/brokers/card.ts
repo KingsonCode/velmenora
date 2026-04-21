@@ -74,7 +74,10 @@ export function getBrokerHighlights(broker: Broker): string[] {
 
 export function getBrokerDescription(broker: Broker): string {
     const bestFor = broker.conversion?.bestFor?.[0];
-    const categories = broker.category?.join(", ").replaceAll("_", " ");
+
+    const categories = broker.category
+        ?.map((item) => item.replaceAll("_", " "))
+        .join(", ");
 
     if (bestFor) {
         return `${broker.name} is a strong choice for ${bestFor.toLowerCase()}, offering competitive trading conditions and a trusted environment for active traders.`;

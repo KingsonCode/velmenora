@@ -473,23 +473,23 @@ export function buildCategoryBrokerIntro(
 export function buildInternalLinkAnchors(lang: string): InternalLinkAnchor[] {
     return [
         {
-            href: `/${lang}/blog/ecn-brokers`,
+            href: `/${lang}/country/blog/ecn-brokers`,
             label: "Best ECN Forex Brokers",
         },
         {
-            href: `/${lang}/blog/low-spread-brokers`,
+            href: `/${lang}/country/blog/low-spread-brokers`,
             label: "Lowest Spread Forex Brokers",
         },
         {
-            href: `/${lang}/blog/high-leverage-brokers`,
+            href: `/${lang}/country/blog/high-leverage-brokers`,
             label: "High Leverage Forex Brokers",
         },
         {
-            href: `/${lang}/blog/best-forex-brokers-for-beginners`,
+            href: `/${lang}/country/blog/best-forex-brokers-for-beginners`,
             label: "Best Forex Brokers for Beginners",
         },
         {
-            href: `/${lang}/blog/fast-withdrawal-forex-brokers`,
+            href: `/${lang}/country/blog/fast-withdrawal-forex-brokers`,
             label: "Fast Withdrawal Forex Brokers",
         },
     ];

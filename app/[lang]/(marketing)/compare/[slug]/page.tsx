@@ -141,12 +141,12 @@ export async function generateMetadata({
         title,
         description,
         alternates: {
-            canonical: `https://velmenora.com/${lang}/compare/${slug}`,
+            canonical: `https://velmenora.com/${lang}/country/compare/${slug}`,
         },
         openGraph: {
             title,
             description,
-            url: `https://velmenora.com/${lang}/compare/${slug}`,
+            url: `https://velmenora.com/${lang}/country/compare/${slug}`,
             siteName: "Velmenora",
             type: "article",
             images: ["/og-default.jpg"],
@@ -368,7 +368,7 @@ export default async function CompareSlugPage({
                 {/* SECONDARY LINKS */}
                 <section className="mb-12 grid gap-4 md:grid-cols-3">
                     <Link
-                        href={`/${lang}/brokers/${brokerA.slug}`}
+                        href={`/${lang}/country/brokers/${brokerA.slug}`}
                         className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
                     >
                         <h3 className="mb-2 font-semibold">{brokerA.name} Review</h3>
@@ -378,7 +378,7 @@ export default async function CompareSlugPage({
                     </Link>
 
                     <Link
-                        href={`/${lang}/brokers/${brokerB.slug}`}
+                        href={`/${lang}/country/brokers/${brokerB.slug}`}
                         className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
                     >
                         <h3 className="mb-2 font-semibold">{brokerB.name} Review</h3>
@@ -388,7 +388,7 @@ export default async function CompareSlugPage({
                     </Link>
 
                     <Link
-                        href={`/${lang}/compare`}
+                        href={`/${lang}/country/compare`}
                         className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/10"
                     >
                         <h3 className="mb-2 font-semibold">More comparisons</h3>

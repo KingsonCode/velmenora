@@ -59,7 +59,7 @@ export default function FinalCTA({
                                 />
 
                                 <Link
-                                    href={`/${lang}/brokers`}
+                                    href={`/${lang}/country/brokers`}
                                     className="rounded-2xl border border-white/15 px-8 py-4 text-center font-semibold transition hover:bg-white/10"
                                 >
                                     {t.compare}
@@ -69,14 +69,14 @@ export default function FinalCTA({
                             {/* NAV */}
                             <div className="mt-6 flex flex-wrap gap-3 text-sm">
                                 <Link
-                                    href={`/${lang}/academy`}
+                                    href={`/${lang}/country/academy`}
                                     className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 transition hover:bg-white/10"
                                 >
                                     {t.learn}
                                 </Link>
 
                                 <Link
-                                    href={`/${lang}/brokers`}
+                                    href={`/${lang}/country/brokers`}
                                     className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 transition hover:bg-white/10"
                                 >
                                     Browse Brokers

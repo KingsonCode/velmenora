@@ -93,7 +93,7 @@ export default function WatchlistPageClient({ lang }: Props) {
                     <p className="mt-2 text-sm text-gray-400">{t.emptyText}</p>
 
                     <Link
-                        href={`/${lang}/markets`}
+                        href={`/${lang}/country/markets`}
                         className="mt-5 inline-flex rounded-lg bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700"
                     >
                         {t.browseMarkets}
@@ -115,7 +115,7 @@ export default function WatchlistPageClient({ lang }: Props) {
 
                                 <div className="mt-5 flex gap-3">
                                     <Link
-                                        href={`/${lang}/markets/${item.pair}`}
+                                        href={`/${lang}/country/markets/${item.pair}`}
                                         className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
                                     >
                                         {t.viewMarket}

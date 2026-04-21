@@ -228,7 +228,7 @@ export default function CompareClient({ broker, lang }: Props) {
                             </a>
 
                             <Link
-                                href={`/${lang}/brokers/${b.slug}`}
+                                href={`/${lang}/country/brokers/${b.slug}`}
                                 className="rounded-xl border border-white/20 px-6 py-3 transition hover:bg-white/5"
                             >
                                 Read Review
@@ -261,7 +261,7 @@ export default function CompareClient({ broker, lang }: Props) {
                             </p>
 
                             <Link
-                                href={`/${lang}/compare/${leadBroker.slug}-vs-${b.slug}`}
+                                href={`/${lang}/country/compare/${leadBroker.slug}-vs-${b.slug}`}
                                 className="text-yellow-400 text-sm"
                             >
                                 Compare →
@@ -288,7 +288,7 @@ export default function CompareClient({ broker, lang }: Props) {
 
                             <div className="flex gap-3">
                                 <Link
-                                    href={`/${lang}/compare/${leadBroker.slug}-vs-${b.slug}`}
+                                    href={`/${lang}/country/compare/${leadBroker.slug}-vs-${b.slug}`}
                                     className="text-sm text-yellow-400"
                                 >
                                     Compare

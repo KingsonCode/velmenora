@@ -371,7 +371,7 @@ export default function MarketHeader({ pair, lang, name }: Props) {
                 </button>
 
                 <Link
-                    href={`/${lang}/compare`}
+                    href={`/${lang}/country/compare`}
                     className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-3 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.05]"
                 >
                     {t.compareBrokers}

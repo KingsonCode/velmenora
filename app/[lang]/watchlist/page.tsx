@@ -54,12 +54,12 @@ export async function generateMetadata({
         title: copy[lang].title,
         description: copy[lang].description,
         alternates: {
-            canonical: `/${lang}/watchlist`,
+            canonical: `/${lang}/country/watchlist`,
         },
         openGraph: {
             title: copy[lang].title,
             description: copy[lang].description,
-            url: `/${lang}/watchlist`,
+            url: `/${lang}/country/watchlist`,
             siteName: "Velmenora",
             type: "website",
         },

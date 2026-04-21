@@ -91,7 +91,7 @@ export default function ExplorerClient({ lang }: Props) {
         if (sort !== "ai") query.set("sort", sort);
 
         const qs = query.toString();
-        router.replace(qs ? `/${lang}/explorer?${qs}` : `/${lang}/explorer`);
+        router.replace(qs ? `/${lang}/country/explorer?${qs}` : `/${lang}/country/explorer`);
     }, [search, minRating, maxDeposit, platform, sort, router, lang]);
 
     const filtered = useMemo(() => {
@@ -174,7 +174,7 @@ export default function ExplorerClient({ lang }: Props) {
 
                         <div className="flex flex-col sm:flex-row gap-4">
                             <Link
-                                href={`/${lang}/academy`}
+                                href={`/${lang}/country/academy`}
                                 className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                             >
                                 Learn Forex First
@@ -435,7 +435,7 @@ export default function ExplorerClient({ lang }: Props) {
                             <button
                                 type="button"
                                 onClick={() =>
-                                    router.push(`/${lang}/compare?ids=${compare.join(",")}`)
+                                    router.push(`/${lang}/country/compare?ids=${compare.join(",")}`)
                                 }
                                 className="rounded-xl bg-yellow-500 px-6 py-3 font-semibold text-black"
                             >

@@ -36,15 +36,15 @@ function getBaseUrl() {
 
 function getRelatedLinks(lang: Lang, category: BlogCategory) {
     const links: Array<{ href: string; label: string }> = [
-        { href: `/${lang}/blog/ecn-brokers`, label: "Best ECN Forex Brokers" },
-        { href: `/${lang}/blog/low-spread-brokers`, label: "Lowest Spread Forex Brokers" },
-        { href: `/${lang}/blog/high-leverage-brokers`, label: "High Leverage Forex Brokers" },
+        { href: `/${lang}/country/blog/ecn-brokers`, label: "Best ECN Forex Brokers" },
+        { href: `/${lang}/country/blog/low-spread-brokers`, label: "Lowest Spread Forex Brokers" },
+        { href: `/${lang}/country/blog/high-leverage-brokers`, label: "High Leverage Forex Brokers" },
         {
-            href: `/${lang}/blog/best-forex-brokers-for-beginners`,
+            href: `/${lang}/country/blog/best-forex-brokers-for-beginners`,
             label: "Best Forex Brokers for Beginners",
         },
         {
-            href: `/${lang}/blog/fast-withdrawal-forex-brokers`,
+            href: `/${lang}/country/blog/fast-withdrawal-forex-brokers`,
             label: "Fast Withdrawal Forex Brokers",
         },
     ];
@@ -53,7 +53,7 @@ function getRelatedLinks(lang: Lang, category: BlogCategory) {
 }
 
 function getCompareHref(lang: Lang, a: string, b: string) {
-    return `/${lang}/compare/${a}-vs-${b}`;
+    return `/${lang}/country/compare/${a}-vs-${b}`;
 }
 
 function formatFeatureLabel(feature: string) {
@@ -115,7 +115,7 @@ export async function generateMetadata({
 
     const title = `${getCategorySeoTitle(category, countryName ?? undefined)} | Velmenora`;
     const description = getCategorySeoDescription(category, countryName ?? undefined);
-    const canonical = `/${lang}/blog/${category}`;
+    const canonical = `/${lang}/country/blog/${category}`;
 
     return {
         title,
@@ -179,7 +179,7 @@ export default async function CategoryPage({
     const content = buildCategoryContent(category, countryName ?? undefined);
     const relatedLinks = getRelatedLinks(lang, category);
     const baseUrl = getBaseUrl();
-    const pageUrl = `${baseUrl}/${lang}/blog/${category}`;
+    const pageUrl = `${baseUrl}/${lang}/country/blog/${category}`;
     const topThree = brokers.slice(0, 3);
 
     const pageTitle = getCategorySeoTitle(category, countryName ?? undefined);
@@ -233,7 +233,7 @@ export default async function CategoryPage({
                 "@type": "ListItem",
                 position: 2,
                 name: "Blog",
-                item: `${baseUrl}/${lang}/blog`,
+                item: `${baseUrl}/${lang}/country/blog`,
             },
             {
                 "@type": "ListItem",
@@ -284,7 +284,7 @@ export default async function CategoryPage({
                     <h2 className="text-2xl md:text-3xl font-semibold">Top Picks</h2>
 
                     <Link
-                        href={`/${lang}/brokers`}
+                        href={`/${lang}/country/brokers`}
                         className="text-sm text-gray-300 hover:text-white transition"
                     >
                         View all brokers →
@@ -328,7 +328,7 @@ export default async function CategoryPage({
 
                             <div className="flex gap-3 flex-wrap">
                                 <Link
-                                    href={`/${lang}/brokers/${broker.slug}`}
+                                    href={`/${lang}/country/brokers/${broker.slug}`}
                                     className="inline-block border border-white/15 px-4 py-2 rounded-lg"
                                 >
                                     Read Review
@@ -446,7 +446,7 @@ export default async function CategoryPage({
                     </Link>
 
                     <Link
-                        href={`/${lang}/brokers/${primaryBroker.slug}`}
+                        href={`/${lang}/country/brokers/${primaryBroker.slug}`}
                         className="inline-block border border-white/15 px-5 py-3 rounded-lg"
                     >
                         {content.cta.secondaryLabel}

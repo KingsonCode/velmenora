@@ -75,7 +75,7 @@ export default function CountrySearch({
         if (onSelect) {
             onSelect(code);
         } else {
-            window.location.href = `/${lang}/${code}`;
+            window.location.href = `/${lang}/country/${code}`;
         }
     }
 

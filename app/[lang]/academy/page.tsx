@@ -90,14 +90,14 @@ export default async function AcademyPage({
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href={`/${lang}/academy/what-is-forex`}
+                            href={`/${lang}/country/academy/what-is-forex`}
                             className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-700"
                         >
                             Start Learning →
                         </Link>
 
                         <Link
-                            href={`/${lang}/explorer`}
+                            href={`/${lang}/country/explorer`}
                             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                         >
                             Compare Brokers
@@ -137,7 +137,7 @@ export default async function AcademyPage({
                     {academyGuides.map((guide, index) => (
                         <Link
                             key={guide.href}
-                            href={`/${lang}/academy/${guide.href}`}
+                            href={`/${lang}/country/academy/${guide.href}`}
                             className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-white/10"
                         >
                             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_35%)] opacity-0 transition duration-300 group-hover:opacity-100" />
@@ -238,14 +238,14 @@ export default async function AcademyPage({
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href={`/${lang}/academy/forex-for-beginners`}
+                            href={`/${lang}/country/academy/forex-for-beginners`}
                             className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-700"
                         >
                             Open Beginner Guide →
                         </Link>
 
                         <Link
-                            href={`/${lang}/academy/forex-demo-account`}
+                            href={`/${lang}/country/academy/forex-demo-account`}
                             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                         >
                             Learn Demo Trading
@@ -296,14 +296,14 @@ export default async function AcademyPage({
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
-                        href={`/${lang}/explorer`}
+                        href={`/${lang}/country/explorer`}
                         className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition hover:bg-blue-700"
                     >
                         Explore Top Forex Brokers →
                     </Link>
 
                     <Link
-                        href={`/${lang}/academy/what-is-forex`}
+                        href={`/${lang}/country/academy/what-is-forex`}
                         className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 py-4 text-lg font-semibold text-white transition hover:bg-white/10"
                     >
                         Start with Forex Basics

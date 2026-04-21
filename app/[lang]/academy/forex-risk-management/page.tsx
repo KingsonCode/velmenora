@@ -172,14 +172,14 @@ export default async function ForexRiskManagementPage({
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href={`/${lang}/academy/forex-for-beginners`}
+                            href={`/${lang}/country/academy/forex-for-beginners`}
                             className="inline-flex items-center justify-center rounded-xl bg-red-600 px-6 py-3.5 font-semibold text-white transition hover:bg-red-700"
                         >
                             Read Beginner Guide →
                         </Link>
 
                         <Link
-                            href={`/${lang}/academy/how-to-trade-forex`}
+                            href={`/${lang}/country/academy/how-to-trade-forex`}
                             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                         >
                             Learn Trade Execution
@@ -224,7 +224,7 @@ export default async function ForexRiskManagementPage({
                     <p className="text-gray-400 leading-relaxed">
                         If you are still building your base, read our{" "}
                         <Link
-                            href={`/${lang}/academy/forex-for-beginners`}
+                            href={`/${lang}/country/academy/forex-for-beginners`}
                             className="text-red-400 underline underline-offset-4 transition hover:text-red-300"
                         >
                             forex for beginners guide
@@ -412,14 +412,14 @@ export default async function ForexRiskManagementPage({
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
-                        href={`/${lang}/academy/how-to-trade-forex`}
+                        href={`/${lang}/country/academy/how-to-trade-forex`}
                         className="inline-flex items-center justify-center rounded-xl bg-red-600 px-7 py-3.5 font-semibold text-white transition hover:bg-red-700"
                     >
                         Learn How to Trade Forex →
                     </Link>
 
                     <Link
-                        href={`/${lang}/explorer`}
+                        href={`/${lang}/country/explorer`}
                         className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10"
                     >
                         Compare Trusted Brokers

@@ -51,7 +51,7 @@ export default function BrokerCard({
     return (
         <article
             className={[
-                "relative flex flex-col justify-between rounded-2xl border p-6 transition-all duration-300",
+                "relative flex h-full flex-col justify-between rounded-2xl border p-6 transition-all duration-300",
                 highlight
                     ? "scale-[1.03] border-green-700 bg-gradient-to-br from-green-900/40 to-black shadow-xl"
                     : "border-gray-800 bg-gray-900 hover:border-gray-600",

@@ -261,7 +261,7 @@ export default async function MarketNews({
                 )}
 
                 <Link
-                    href={`/${lang}/news/${pair.toLowerCase()}`}
+                    href={`/${lang}/country/news/${pair.toLowerCase()}`}
                     className="block w-full rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/[0.05]"
                 >
                     {t.more} {formattedPair} {t.news} →

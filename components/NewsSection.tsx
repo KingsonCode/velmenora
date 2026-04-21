@@ -39,7 +39,7 @@ export default function NewsSection({ lang = "en" }: Props) {
                 </h2>
 
                 <Link
-                    href={`/${lang}/news`}
+                    href={`/${lang}/country/news`}
                     className="text-sm text-blue-400 hover:underline"
                 >
                     {t.viewAll}

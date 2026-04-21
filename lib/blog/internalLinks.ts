@@ -233,6 +233,6 @@ export function getCategoryInternalLinks(
         .map((item) => ({
             slug: item.slug,
             label: item.label,
-            href: `/${lang}/blog/${item.slug}`,
+            href: `/${lang}/country/blog/${item.slug}`,
         }));
 }
