@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Broker, CountryCode } from "@/lib/types/broker";
 import { GeoResult } from "@/lib/geo";
@@ -8,7 +9,7 @@ type Props = {
     rank?: number;
     allBrokers?: Broker[];
     highlight?: boolean;
-    geo?: GeoResult; // 🔥 FULL GEO ENGINE
+    geo?: GeoResult;
 };
 
 /* ================= BADGES ================= */
@@ -46,21 +47,16 @@ function getExplanation(
 
     const explanations: string[] = [];
 
-    /* 🥇 TOP */
     if (rank === 1) {
         explanations.push("🔥 Best choice right now");
     }
 
-    /* 💳 PAYMENT MATCH */
-    const match = broker.payments?.find((p) =>
-        geo.payments?.includes(p)
-    );
+    const match = broker.payments?.find((p) => geo.payments?.includes(p));
 
     if (match) {
         explanations.push(`💸 Supports ${match}`);
     }
 
-    /* 🎯 INTENT */
     if (geo.intent === "beginner" && broker.tags?.includes("beginner")) {
         explanations.push("🎯 Great for beginners");
     }
@@ -72,15 +68,20 @@ function getExplanation(
         explanations.push("⚡ Built for serious traders");
     }
 
-    /* 🌍 REGION BOOST */
-    if (
-        broker.regions?.includes("AFRICA") &&
-        geo.cluster === "AFRICA"
-    ) {
+    if (broker.regions?.includes("AFRICA") && geo.cluster === "AFRICA") {
         explanations.push("🌍 Optimized for your region");
     }
 
     return explanations[0] || null;
+}
+
+function getInitials(name: string) {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
 }
 
 /* ================= COMPONENT ================= */
@@ -98,57 +99,66 @@ export default function BrokerCard({
     return (
         <div
             className={`
-        relative flex flex-col justify-between
-        p-6 rounded-2xl border transition-all duration-300
-        ${highlight
-                    ? "bg-gradient-to-br from-green-900/40 to-black border-green-700 shadow-xl scale-[1.03]"
-                    : "bg-gray-900 border-gray-800 hover:border-gray-600"
+                relative flex flex-col justify-between
+                rounded-2xl border p-6 transition-all duration-300
+                ${highlight
+                    ? "scale-[1.03] border-green-700 bg-gradient-to-br from-green-900/40 to-black shadow-xl"
+                    : "border-gray-800 bg-gray-900 hover:border-gray-600"
                 }
-      `}
+            `}
         >
-            {/* 🔥 TOP BADGE */}
             {highlight && (
-                <div className="absolute -top-3 left-4 bg-green-600 text-xs px-3 py-1 rounded-full font-semibold shadow">
+                <div className="absolute -top-3 left-4 rounded-full bg-green-600 px-3 py-1 text-xs font-semibold shadow">
                     🔥 Recommended
                 </div>
             )}
 
-            {/* 🔝 HEADER */}
             <div className="mb-4">
-
-                {/* RANK */}
                 {rank && (
-                    <div className="text-sm text-green-400 mb-1 font-medium">
+                    <div className="mb-3 text-sm font-medium text-green-400">
                         #{rank} Top Pick
                     </div>
                 )}
 
-                {/* NAME */}
-                <h3 className="text-2xl font-bold mb-2">
-                    {broker.name}
-                </h3>
+                <div className="flex items-start gap-4">
+                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#0b1020]">
+                        {(broker as Broker & { logo?: string }).logo ? (
+                            <Image
+                                src={(broker as Broker & { logo?: string }).logo as string}
+                                alt={`${broker.name} logo`}
+                                fill
+                                className="object-contain p-2"
+                                sizes="64px"
+                            />
+                        ) : (
+                            <span className="text-sm font-bold text-white/70">
+                                {getInitials(broker.name)}
+                            </span>
+                        )}
+                    </div>
 
-                {/* ⭐ RATING */}
-                <div className="text-yellow-400 text-lg">
-                    ⭐ {broker.rating ?? "4.5"}
+                    <div className="min-w-0 flex-1">
+                        <h3 className="mb-2 text-2xl font-bold">{broker.name}</h3>
+
+                        <div className="text-lg text-yellow-400">
+                            ⭐ {broker.rating ?? "4.5"}
+                        </div>
+                    </div>
                 </div>
-
             </div>
 
-            {/* 🔥 SMART EXPLANATION */}
             {explanation && (
-                <div className="mb-4 text-sm bg-green-900/30 border border-green-700 px-3 py-2 rounded-lg text-green-300">
+                <div className="mb-4 rounded-lg border border-green-700 bg-green-900/30 px-3 py-2 text-sm text-green-300">
                     {explanation}
                 </div>
             )}
 
-            {/* 🔥 BADGES */}
             {badges.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="mb-4 flex flex-wrap gap-2">
                     {badges.map((badge) => (
                         <span
                             key={badge}
-                            className="text-xs bg-green-900/40 border border-green-700 px-2 py-1 rounded"
+                            className="rounded border border-green-700 bg-green-900/40 px-2 py-1 text-xs"
                         >
                             {badge}
                         </span>
@@ -156,21 +166,18 @@ export default function BrokerCard({
                 </div>
             )}
 
-            {/* 🔥 FEATURES */}
             <div className="mb-5">
-                <p className="text-gray-400 text-sm leading-relaxed">
-                    {broker.features?.join(", ") ||
-                        "Low spreads, fast execution"}
+                <p className="text-sm leading-relaxed text-gray-400">
+                    {broker.features?.join(", ") || "Low spreads, fast execution"}
                 </p>
             </div>
 
-            {/* 🔥 TAGS */}
             {broker.tags && (
-                <div className="flex flex-wrap gap-2 mb-5">
+                <div className="mb-5 flex flex-wrap gap-2">
                     {broker.tags.slice(0, 3).map((tag) => (
                         <span
                             key={tag}
-                            className="text-xs bg-gray-800 px-2 py-1 rounded"
+                            className="rounded bg-gray-800 px-2 py-1 text-xs"
                         >
                             {tag}
                         </span>
@@ -178,15 +185,12 @@ export default function BrokerCard({
                 </div>
             )}
 
-            {/* 🔥 DIVIDER */}
-            <div className="border-t border-gray-800 my-4" />
+            <div className="my-4 border-t border-gray-800" />
 
-            {/* 🔥 CTA */}
-            <div className="flex flex-col gap-3 mt-auto">
-
+            <div className="mt-auto flex flex-col gap-3">
                 <Link
                     href={`/brokers/${broker.slug}`}
-                    className="text-blue-400 text-sm underline"
+                    className="text-sm text-blue-400 underline"
                 >
                     👉 Read Review
                 </Link>
@@ -194,16 +198,15 @@ export default function BrokerCard({
                 <a
                     href={`/go/${broker.slug}?src=card`}
                     className={`
-            text-center py-3 rounded-xl font-semibold transition text-sm
-            ${highlight
+                        rounded-xl py-3 text-center text-sm font-semibold transition
+                        ${highlight
                             ? "bg-green-600 hover:bg-green-500"
                             : "bg-gray-800 hover:bg-gray-700"
                         }
-          `}
+                    `}
                 >
                     🚀 Open Account
                 </a>
-
             </div>
         </div>
     );

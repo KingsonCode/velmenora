@@ -10,6 +10,7 @@ export type Cluster =
     | "MIDDLE_EAST"
     | "EUROPE"
     | "AU_CA"
+    | "US"
     | "GLOBAL";
 
 export type Language = "en" | "fr" | "ar" | "de";
@@ -278,6 +279,44 @@ export const CLUSTERS: Record<Cluster, ClusterConfig> = {
         behavior: {
             trust_level: "high",
             prefers_regulation: true
+        }
+    },
+
+
+    US: {
+        language: "en",
+        currency: "USD",
+
+        payment_methods: ["Bank Transfer", "Cards", "Crypto"],
+
+        broker_priority: {
+            primary: "exness",
+            secondary: "icmarkets",
+            tertiary: "pepperstone"
+        },
+
+        pain_points: [
+            "broker trust",
+            "withdrawal reliability",
+            "platform stability"
+        ],
+
+        seo: {
+            locale_slug: "us",
+            keyword_modifier: "United States",
+            title_suffix: "for US-Based Traders"
+        },
+
+        headlines: {
+            best_broker: "Best Forex Brokers for US-Based Traders",
+            fast_withdrawal: "Fast Withdrawal Brokers for US-Based Traders",
+            low_spread: "Lowest Spread Brokers for US-Based Traders"
+        },
+
+        behavior: {
+            trust_level: "high",
+            prefers_regulation: true,
+            prefers_low_spread: true
         }
     },
 

@@ -14,6 +14,17 @@ export type TradingEconomicsRawItem = {
     [key: string]: unknown;
 };
 
+const DEFAULT_CALENDAR_COUNTRIES = [
+    "United States",
+    "Euro Area",
+    "United Kingdom",
+    "Japan",
+    "Canada",
+    "Australia",
+    "New Zealand",
+    "Switzerland",
+];
+
 function getCredentials() {
     const key = process.env.TRADING_ECONOMICS_KEY;
     const secret = process.env.TRADING_ECONOMICS_SECRET;
@@ -38,7 +49,7 @@ function buildUrl(path: string, extraQuery = "") {
 
 async function fetchTradingEconomics<T = unknown>(url: string): Promise<T> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
     try {
         const res = await fetch(url, {
@@ -50,7 +61,10 @@ async function fetchTradingEconomics<T = unknown>(url: string): Promise<T> {
         });
 
         if (!res.ok) {
-            throw new Error(`Trading Economics request failed: ${res.status}`);
+            const text = await res.text().catch(() => "");
+            throw new Error(
+                `Trading Economics request failed: ${res.status} ${text}`.trim()
+            );
         }
 
         return (await res.json()) as T;
@@ -72,8 +86,7 @@ export function toSafeArray(data: unknown): TradingEconomicsRawItem[] {
 }
 
 export async function fetchEconomicCalendar() {
-    const url = buildUrl("/calendar");
-    return fetchTradingEconomics<unknown>(url);
+    return fetchCalendarByCountry(DEFAULT_CALENDAR_COUNTRIES);
 }
 
 export async function fetchCalendarByCountry(countries: string[]) {

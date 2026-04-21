@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import TopMarkets from "@/components/TopMarkets";
-import EconomicCalendarSection from "@/components/market/EconomicCalendarSection";
+import HomeCalendar from "@/components/home/HomeCalendar";
 
 const SUPPORTED_LANGS = ["en", "ar", "de", "fr"] as const;
 type Lang = (typeof SUPPORTED_LANGS)[number];
@@ -181,7 +181,9 @@ export default async function MarketsPage({
                 <TopMarkets lang={lang} />
             </section>
 
-            <EconomicCalendarSection />
+            <section className="mx-auto max-w-7xl px-4 py-8">
+                <HomeCalendar />
+            </section>
 
             <section className="mx-auto max-w-7xl px-4 py-12">
                 <div className="grid gap-6 md:grid-cols-3">

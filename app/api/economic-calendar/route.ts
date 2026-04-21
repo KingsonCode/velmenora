@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchEconomicCalendar, toSafeArray } from "@/lib/markets/provider";
 import {
+    dedupeCalendarItems,
     normalizeCalendarItem,
     sortCalendar,
     type CalendarItem,
@@ -10,11 +11,18 @@ export async function GET() {
     try {
         const data = await fetchEconomicCalendar();
 
-        const normalized = toSafeArray(data)
-            .map(normalizeCalendarItem)
-            .filter((item): item is CalendarItem => item !== null)
+        const raw = toSafeArray(data);
+
+        const normalized = dedupeCalendarItems(
+            raw
+                .map(normalizeCalendarItem)
+                .filter((item): item is CalendarItem => item !== null)
+        )
             .sort(sortCalendar)
             .slice(0, 25);
+
+        console.log("economic-calendar raw:", raw.length);
+        console.log("economic-calendar normalized:", normalized.length);
 
         return NextResponse.json(normalized, {
             status: 200,

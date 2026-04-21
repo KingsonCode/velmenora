@@ -298,7 +298,7 @@ export const BROKERS: Broker[] = [
     {
         name: "IC Markets",
         slug: "icmarkets",
-        logo: "/logos/icmarkets.png",
+        logo: "/logos/ic.png",
 
         affiliate: {
             default:

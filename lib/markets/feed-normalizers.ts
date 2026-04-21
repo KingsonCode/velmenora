@@ -76,7 +76,7 @@ export function normalizeCalendarItem(
 
     const date = String(item.Date ?? "").trim();
     const country = String(item.Country ?? "").trim();
-    const category = String(item.Category ?? "").trim();
+    const category = String(item.Category ?? item.Event ?? "").trim();
     const event = String(item.Event ?? "").trim();
 
     if (!id || !date || !country || !event) {
@@ -87,7 +87,7 @@ export function normalizeCalendarItem(
         id,
         date,
         country,
-        category,
+        category: category || "Economic release",
         event,
         importance: toImportance(item.Importance),
         actual: String(item.Actual ?? "").trim(),
@@ -118,7 +118,9 @@ export function normalizeNewsItem(
         ""
     ).trim();
 
-    const source = String(item.source ?? item.Source ?? DEFAULT_NEWS_SOURCE).trim();
+    const source = String(
+        item.source ?? item.Source ?? DEFAULT_NEWS_SOURCE
+    ).trim();
     const time = String(item.date ?? item.Date ?? "").trim();
     const url = toSafeUrl(item.url ?? item.URL);
 

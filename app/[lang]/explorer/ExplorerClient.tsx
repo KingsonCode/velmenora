@@ -154,7 +154,7 @@ export default function ExplorerClient({ lang }: Props) {
     };
 
     return (
-        <section className="min-h-screen bg-black text-white px-4 py-12">
+        <section className="min-h-screen bg-black text-white px-4 py-12 pb-28">
             {/* HERO */}
             <div className="max-w-6xl mx-auto mb-10">
                 <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-yellow-500/10 p-8 md:p-10">
@@ -192,7 +192,7 @@ export default function ExplorerClient({ lang }: Props) {
             </div>
 
             {/* FILTER BAR */}
-            <div className="sticky top-20 z-40 max-w-6xl mx-auto mb-8 rounded-3xl border border-white/10 bg-black/80 p-4 backdrop-blur-xl">
+            <div className="relative z-10 max-w-6xl mx-auto mb-8 rounded-3xl border border-white/10 bg-black/80 p-4 backdrop-blur-xl">
                 <div className="mb-4 flex items-center gap-2 text-sm text-gray-300">
                     <SlidersHorizontal size={16} />
                     <span>Filter brokers</span>
@@ -208,7 +208,7 @@ export default function ExplorerClient({ lang }: Props) {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search broker..."
-                            className="w-full rounded-xl border border-white/20 bg-white/10 px-10 py-3 outline-none"
+                            className="w-full rounded-xl border border-white/20 bg-white/10 px-10 py-3 text-gray-200 outline-none placeholder:text-gray-500"
                         />
                     </div>
 
@@ -220,11 +220,26 @@ export default function ExplorerClient({ lang }: Props) {
                         <select
                             value={minRating}
                             onChange={(e) => setMinRating(Number(e.target.value))}
-                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 outline-none"
+                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 text-white outline-none"
                         >
-                            <option value={0}>All Ratings</option>
-                            <option value={4}>4★+</option>
-                            <option value={4.5}>4.5★+</option>
+                            <option
+                                value={0}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                All Ratings
+                            </option>
+                            <option
+                                value={4}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                4★+
+                            </option>
+                            <option
+                                value={4.5}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                4.5★+
+                            </option>
                         </select>
                     </div>
 
@@ -236,11 +251,26 @@ export default function ExplorerClient({ lang }: Props) {
                         <select
                             value={maxDeposit}
                             onChange={(e) => setMaxDeposit(Number(e.target.value))}
-                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 outline-none"
+                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 text-white outline-none"
                         >
-                            <option value={1000}>Any Deposit</option>
-                            <option value={10}>Under $10</option>
-                            <option value={50}>Under $50</option>
+                            <option
+                                value={1000}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Any Deposit
+                            </option>
+                            <option
+                                value={10}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Under $10
+                            </option>
+                            <option
+                                value={50}
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Under $50
+                            </option>
                         </select>
                     </div>
 
@@ -252,11 +282,26 @@ export default function ExplorerClient({ lang }: Props) {
                         <select
                             value={platform}
                             onChange={(e) => setPlatform(e.target.value)}
-                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 outline-none"
+                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 text-white outline-none"
                         >
-                            <option value="All">All Platforms</option>
-                            <option value="MT4">MT4</option>
-                            <option value="MT5">MT5</option>
+                            <option
+                                value="All"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                All Platforms
+                            </option>
+                            <option
+                                value="MT4"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                MT4
+                            </option>
+                            <option
+                                value="MT5"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                MT5
+                            </option>
                         </select>
                     </div>
 
@@ -268,11 +313,26 @@ export default function ExplorerClient({ lang }: Props) {
                         <select
                             value={sort}
                             onChange={(e) => setSort(e.target.value)}
-                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 outline-none"
+                            className="w-full appearance-none rounded-xl border border-white/20 bg-white/10 px-10 py-3 text-white outline-none"
                         >
-                            <option value="ai">Recommended (AI)</option>
-                            <option value="rating">Top Rated</option>
-                            <option value="deposit">Lowest Deposit</option>
+                            <option
+                                value="ai"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Recommended (AI)
+                            </option>
+                            <option
+                                value="rating"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Top Rated
+                            </option>
+                            <option
+                                value="deposit"
+                                style={{ backgroundColor: "#111827", color: "#ffffff" }}
+                            >
+                                Lowest Deposit
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -315,8 +375,8 @@ export default function ExplorerClient({ lang }: Props) {
                                 type="button"
                                 onClick={() => toggleCompare(broker.slug)}
                                 className={`absolute right-2 top-2 z-10 rounded-full px-3 py-1 text-xs transition ${selected
-                                        ? "bg-yellow-500 text-black"
-                                        : "bg-white/10 text-white hover:bg-white/20"
+                                    ? "bg-yellow-500 text-black"
+                                    : "bg-white/10 text-white hover:bg-white/20"
                                     }`}
                             >
                                 {selected ? "Selected" : "Compare"}

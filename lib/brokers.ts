@@ -28,7 +28,7 @@ export function isValidCountry(value: string): value is CountryCode {
     return COUNTRY_SET.has(value.toUpperCase() as CountryCode);
 }
 
-/* ================= HELPERS ================= */
+/* ================= SCORING ================= */
 
 function scoreBroker(b: Broker): number {
     return (b.priority || 0) * 2 + (b.rating || 0);
@@ -54,29 +54,29 @@ export function getBrokersByRegion(region: Region): Broker[] {
     return BROKERS.filter((b) => b.regions?.includes(region));
 }
 
-/* ================= TOP (FULL GEO FALLBACK) ================= */
+/* ================= SMART GEO POOL ================= */
+
+function getGeoPool(country?: CountryCode): Broker[] {
+    if (country) {
+        const local = getBrokersByCountry(country);
+        if (local.length > 0) return local;
+    }
+
+    const global = getBrokersByRegion("GLOBAL");
+    if (global.length > 0) return global;
+
+    return BROKERS;
+}
+
+/* ================= TOP ================= */
 
 export function getTopBrokers(
     country?: CountryCode,
     limit = 5
 ): Broker[] {
-    let list: Broker[] = [];
+    const pool = getGeoPool(country);
 
-    if (country) {
-        const local = getBrokersByCountry(country);
-
-        if (local.length > 0) {
-            list = local;
-        } else {
-            const global = getBrokersByRegion("GLOBAL");
-            list = global.length > 0 ? global : BROKERS;
-        }
-    } else {
-        const global = getBrokersByRegion("GLOBAL");
-        list = global.length > 0 ? global : BROKERS;
-    }
-
-    return [...list]
+    return [...pool]
         .sort((a, b) => scoreBroker(b) - scoreBroker(a))
         .slice(0, limit);
 }
@@ -99,14 +99,14 @@ export function getRelatedBrokers(
             let score = scoreBroker(b);
 
             if (
-                currentCategories.length > 0 &&
+                currentCategories.length &&
                 b.category?.some((c) => currentCategories.includes(c))
             ) {
                 score += 5;
             }
 
             if (
-                currentRegions.length > 0 &&
+                currentRegions.length &&
                 b.regions?.some((r) => currentRegions.includes(r))
             ) {
                 score += 3;
@@ -125,15 +125,18 @@ export function getBrokerLink(
     broker: Broker,
     country?: CountryCode
 ): string {
+    // 🔥 priority 1 — geo affiliate
     const geoUrl = country ? broker.affiliate?.geo?.[country] : undefined;
     if (geoUrl) return geoUrl;
 
-    const defaultAffiliate = broker.affiliate?.default;
-    if (defaultAffiliate) return defaultAffiliate;
+    // 🔥 priority 2 — default affiliate
+    if (broker.affiliate?.default) return broker.affiliate.default;
 
-    const legacyGeoUrl = country ? broker.alt_urls?.[country] : undefined;
-    if (legacyGeoUrl) return legacyGeoUrl;
+    // 🔥 priority 3 — legacy alt_urls
+    const legacyGeo = country ? broker.alt_urls?.[country] : undefined;
+    if (legacyGeo) return legacyGeo;
 
+    // 🔥 fallback
     if (broker.url) return broker.url;
 
     return "/";
@@ -145,4 +148,17 @@ export function getBestBrokerForCountry(
     country?: CountryCode
 ): Broker | null {
     return getTopBrokers(country, 1)[0] ?? null;
+}
+
+/* ================= UI HELPER (🔥 NEW) ================= */
+
+/**
+ * Direct helper for landing pages (/start, /compare)
+ * returns already sorted + limited brokers
+ */
+export function getTopBrokerCards(
+    country?: CountryCode,
+    limit = 3
+): Broker[] {
+    return getTopBrokers(country, limit);
 }

@@ -6,6 +6,72 @@ import { getRandomSlugs } from "@/lib/blog/programmaticEngine";
 
 export const revalidate = 3600;
 
+/* ================= CATEGORY HELPERS ================= */
+const CATEGORY_SLUGS = new Set([
+    "best-forex-brokers",
+    "ecn-brokers",
+    "low-spread-brokers",
+    "high-leverage-brokers",
+    "best-forex-brokers-for-beginners",
+    "fast-withdrawal-forex-brokers",
+]);
+
+function isCategorySlug(slug: string) {
+    return CATEGORY_SLUGS.has(slug);
+}
+
+function formatCategoryTitle(slug: string) {
+    return slug
+        .replaceAll("-", " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+function generateCategoryContent(slug: string) {
+    const title = formatCategoryTitle(slug);
+
+    return `
+        <h2>Top ${title}</h2>
+        <p>
+            This page highlights the best ${title} based on trading conditions,
+            spreads, execution speed, and overall trader experience.
+        </p>
+
+        <h2>What to Look For</h2>
+        <ul>
+            <li>Low spreads and commissions</li>
+            <li>Fast withdrawals</li>
+            <li>Reliable regulation</li>
+            <li>Strong trading platforms (MT4, MT5, cTrader)</li>
+        </ul>
+
+        <h2>Why This Matters</h2>
+        <p>
+            Choosing the right broker can significantly impact your trading
+            performance, especially in volatile forex markets.
+        </p>
+
+        <h2>Compare Brokers</h2>
+        <p>
+            Use our comparison tools to evaluate brokers side by side and
+            find the best match for your trading strategy.
+        </p>
+    `;
+}
+
+function getFallbackCategoryPost(slug: string) {
+    if (!isCategorySlug(slug)) return null;
+
+    return {
+        slug,
+        title: formatCategoryTitle(slug),
+        description:
+            "Compare top forex brokers based on trading conditions, spreads, and features.",
+        content: generateCategoryContent(slug),
+        type: "category",
+        image: "/og-default.jpg",
+    };
+}
+
 /* ================= STATIC PATHS ================= */
 export async function generateStaticParams() {
     const manualPosts = getAllPostsData()
@@ -18,7 +84,11 @@ export async function generateStaticParams() {
         slug,
     }));
 
-    return [...manualPosts, ...sampledProgrammatic];
+    const categoryPages = Array.from(CATEGORY_SLUGS).map((slug) => ({
+        slug,
+    }));
+
+    return [...manualPosts, ...sampledProgrammatic, ...categoryPages];
 }
 
 /* ================= SEO ================= */
@@ -28,7 +98,8 @@ export async function generateMetadata({
     params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
     const { slug } = await params;
-    const post = getPost(slug);
+
+    const post = getPost(slug) || getFallbackCategoryPost(slug);
 
     if (!post) {
         return {
@@ -84,7 +155,13 @@ export default async function BlogPostPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = await params;
-    const post = getPost(slug);
+
+    let post = getPost(slug);
+
+    /* ================= HANDLE CATEGORY PAGES ================= */
+    if (!post) {
+        post = getFallbackCategoryPost(slug);
+    }
 
     if (!post) {
         notFound();
@@ -93,64 +170,64 @@ export default async function BlogPostPage({
     return (
         <main className="min-h-screen bg-[#050816] text-white">
             {/* HERO */}
-            <section className="relative border-b border-white/10 overflow-hidden">
+            <section className="relative overflow-hidden border-b border-white/10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
 
-                <div className="relative max-w-4xl mx-auto px-6 py-16 md:py-24">
+                <div className="relative mx-auto max-w-4xl px-6 py-16 md:py-24">
                     {/* BREADCRUMB */}
-                    <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-400 mb-6">
+                    <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-400">
                         <Link
                             href="/"
-                            className="hover:text-yellow-300 transition"
+                            className="transition hover:text-yellow-300"
                         >
                             Home
                         </Link>
                         <span>/</span>
                         <Link
                             href="/blog"
-                            className="hover:text-yellow-300 transition"
+                            className="transition hover:text-yellow-300"
                         >
                             Blog
                         </Link>
                         <span>/</span>
-                        <span className="text-gray-500 truncate max-w-[220px] md:max-w-none">
+                        <span className="max-w-[220px] truncate text-gray-500 md:max-w-none">
                             {post.title}
                         </span>
                     </nav>
 
                     {/* EYEBROW */}
-                    <div className="inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-yellow-300 mb-6">
+                    <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-yellow-300">
                         <span className="h-2 w-2 rounded-full bg-yellow-300" />
                         Forex Guide
                     </div>
 
                     {/* TITLE */}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                    <h1 className="mb-6 text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">
                         {post.title}
                     </h1>
 
                     {/* DESCRIPTION */}
                     {post.description ? (
-                        <p className="text-lg md:text-xl text-gray-300 max-w-3xl leading-relaxed mb-8">
+                        <p className="mb-8 max-w-3xl text-lg leading-relaxed text-gray-300 md:text-xl">
                             {post.description}
                         </p>
                     ) : null}
 
                     {/* META */}
                     <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
-                        {post.date ? (
+                        {"date" in post && post.date ? (
                             <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
                                 Updated: {post.date}
                             </span>
                         ) : null}
 
-                        {post.country ? (
+                        {"country" in post && post.country ? (
                             <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
                                 Market: {post.country}
                             </span>
                         ) : null}
 
-                        {post.type ? (
+                        {"type" in post && post.type ? (
                             <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 uppercase">
                                 {post.type}
                             </span>
@@ -164,20 +241,20 @@ export default async function BlogPostPage({
             </section>
 
             {/* CONTENT */}
-            <section className="max-w-4xl mx-auto px-6 py-12 md:py-16">
+            <section className="mx-auto max-w-4xl px-6 py-12 md:py-16">
                 <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
                     {/* ARTICLE */}
                     <article className="min-w-0">
-                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm shadow-2xl p-6 md:p-10">
+                        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl backdrop-blur-sm md:p-10">
                             {post.content ? (
                                 <div
                                     className="
                                         prose prose-invert max-w-none
-                                        prose-headings:text-white
                                         prose-headings:scroll-mt-24
-                                        prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-4
+                                        prose-headings:text-white
+                                        prose-h2:mb-4 prose-h2:mt-10 prose-h2:text-2xl prose-h2:font-bold
                                         prose-h3:text-xl prose-h3:font-semibold
-                                        prose-p:text-gray-300 prose-p:leading-8
+                                        prose-p:leading-8 prose-p:text-gray-300
                                         prose-li:text-gray-300
                                         prose-strong:text-yellow-200
                                         prose-a:text-yellow-300 hover:prose-a:text-yellow-200
@@ -195,25 +272,27 @@ export default async function BlogPostPage({
 
                         {/* BOTTOM CTA */}
                         <div className="mt-10 rounded-3xl border border-yellow-400/15 bg-gradient-to-br from-yellow-400/10 via-white/[0.02] to-transparent p-6 md:p-8">
-                            <h2 className="text-2xl font-bold mb-3">
+                            <h2 className="mb-3 text-2xl font-bold">
                                 Ready to compare brokers?
                             </h2>
 
-                            <p className="text-gray-300 mb-6 max-w-2xl">
-                                Explore broker comparisons, trading guides, and market-focused content built to help traders choose better platforms.
+                            <p className="mb-6 max-w-2xl text-gray-300">
+                                Explore broker comparisons, trading guides, and
+                                market-focused content built to help traders choose
+                                better platforms.
                             </p>
 
                             <div className="flex flex-wrap gap-4">
                                 <Link
                                     href="/compare"
-                                    className="inline-flex items-center justify-center rounded-xl bg-yellow-400 text-black px-6 py-3 font-semibold hover:scale-[1.02] transition"
+                                    className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-semibold text-black transition hover:scale-[1.02]"
                                 >
                                     Compare Brokers
                                 </Link>
 
                                 <Link
                                     href="/blog"
-                                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold hover:bg-white/10 transition"
+                                    className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3 font-semibold transition hover:bg-white/10"
                                 >
                                     More Guides
                                 </Link>
@@ -224,28 +303,28 @@ export default async function BlogPostPage({
                     {/* SIDEBAR */}
                     <aside className="space-y-6">
                         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-                            <h3 className="text-lg font-semibold mb-4">
+                            <h3 className="mb-4 text-lg font-semibold">
                                 Quick Navigation
                             </h3>
 
                             <div className="space-y-3 text-sm">
                                 <Link
                                     href="/blog"
-                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 transition hover:bg-white/10 hover:text-yellow-300"
                                 >
                                     All Trading Guides
                                 </Link>
 
                                 <Link
                                     href="/compare"
-                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 transition hover:bg-white/10 hover:text-yellow-300"
                                 >
                                     Broker Comparison
                                 </Link>
 
                                 <Link
                                     href="/brokers"
-                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 hover:text-yellow-300 hover:bg-white/10 transition"
+                                    className="block rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-gray-300 transition hover:bg-white/10 hover:text-yellow-300"
                                 >
                                     Browse Brokers
                                 </Link>
@@ -253,7 +332,7 @@ export default async function BlogPostPage({
                         </div>
 
                         <div className="rounded-3xl border border-yellow-400/15 bg-yellow-400/5 p-6">
-                            <h3 className="text-lg font-semibold mb-3 text-yellow-200">
+                            <h3 className="mb-3 text-lg font-semibold text-yellow-200">
                                 Why Velmenora?
                             </h3>
 

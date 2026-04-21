@@ -1,111 +1,105 @@
-// /lib/geo/resolver.ts
-
 import {
     normalizeCountryCode,
     getCountryMeta,
-    getClusterByCountry
+    getClusterByCountry,
 } from "./countries";
+import type { CountryCode } from "./countries";
 import { CLUSTERS, Cluster, ClusterConfig } from "./clusters";
 
 /* ================= TYPES ================= */
 
-type AnyRequest = {
+export type AnyRequest = {
     headers?: { get?: (key: string) => string | null };
     nextUrl?: { searchParams?: URLSearchParams };
     cookies?: { get?: (key: string) => { value?: string } | undefined };
 };
 
 export type GeoResult = {
-    country: string | null;
+    country: CountryCode | null;
     cluster: Cluster;
     config: ClusterConfig;
     meta: ReturnType<typeof getCountryMeta>;
     source: "query" | "header" | "cookie" | "manual" | "fallback";
 
-    /* 🔥 DIRECT ACCESS */
     language: string;
     brokers: string[];
     payments: string[];
     intent: "beginner" | "pro";
 };
 
+/* ================= INTERNAL HELPERS ================= */
+
+function normalizeDetectedCountry(value?: string | null): CountryCode | null {
+    return normalizeCountryCode(value || undefined);
+}
+
 /* ================= DETECTORS ================= */
 
-/**
- * 🔥 SAFE HEADER DETECTION (NO CRASH EVER)
- */
-function detectCountryFromHeaders(req: AnyRequest): string | null {
-    const headers = req?.headers;
+function detectCountryFromHeaders(req: AnyRequest): CountryCode | null {
+    const h = req?.headers;
 
-    if (!headers || typeof headers.get !== "function") {
+    if (!h || typeof h.get !== "function") {
         return null;
     }
 
     const candidates = [
-        headers.get("x-vercel-ip-country"),
-        headers.get("cf-ipcountry"),
-        headers.get("x-country"),
-        headers.get("x-forwarded-country")
+        h.get("x-vercel-ip-country"),
+        h.get("cf-ipcountry"),
+        h.get("x-geo-country"),
+        h.get("x-country-code"),
+        h.get("x-country"),
+        h.get("x-forwarded-country"),
     ];
 
-    for (const c of candidates) {
-        const normalized = normalizeCountryCode(c || undefined);
+    for (const candidate of candidates) {
+        const normalized = normalizeDetectedCountry(candidate);
         if (normalized) return normalized;
     }
 
     return null;
 }
 
-/**
- * 🔥 SAFE QUERY DETECTION
- */
-function detectCountryFromQuery(req: AnyRequest): string | null {
+function detectCountryFromQuery(req: AnyRequest): CountryCode | null {
     const params = req?.nextUrl?.searchParams;
     if (!params) return null;
 
-    const country = params.get("country");
-    return normalizeCountryCode(country || undefined);
+    const country =
+        params.get("country") ||
+        params.get("geo") ||
+        params.get("region");
+
+    return normalizeDetectedCountry(country);
 }
 
-/**
- * 🔥 SAFE COOKIE DETECTION
- */
-function detectCountryFromCookie(req: AnyRequest): string | null {
-    const cookie = req?.cookies?.get?.("geo_country")?.value;
-    return normalizeCountryCode(cookie);
+function detectCountryFromCookie(req: AnyRequest): CountryCode | null {
+    const cookie =
+        req?.cookies?.get?.("geo_country")?.value ||
+        req?.cookies?.get?.("country")?.value;
+
+    return normalizeDetectedCountry(cookie);
 }
 
-/* ================= MAIN ================= */
+/* ================= CORE RESOLVER ================= */
 
-export function resolveGeo(
-    input?: AnyRequest | string
-): GeoResult {
-
-    let country: string | null = null;
+export function resolveGeo(input?: AnyRequest | string): GeoResult {
+    let country: CountryCode | null = null;
     let source: GeoResult["source"] = "fallback";
 
-    /* ================= MODE SWITCH ================= */
-
     if (typeof input === "string") {
-        // 👉 Manual mode
-        const normalized = normalizeCountryCode(input);
+        const normalized = normalizeDetectedCountry(input);
         if (normalized) {
             country = normalized;
             source = "manual";
         }
-    }
-
-    else if (input) {
+    } else if (input) {
         const req = input;
 
-        // 1. Query (highest priority)
         const queryCountry = detectCountryFromQuery(req);
         if (queryCountry) {
             country = queryCountry;
             source = "query";
         }
 
-        // 2. Headers
         if (!country) {
             const headerCountry = detectCountryFromHeaders(req);
             if (headerCountry) {
@@ -114,7 +108,6 @@ export function resolveGeo(
             }
         }
 
-        // 3. Cookie
         if (!country) {
             const cookieCountry = detectCountryFromCookie(req);
             if (cookieCountry) {
@@ -123,8 +116,6 @@ export function resolveGeo(
             }
         }
     }
-
-    /* ================= FALLBACK ================= */
 
     if (!country) {
         country = null;
@@ -135,22 +126,16 @@ export function resolveGeo(
     const config = CLUSTERS[cluster];
     const meta = getCountryMeta(country || undefined);
 
-    /* ================= DERIVED ================= */
-
     const brokers = [
         config.broker_priority.primary,
         config.broker_priority.secondary,
         config.broker_priority.tertiary,
-    ];
+    ].filter(Boolean);
 
     const payments = config.payment_methods;
 
-    const intent =
-        config.behavior.trust_level === "low"
-            ? "beginner"
-            : "pro";
-
-    /* ================= RESULT ================= */
+    const intent: "beginner" | "pro" =
+        config.behavior.trust_level === "low" ? "beginner" : "pro";
 
     return {
         country,
@@ -158,7 +143,6 @@ export function resolveGeo(
         config,
         meta,
         source,
-
         language: config.language,
         brokers,
         payments,
