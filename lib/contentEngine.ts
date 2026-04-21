@@ -1,6 +1,29 @@
 import { pick } from "@/lib/utils/pick";
 import type { Broker } from "./types/broker";
 
+/* 🔥 NEW ENGINES */
+import { buildVariation } from "./content/variationEngine";
+import { rankBrokers } from "./engines/rankingEngine";
+import { buildInternalLinks } from "./engines/internalLinkEngine";
+
+/* ================= TYPES ================= */
+
+type Intent =
+    | "best"
+    | "low-spread"
+    | "high-leverage"
+    | "beginner"
+    | "guide";
+
+type BuildPageContentInput = {
+    intent: Intent;
+    countryCode: string;
+    countryName: string;
+    cluster: string;
+    brokers: Broker[];
+    payments: string[];
+};
+
 /* ================= UTILS ================= */
 
 function formatFeature(f: string) {
@@ -45,6 +68,58 @@ function formatBestFor(broker: Broker): string {
     return "stable trading conditions";
 }
 
+/* =========================================================
+   🔥 NEW: PAGE CONTENT ENGINE (RANKING + VARIATION)
+========================================================= */
+
+export function buildPageContent(input: BuildPageContentInput) {
+    const {
+        intent,
+        countryCode,
+        countryName,
+        cluster,
+        brokers,
+        payments,
+    } = input;
+
+    /* 🔥 RANK BROKERS */
+    const ranked = rankBrokers({
+        brokers,
+        intent,
+        countryCode,
+        cluster,
+    });
+
+    /* 🔥 BUILD VARIATION */
+    const variation = buildVariation({
+        intent,
+        ctx: {
+            country: countryCode.toLowerCase(),
+            countryName,
+            cluster,
+            payments,
+        },
+        brokers: ranked,
+        seedKey: `${intent}-${countryCode}`,
+    });
+
+    /* 🔗 INTERNAL LINKS */
+    const links = buildInternalLinks({
+        country: countryCode.toLowerCase(),
+        intent,
+    });
+
+    return {
+        intro: variation.intro,
+        payments: variation.paymentsLine,
+        mentions: variation.brokerMentions,
+        cta: variation.cta,
+
+        brokers: ranked,
+        internalLinks: links,
+    };
+}
+
 /* ================= REVIEW ENGINE ================= */
 
 export function buildReviewSections(broker: Broker) {
@@ -63,7 +138,9 @@ export function buildReviewSections(broker: Broker) {
     ]);
 
     const trading = paragraph(
-        `${broker.name} provides competitive trading conditions including spreads starting from ${formatSpreadsFrom(broker)}.`,
+        `${broker.name} provides competitive trading conditions including spreads starting from ${formatSpreadsFrom(
+            broker
+        )}.`,
         `With ${formatMinDeposit(broker)}, it remains accessible to many traders.`,
         `It supports ${formatPlatforms(broker)}, ensuring flexibility.`
     );
@@ -75,7 +152,9 @@ export function buildReviewSections(broker: Broker) {
     );
 
     const payments = paragraph(
-        `${broker.name} supports ${broker.payments.join(", ")} for deposits and withdrawals.`,
+        `${broker.name} supports ${broker.payments.join(
+            ", "
+        )} for deposits and withdrawals.`,
         `This ensures flexibility and accessibility across different regions.`,
         `Withdrawal speed is considered reliable for active traders.`
     );
@@ -83,15 +162,16 @@ export function buildReviewSections(broker: Broker) {
     const trust = paragraph(
         `${broker.name} is positioned as a trusted broker,`,
         `which impacts its trust level.`,
-        `Overall trust is considered ${broker.conversion?.trustLevel || "moderate"}.`
+        `Overall trust is considered ${broker.conversion?.trustLevel || "moderate"
+        }.`
     );
 
-    const pros = broker.features.map(
-        (f) => `Strong ${formatFeature(f)}`
-    );
+    const pros = broker.features.map((f) => `Strong ${formatFeature(f)}`);
 
     const conclusion = paragraph(
-        `${broker.name} is best suited for traders looking for ${formatBestFor(broker)}.`,
+        `${broker.name} is best suited for traders looking for ${formatBestFor(
+            broker
+        )}.`,
         `It combines features, platform support, and flexible payments effectively.`
     );
 
@@ -120,18 +200,24 @@ export function buildComparisonSections(
     );
 
     const conditions = paragraph(
-        `${a.name} offers spreads from ${formatSpreadsFrom(a)}, while ${b.name} starts from ${formatSpreadsFrom(b)}.`,
+        `${a.name} offers spreads from ${formatSpreadsFrom(a)}, while ${b.name} starts from ${formatSpreadsFrom(
+            b
+        )}.`,
         `Minimum deposit is ${formatMinDeposit(a)} vs ${formatMinDeposit(b)}.`,
         `These differences affect trading strategies and accessibility.`
     );
 
     const platforms = paragraph(
-        `${a.name} supports ${formatPlatforms(a)}, while ${b.name} supports ${formatPlatforms(b)}.`,
+        `${a.name} supports ${formatPlatforms(a)}, while ${b.name} supports ${formatPlatforms(
+            b
+        )}.`,
         `Platform availability impacts usability and execution speed.`
     );
 
     const features = paragraph(
-        `${a.name} offers ${a.features.join(", ")}, while ${b.name} provides ${b.features.join(", ")}.`,
+        `${a.name} offers ${a.features.join(
+            ", "
+        )}, while ${b.name} provides ${b.features.join(", ")}.`,
         `Feature differences can influence trading performance.`
     );
 
