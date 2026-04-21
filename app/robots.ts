@@ -4,12 +4,14 @@ import type { MetadataRoute } from "next";
    🔥 CONFIG
 ========================================================= */
 const BASE_URL =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://velmenora.com";
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
+    "https://www.velmenora.com";
 
 const isProd = process.env.NODE_ENV === "production";
 
 /* =========================================================
-   🔥 ROBOTS CONFIG
+   🔥 ROBOTS
 ========================================================= */
 export default function robots(): MetadataRoute.Robots {
     /* ❌ BLOCK EVERYTHING IN DEV */
@@ -30,7 +32,7 @@ export default function robots(): MetadataRoute.Robots {
             {
                 userAgent: "*",
 
-                /* 🔓 ALLOW ALL IMPORTANT CONTENT */
+                /* 🔓 ALLOW IMPORTANT CONTENT */
                 allow: [
                     "/",
                     "/blog/",
@@ -53,10 +55,15 @@ export default function robots(): MetadataRoute.Robots {
             },
         ],
 
-        /* 🔥 ROOT SITEMAP ENTRY */
-        sitemap: `${BASE_URL}/sitemap.xml`,
+        /* 🔥 MULTIPLE SITEMAPS (VERY IMPORTANT) */
+        sitemap: [
+            `${BASE_URL}/sitemap.xml`,
+            `${BASE_URL}/blog/sitemap.xml`,
+            `${BASE_URL}/money-pages/sitemap.xml`,
+            `${BASE_URL}/programmatic/sitemap/0.xml`,
+        ],
 
-        /* 🔥 HOST (OPTIONAL BUT GOOD FOR CLARITY) */
+        /* 🔥 HOST */
         host: BASE_URL,
     };
 }

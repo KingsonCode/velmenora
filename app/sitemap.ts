@@ -1,12 +1,15 @@
 import type { MetadataRoute } from "next";
 
 const BASE_URL =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://velmenora.com";
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
+    "https://www.velmenora.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const now = new Date();
 
     return [
+        /* ================= CORE ================= */
         {
             url: `${BASE_URL}/`,
             lastModified: now,
@@ -29,13 +32,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: `${BASE_URL}/compare`,
             lastModified: now,
             changeFrequency: "weekly",
-            priority: 0.9,
+            priority: 0.85,
         },
         {
             url: `${BASE_URL}/academy`,
             lastModified: now,
             changeFrequency: "weekly",
-            priority: 0.8,
+            priority: 0.85,
         },
         {
             url: `${BASE_URL}/markets`,
@@ -50,7 +53,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 0.75,
         },
 
-        /* BLOG CATEGORY HUBS */
+        /* ================= BLOG CATEGORY HUBS ================= */
         {
             url: `${BASE_URL}/blog/category/beginners`,
             lastModified: now,
@@ -80,6 +83,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: now,
             changeFrequency: "weekly",
             priority: 0.85,
+        },
+
+        /* ================= SITEMAP DISCOVERY ================= */
+        {
+            url: `${BASE_URL}/blog/sitemap.xml`,
+            lastModified: now,
+            changeFrequency: "weekly",
+            priority: 0.3,
+        },
+        {
+            url: `${BASE_URL}/money-pages/sitemap.xml`,
+            lastModified: now,
+            changeFrequency: "weekly",
+            priority: 0.3,
+        },
+        {
+            url: `${BASE_URL}/programmatic/sitemap/0.xml`,
+            lastModified: now,
+            changeFrequency: "weekly",
+            priority: 0.3,
         },
     ];
 }
