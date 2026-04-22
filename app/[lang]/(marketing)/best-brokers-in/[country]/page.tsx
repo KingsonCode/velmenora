@@ -6,14 +6,10 @@ import {
     resolveCountry,
 } from "@/lib/countryEngine";
 
-import {
-    buildCountryTitle,
-    generateCanonical,
-} from "@/lib/seo";
-
+import { buildMoneyPageMetadata } from "@/lib/seo/metadataEngine";
 import { PROGRAMMATIC_SUPPORTED_LANGS } from "@/lib/programmatic/staticSlugs";
 
-/* ✅ NEW CLEAN COMPONENT */
+/* ✅ CLEAN COMPONENT */
 import CountryMoneyPage from "@/components/pages/CountryMoneyPage";
 
 /* ================= TYPES ================= */
@@ -55,20 +51,20 @@ export function generateStaticParams() {
 export async function generateMetadata({
     params,
 }: PageProps): Promise<Metadata> {
-    const { country } = await params;
+    const { lang, country } = await params;
 
     const code = resolveCountry(country);
     const data = getCountryPageData(code);
 
-    if (!data) return {};
+    if (!data) {
+        return {};
+    }
 
-    return {
-        title: buildCountryTitle(data.name),
-        description: `Best forex brokers in ${data.name} with fast withdrawals, low spreads, and local payment methods.`,
-        alternates: {
-            canonical: generateCanonical(`/best-brokers-in/${country}`),
-        },
-    };
+    return buildMoneyPageMetadata({
+        intent: "best",
+        countryName: data.name,
+        pathname: `/${lang}/best-brokers-in/${country}`,
+    });
 }
 
 /* ================= PAGE ================= */

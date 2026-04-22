@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { getBroker, isValidCountry } from "@/lib/brokers";
 import { getCompareSlugs } from "@/lib/compare";
 import type { CountryCode, Broker } from "@/lib/types/broker";
+import { buildComparisonMetadata } from "@/lib/seo/metadataEngine";
 
 /* =========================================================
    CONFIG
@@ -122,42 +123,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { slug, lang } = await params;
 
-    if (!isValidLang(lang)) return {};
+    if (!isValidLang(lang)) {
+        return {};
+    }
 
     const parsed = parseSlug(slug);
-    if (!parsed) return {};
+    if (!parsed) {
+        return {};
+    }
 
-    const { a, b } = parsed;
+    const brokerA = getBroker(parsed.a);
+    const brokerB = getBroker(parsed.b);
 
-    const brokerA = getBroker(a);
-    const brokerB = getBroker(b);
+    if (!brokerA || !brokerB) {
+        return {};
+    }
 
-    if (!brokerA || !brokerB) return {};
-
-    const title = `${brokerA.name} vs ${brokerB.name} (2026) – Full Comparison`;
-    const description = `Compare ${brokerA.name} vs ${brokerB.name} in spreads, fees, platforms, features and overall performance. Find the better broker for your trading style.`;
-
-    return {
-        title,
-        description,
-        alternates: {
-            canonical: `https://velmenora.com/${lang}/country/compare/${slug}`,
-        },
-        openGraph: {
-            title,
-            description,
-            url: `https://velmenora.com/${lang}/country/compare/${slug}`,
-            siteName: "Velmenora",
-            type: "article",
-            images: ["/og-default.jpg"],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-            images: ["/og-default.jpg"],
-        },
-    };
+    return buildComparisonMetadata({
+        brokerAName: brokerA.name,
+        brokerBName: brokerB.name,
+        pathname: `/${lang}/compare/${slug}`,
+    });
 }
 
 /* =========================================================
@@ -198,7 +184,6 @@ export default async function CompareSlugPage({
     return (
         <main className="min-h-screen bg-[#020617] px-6 py-20 text-white">
             <div className="mx-auto max-w-5xl">
-                {/* HERO */}
                 <section className="mb-10 text-center">
                     <div className="mb-4 inline-flex rounded-full border border-yellow-500/20 bg-yellow-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-yellow-300">
                         Head-to-Head Broker Comparison
@@ -215,14 +200,12 @@ export default async function CompareSlugPage({
                     </p>
                 </section>
 
-                {/* WINNER BADGE */}
                 <section className="mb-10 text-center">
                     <span className="inline-flex rounded-full bg-yellow-400 px-5 py-2.5 font-semibold text-black">
                         🏆 Best Overall: {winner.name}
                     </span>
                 </section>
 
-                {/* TOP CTA */}
                 <section className="mb-12 grid gap-6 md:grid-cols-2">
                     {orderedBrokers.map((broker) => (
                         <Link
@@ -238,7 +221,6 @@ export default async function CompareSlugPage({
                     ))}
                 </section>
 
-                {/* QUICK SUMMARY */}
                 <section className="mb-12 grid gap-4 md:grid-cols-3">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-2 text-sm uppercase tracking-wide text-gray-400">
@@ -266,7 +248,6 @@ export default async function CompareSlugPage({
                     </div>
                 </section>
 
-                {/* COMPARISON TABLE */}
                 <section className="mb-12 overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
                     <table className="w-full min-w-[720px]">
                         <thead>
@@ -329,7 +310,6 @@ export default async function CompareSlugPage({
                     </table>
                 </section>
 
-                {/* CONTENT */}
                 <section className="mb-12 rounded-3xl border border-white/10 bg-white/5 p-8 md:p-10">
                     <h2 className="mb-4 text-2xl font-bold">
                         {brokerA.name} vs {brokerB.name}: Full Comparison
@@ -365,7 +345,6 @@ export default async function CompareSlugPage({
                     </p>
                 </section>
 
-                {/* SECONDARY LINKS */}
                 <section className="mb-12 grid gap-4 md:grid-cols-3">
                     <Link
                         href={`/${lang}/country/brokers/${brokerA.slug}`}
@@ -398,7 +377,6 @@ export default async function CompareSlugPage({
                     </Link>
                 </section>
 
-                {/* FINAL CTA */}
                 <section className="text-center">
                     <Link
                         href={`/go/${winner.slug}?src=${brokerA.slug}-vs-${brokerB.slug}-bottom&country=${country}`}

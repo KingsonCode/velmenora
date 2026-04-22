@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-// ✅ NEW
+// ✅ DATA
 import { getBroker } from "@/lib/brokerEngine";
 import { getAllBrokers } from "@/lib/brokers";
-import {
-    buildReviewTitle,
-    buildReviewDescription,
-    generateCanonical,
-} from "@/lib/seo";
+
+// ✅ NEW METADATA ENGINE
+import { buildReviewMetadata } from "@/lib/seo/metadataEngine";
 
 import { buildReviewSections } from "@/lib/contentEngine";
 
@@ -48,21 +47,20 @@ export async function generateMetadata({
     params,
 }: {
     params: Promise<{ lang: string; slug: string }>;
-}) {
-    const { slug } = await params;
+}): Promise<Metadata> {
+    const { lang, slug } = await params;
 
     const brokerSlug = slug.replace("-review", "");
     const broker = getBroker(brokerSlug);
 
-    if (!broker) return {};
+    if (!broker) {
+        return {};
+    }
 
-    return {
-        title: buildReviewTitle(broker.name),
-        description: buildReviewDescription(broker.name),
-        alternates: {
-            canonical: generateCanonical(`/review/${slug}`),
-        },
-    };
+    return buildReviewMetadata({
+        brokerName: broker.name,
+        pathname: `/${lang}/review/${slug}`,
+    });
 }
 
 /* ================= PAGE ================= */
@@ -86,35 +84,27 @@ export default async function BrokerReviewPage({
 
     return (
         <>
-            {/* 🔥 TRACKING */}
             <TrackingView page="review" broker={broker.slug} />
 
-            {/* 🔥 SCHEMA */}
             <SchemaMarkup data={buildReviewSchema(broker)} />
             <SchemaMarkup data={buildFAQSchema(faq)} />
 
-            {/* 🔥 HERO */}
             <BrokerHeroCard broker={broker} geoLabel="Global" />
 
-            {/* 🔥 STATS */}
             <BrokerStatsGrid
                 broker={broker}
                 payments={broker.payments || []}
             />
 
-            {/* 🔥 TRUST */}
             <BrokerTrustCard broker={broker} />
 
-            {/* 🔥 CONTENT (SEO HEAVY) */}
             <section className="max-w-3xl mx-auto px-6 py-12 space-y-6">
-
                 <h1 className="text-3xl font-bold">
                     {broker.name} Review
                 </h1>
 
                 <p>{content.intro}</p>
 
-                {/* 🔥 INTERNAL LINK BOOST */}
                 <p className="mt-4">
                     Looking for alternatives?{" "}
                     <a href="/best-forex-brokers" className="underline">
@@ -142,17 +132,13 @@ export default async function BrokerReviewPage({
 
                 <h2>Final Verdict</h2>
                 <p>{content.conclusion}</p>
-
             </section>
 
-            {/* 🔥 CTA (MONEY ZONE) */}
             <BrokerCTA broker={broker} />
             <StickyCTA broker={broker} />
 
-            {/* 🔥 FAQ */}
             <FAQ items={faq} />
 
-            {/* 🔥 INTERNAL LINKS */}
             <InternalLinks
                 title="Compare with Other Brokers"
                 links={getRelatedComparisons(broker.slug)}
@@ -163,7 +149,6 @@ export default async function BrokerReviewPage({
                 links={getRelatedReviews(broker.slug)}
             />
 
-            {/* 🔥 FINAL SEO PUSH */}
             <p className="text-center mt-10">
                 Still exploring?{" "}
                 <a href="/best-forex-brokers" className="underline">

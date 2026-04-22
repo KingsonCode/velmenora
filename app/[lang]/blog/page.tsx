@@ -7,6 +7,8 @@ import {
     type BlogCategory,
 } from "@/lib/blog/categories";
 
+import { buildBlogMetadata } from "@/lib/seo/metadataEngine";
+
 const SUPPORTED_LANGS = ["en", "ar", "de", "fr"] as const;
 type Lang = (typeof SUPPORTED_LANGS)[number];
 type RouteParams = Promise<{ lang: string }>;
@@ -22,7 +24,11 @@ export const revalidate = 3600;
 ========================================= */
 
 function getBaseUrl() {
-    return process.env.NEXT_PUBLIC_BASE_URL || "https://www.velmenora.com";
+    return (
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+        process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
+        "https://www.velmenora.com"
+    );
 }
 
 function getCategoryHref(lang: Lang, category: BlogCategory) {
@@ -68,28 +74,11 @@ export async function generateMetadata({
         return {};
     }
 
-    const title = "Forex Broker Guides | Velmenora";
-    const description =
-        "Explore forex broker guides by category, including ECN brokers, low spread brokers, high leverage brokers, beginner-friendly brokers, and fast withdrawal forex brokers.";
-
-    return {
-        title,
-        description,
-        alternates: {
-            canonical: `/${lang}/country/blog`,
-        },
-        openGraph: {
-            title,
-            description,
-            url: `/${lang}/country/blog`,
-            type: "website",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title,
-            description,
-        },
-    };
+    return buildBlogMetadata({
+        intent: "guide",
+        pathname: `/${lang}/blog`,
+        keyword: "Forex Broker Guides",
+    });
 }
 
 /* =========================================
@@ -139,7 +128,7 @@ export default async function BlogPage({
                 "@type": "ListItem",
                 position: 2,
                 name: "Blog",
-                item: `${baseUrl}/${lang}/country/blog`,
+                item: `${baseUrl}/${lang}/blog`,
             },
         ],
     };
@@ -158,7 +147,6 @@ export default async function BlogPage({
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
 
-            {/* HERO */}
             <section className="mb-16 text-center">
                 <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-300 mb-5">
                     Forex Broker Guides
@@ -175,7 +163,6 @@ export default async function BlogPage({
                 </p>
             </section>
 
-            {/* EMPTY STATE */}
             {cards.length === 0 ? (
                 <section className="mb-20">
                     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 md:p-12 text-center backdrop-blur-sm">
@@ -212,7 +199,6 @@ export default async function BlogPage({
                 </section>
             ) : (
                 <>
-                    {/* CATEGORY GRID */}
                     <section className="mb-20">
                         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {cards.map((card) => (
@@ -243,7 +229,6 @@ export default async function BlogPage({
                         </div>
                     </section>
 
-                    {/* INTERNAL LINKS */}
                     <section className="mb-20">
                         <h2 className="text-2xl md:text-3xl font-semibold mb-6">
                             Popular Broker Guides
@@ -265,7 +250,6 @@ export default async function BlogPage({
                 </>
             )}
 
-            {/* SEO BODY */}
             <section className="prose prose-invert max-w-none mb-20">
                 <h2>Why Category-Based Broker Research Matters</h2>
 
@@ -292,7 +276,6 @@ export default async function BlogPage({
                 </ul>
             </section>
 
-            {/* FINAL SECTION */}
             <section className="prose prose-invert max-w-none">
                 <h2>Final Thoughts</h2>
 
