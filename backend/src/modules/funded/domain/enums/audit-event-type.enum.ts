@@ -1,0 +1,16 @@
+export enum AuditEventType {
+    USER_APPLIED = "user_applied",
+    PAYMENT_RECEIVED = "payment_received",
+    CHALLENGE_ASSIGNED = "challenge_assigned",
+    CHALLENGE_STARTED = "challenge_started",
+    METRICS_RECORDED = "metrics_recorded",
+    RULE_BREACHED = "rule_breached",
+    CHALLENGE_PASSED = "challenge_passed",
+    CHALLENGE_FAILED = "challenge_failed",
+    SUBMISSION_CREATED = "submission_created",
+    SUBMISSION_REVIEWED = "submission_reviewed",
+    PAYOUT_REQUESTED = "payout_requested",
+    PAYOUT_APPROVED = "payout_approved",
+    PAYOUT_PAID = "payout_paid",
+    ADMIN_ACTION = "admin_action",
+}

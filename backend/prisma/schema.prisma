@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  trader
+  admin
+  super_admin
+}
+
+enum ChallengeStatus {
+  draft
+  pending_payment
+  payment_confirmed
+  assigned
+  active
+  under_review
+  passed
+  failed
+  payout_pending
+  payout_approved
+  payout_paid
+  payout_rejected
+  suspended
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  manual_review
+}
+
+enum SubmissionStatus {
+  pending
+  received
+  under_review
+  approved
+  rejected
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+  needs_more_info
+}
+
+enum PayoutStatus {
+  draft
+  requested
+  eligibility_failed
+  under_review
+  approved
+  paid
+  rejected
+  cancelled
+}
+
+enum MetricSource {
+  manual
+  admin
+  api
+  import
+}
+
+enum SubmissionType {
+  screenshot
+  statement
+  account_report
+  other
+}
+
+enum PaymentProvider {
+  manual
+  paypal
+  stripe
+  flutterwave
+  paystack
+  mpesa
+  other
+}
+
+enum AuditEventType {
+  user_applied
+  payment_received
+  challenge_assigned
+  challenge_started
+  metrics_recorded
+  rule_breached
+  challenge_passed
+  challenge_failed
+  submission_created
+  submission_reviewed
+  payout_requested
+  payout_approved
+  payout_paid
+  admin_action
+}
+
+enum AuditEntityType {
+  user
+  funded_challenge
+  challenge_account
+  payment
+  submission
+  review_decision
+  payout_request
+  admin_note
+}
+
+model User {
+  id                String            @id @default(cuid())
+  email             String            @unique
+  passwordHash      String            @map("password_hash")
+  fullName          String            @map("full_name")
+  phone             String?
+  role              UserRole          @default(trader)
+  isActive          Boolean           @default(true) @map("is_active")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  challengeAccounts ChallengeAccount[]
+  submissions       Submission[]
+  payoutRequests    PayoutRequest[]   @relation("PayoutRequester")
+  payments          Payment[]
+  reviewDecisions   ReviewDecision[]  @relation("ReviewerReviewDecisions")
+  payoutReviews     PayoutRequest[]   @relation("PayoutReviewer")
+  adminNotes        AdminNote[]
+  auditLogs         AuditLog[]        @relation("AuditActorUser")
+
+  @@map("users")
+  @@index([role])
+  @@index([createdAt])
+}
+
+model FundedChallenge {
+  id                    String             @id @default(cuid())
+  slug                  String             @unique
+  name                  String
+  feeAmount             Decimal            @db.Decimal(12, 2) @map("fee_amount")
+  currency              String             @db.VarChar(10)
+  virtualBalance        Decimal            @db.Decimal(14, 2) @map("virtual_balance")
+  profitTargetPct       Decimal            @db.Decimal(5, 2) @map("profit_target_pct")
+  maxDailyLossPct       Decimal            @db.Decimal(5, 2) @map("max_daily_loss_pct")
+  maxOverallDrawdownPct Decimal            @db.Decimal(5, 2) @map("max_overall_drawdown_pct")
+  minTradingDays        Int                @map("min_trading_days")
+  maxDurationDays       Int?               @map("max_duration_days")
+  payoutRatioPct        Decimal            @db.Decimal(5, 2) @map("payout_ratio_pct")
+  isActive              Boolean            @default(true) @map("is_active")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  challengeAccounts     ChallengeAccount[]
+
+  @@map("funded_challenges")
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model ChallengeAccount {
+  id                  String                  @id @default(cuid())
+  userId              String                  @map("user_id")
+  challengeId         String                  @map("challenge_id")
+  status              ChallengeStatus         @default(pending_payment)
+  paymentStatus       PaymentStatus           @default(pending) @map("payment_status")
+  assignedAt          DateTime?               @map("assigned_at")
+  startedAt           DateTime?               @map("started_at")
+  endedAt             DateTime?               @map("ended_at")
+  initialBalance      Decimal                 @db.Decimal(14, 2) @map("initial_balance")
+  dayStartBalance     Decimal                 @db.Decimal(14, 2) @map("day_start_balance")
+  dayStartAt          DateTime?               @map("day_start_at")
+  currentBalance      Decimal                 @db.Decimal(14, 2) @default(0) @map("current_balance")
+  currentEquity       Decimal                 @db.Decimal(14, 2) @default(0) @map("current_equity")
+  peakEquity          Decimal                 @db.Decimal(14, 2) @default(0) @map("peak_equity")
+  totalPnl            Decimal                 @db.Decimal(14, 2) @default(0) @map("total_pnl")
+  dailyLossPct        Decimal                 @db.Decimal(5, 2) @default(0) @map("daily_loss_pct")
+  overallDrawdownPct  Decimal                 @db.Decimal(5, 2) @default(0) @map("overall_drawdown_pct")
+  tradingDaysCount    Int                     @default(0) @map("trading_days_count")
+  lastMetricsAt       DateTime?               @map("last_metrics_at")
+  passedAt            DateTime?               @map("passed_at")
+  failedAt            DateTime?               @map("failed_at")
+  failureReason       String?                 @db.Text @map("failure_reason")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  challenge           FundedChallenge         @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  ruleSnapshots       ChallengeRuleSnapshot[]
+  metricSnapshots     MetricSnapshot[]
+  submissions         Submission[]
+  reviewDecisions     ReviewDecision[]
+  payoutRequests      PayoutRequest[]
+  payments            Payment[]
+  adminNotes          AdminNote[]
+
+  @@map("challenge_accounts")
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([userId, challengeId])
+  @@index([userId, status])
+}
+
+model ChallengeRuleSnapshot {
+  id                    String           @id @default(cuid())
+  challengeAccountId    String           @map("challenge_account_id")
+  profitTargetPct       Decimal          @db.Decimal(5, 2) @map("profit_target_pct")
+  maxDailyLossPct       Decimal          @db.Decimal(5, 2) @map("max_daily_loss_pct")
+  maxOverallDrawdownPct Decimal          @db.Decimal(5, 2) @map("max_overall_drawdown_pct")
+  minTradingDays        Int              @map("min_trading_days")
+  maxDurationDays       Int?             @map("max_duration_days")
+  payoutRatioPct        Decimal          @db.Decimal(5, 2) @map("payout_ratio_pct")
+  rawRulesJson          Json             @map("raw_rules_json")
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  challengeAccount      ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Cascade)
+
+  @@map("challenge_rule_snapshots")
+  @@index([challengeAccountId])
+}
+
+model MetricSnapshot {
+  id                  String           @id @default(cuid())
+  challengeAccountId  String           @map("challenge_account_id")
+  source              MetricSource
+  balance             Decimal          @db.Decimal(14, 2)
+  equity              Decimal          @db.Decimal(14, 2)
+  realizedPnl         Decimal          @db.Decimal(14, 2) @map("realized_pnl")
+  unrealizedPnl       Decimal          @db.Decimal(14, 2) @map("unrealized_pnl")
+  dailyLossPct        Decimal          @db.Decimal(5, 2) @map("daily_loss_pct")
+  overallDrawdownPct  Decimal          @db.Decimal(5, 2) @map("overall_drawdown_pct")
+  tradingDaysCount    Int              @map("trading_days_count")
+  snapshotTime        DateTime         @map("snapshot_time")
+  rawPayloadJson      Json?            @map("raw_payload_json")
+  createdAt           DateTime         @default(now()) @map("created_at")
+
+  challengeAccount    ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Cascade)
+
+  @@map("metric_snapshots")
+  @@index([challengeAccountId])
+  @@index([snapshotTime])
+  @@index([challengeAccountId, snapshotTime])
+}
+
+model Submission {
+  id                  String            @id @default(cuid())
+  challengeAccountId  String            @map("challenge_account_id")
+  userId              String            @map("user_id")
+  submissionType      SubmissionType    @map("submission_type")
+  note                String?           @db.Text
+  fileUrl             String?           @map("file_url")
+  status              SubmissionStatus  @default(received)
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  challengeAccount    ChallengeAccount  @relation(fields: [challengeAccountId], references: [id], onDelete: Cascade)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  reviewDecisions     ReviewDecision[]
+
+  @@map("submissions")
+  @@index([challengeAccountId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReviewDecision {
+  id                  String            @id @default(cuid())
+  submissionId        String?           @map("submission_id")
+  challengeAccountId  String            @map("challenge_account_id")
+  reviewerId          String            @map("reviewer_id")
+  status              ReviewStatus
+  decisionNote        String?           @db.Text @map("decision_note")
+  metadataJson        Json?             @map("metadata_json")
+  createdAt           DateTime          @default(now()) @map("created_at")
+
+  submission          Submission?       @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+  challengeAccount    ChallengeAccount  @relation(fields: [challengeAccountId], references: [id], onDelete: Cascade)
+  reviewer            User              @relation("ReviewerReviewDecisions", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@map("review_decisions")
+  @@index([submissionId])
+  @@index([challengeAccountId])
+  @@index([reviewerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PayoutRequest {
+  id                      String           @id @default(cuid())
+  challengeAccountId      String           @map("challenge_account_id")
+  userId                  String           @map("user_id")
+  requestedAmount         Decimal          @db.Decimal(12, 2) @map("requested_amount")
+  currency                String           @db.VarChar(10)
+  status                  PayoutStatus     @default(requested)
+  eligibilitySnapshotJson Json             @map("eligibility_snapshot_json")
+  rejectionReason         String?          @db.Text @map("rejection_reason")
+  requestedAt             DateTime         @default(now()) @map("requested_at")
+  reviewedAt              DateTime?        @map("reviewed_at")
+  paidAt                  DateTime?        @map("paid_at")
+  reviewerId              String?          @map("reviewer_id")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
+
+  challengeAccount        ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Restrict)
+  user                    User             @relation("PayoutRequester", fields: [userId], references: [id], onDelete: Restrict)
+  reviewer                User?            @relation("PayoutReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@map("payout_requests")
+  @@index([challengeAccountId])
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([reviewerId])
+}
+
+model Payment {
+  id                  String            @id @default(cuid())
+  userId              String            @map("user_id")
+  challengeAccountId  String?           @map("challenge_account_id")
+  provider            PaymentProvider
+  providerReference   String?           @unique @map("provider_reference")
+  amount              Decimal           @db.Decimal(12, 2)
+  currency            String            @db.VarChar(10)
+  status              PaymentStatus     @default(pending)
+  paidAt              DateTime?         @map("paid_at")
+  rawPayloadJson      Json?             @map("raw_payload_json")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  user                User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  challengeAccount    ChallengeAccount? @relation(fields: [challengeAccountId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+  @@index([userId])
+  @@index([challengeAccountId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id             String           @id @default(cuid())
+  actorUserId    String?          @map("actor_user_id")
+  entityType     AuditEntityType  @map("entity_type")
+  entityId       String           @map("entity_id")
+  eventType      AuditEventType   @map("event_type")
+  oldValuesJson  Json?            @map("old_values_json")
+  newValuesJson  Json?            @map("new_values_json")
+  metadataJson   Json?            @map("metadata_json")
+  ipAddress      String?          @map("ip_address")
+  userAgent      String?          @db.Text @map("user_agent")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  actorUser      User?            @relation("AuditActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model AdminNote {
+  id                 String           @id @default(cuid())
+  challengeAccountId String           @map("challenge_account_id")
+  adminUserId        String           @map("admin_user_id")
+  note               String           @db.Text
+  createdAt          DateTime         @default(now()) @map("created_at")
+
+  challengeAccount   ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Cascade)
+  adminUser          User             @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@map("admin_notes")
+  @@index([challengeAccountId])
+  @@index([adminUserId])
+  @@index([createdAt])
+}

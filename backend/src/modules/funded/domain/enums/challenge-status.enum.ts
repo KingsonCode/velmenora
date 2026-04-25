@@ -1,0 +1,16 @@
+export enum ChallengeStatus {
+    DRAFT = "draft",
+    PENDING_PAYMENT = "pending_payment",
+    PAYMENT_CONFIRMED = "payment_confirmed",
+    ASSIGNED = "assigned",
+    ACTIVE = "active",
+    UNDER_REVIEW = "under_review",
+    PASSED = "passed",
+    FAILED = "failed",
+    PAYOUT_PENDING = "payout_pending",
+    PAYOUT_APPROVED = "payout_approved",
+    PAYOUT_PAID = "payout_paid",
+    PAYOUT_REJECTED = "payout_rejected",
+    SUSPENDED = "suspended",
+    CANCELLED = "cancelled",
+}
