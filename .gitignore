@@ -6,3 +6,9 @@ dist.env.local
 .env.local
 
 .env.*.env.local
+
+# Backend build output
+backend/dist/
+backend/node_modules/
+backend/.env
+backend/.env.*
