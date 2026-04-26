@@ -1,0 +1,2 @@
+ALTER TABLE "funded_challenges"
+ADD COLUMN IF NOT EXISTS "reward_amount" DECIMAL(12,2) NOT NULL DEFAULT 100.00;

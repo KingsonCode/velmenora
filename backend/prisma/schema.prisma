@@ -22,6 +22,8 @@ enum ChallengeStatus {
   passed
   failed
   payout_pending
+  payout_requested
+  payout_under_review
   payout_approved
   payout_paid
   payout_rejected
@@ -100,6 +102,7 @@ enum AuditEventType {
   submission_reviewed
   payout_requested
   payout_approved
+  payout_rejected
   payout_paid
   admin_action
 }
@@ -147,6 +150,7 @@ model FundedChallenge {
   feeAmount             Decimal  @map("fee_amount") @db.Decimal(12, 2)
   currency              String   @db.VarChar(10)
   virtualBalance        Decimal  @map("virtual_balance") @db.Decimal(14, 2)
+  rewardAmount          Decimal  @default(100.00) @map("reward_amount") @db.Decimal(12, 2)
   profitTargetPct       Decimal  @map("profit_target_pct") @db.Decimal(5, 2)
   maxDailyLossPct       Decimal  @map("max_daily_loss_pct") @db.Decimal(5, 2)
   maxOverallDrawdownPct Decimal  @map("max_overall_drawdown_pct") @db.Decimal(5, 2)
@@ -213,6 +217,7 @@ model ChallengeAccount {
   @@index([userId, challengeId])
   @@index([userId, status])
   @@map("challenge_accounts")
+  brokerAccounts BrokerAccount[]
 }
 
 model ChallengeRuleSnapshot {
@@ -392,4 +397,30 @@ model AdminNote {
   @@index([adminUserId])
   @@index([createdAt])
   @@map("admin_notes")
+}
+
+
+
+model BrokerAccount {
+  id                    String   @id @default(cuid())
+
+  challengeAccountId    String   @map("challenge_account_id")
+  challengeAccount      ChallengeAccount @relation(fields: [challengeAccountId], references: [id])
+
+  brokerName            String   @map("broker_name")
+  accountType           String   @map("account_type") // DEMO | REAL
+  platformType          String   @map("platform_type") // MT4 | MT5
+  accountLogin          String   @map("account_login")
+  serverName            String   @map("server_name")
+  investorPasswordEnc   String   @map("investor_password_enc")
+
+  verificationStatus    String   @default("pending") @map("verification_status") // pending | verified | failed
+  verificationNotes     String?  @map("verification_notes")
+  verifiedAt            DateTime? @map("verified_at")
+
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([challengeAccountId])
+  @@map("broker_accounts")
 }

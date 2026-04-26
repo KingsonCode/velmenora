@@ -8,6 +8,8 @@ export enum ChallengeStatus {
     PASSED = "passed",
     FAILED = "failed",
     PAYOUT_PENDING = "payout_pending",
+    PAYOUT_REQUESTED = "payout_requested",
+    PAYOUT_UNDER_REVIEW = "payout_under_review",
     PAYOUT_APPROVED = "payout_approved",
     PAYOUT_PAID = "payout_paid",
     PAYOUT_REJECTED = "payout_rejected",

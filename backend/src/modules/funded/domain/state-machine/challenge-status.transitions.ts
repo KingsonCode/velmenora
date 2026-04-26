@@ -34,6 +34,14 @@ export const CHALLENGE_STATUS_TRANSITIONS: Record<ChallengeStatus, ChallengeStat
     ],
     [ChallengeStatus.FAILED]: [],
     [ChallengeStatus.PAYOUT_PENDING]: [
+        ChallengeStatus.PAYOUT_REQUESTED,
+        ChallengeStatus.PAYOUT_REJECTED,
+    ],
+    [ChallengeStatus.PAYOUT_REQUESTED]: [
+        ChallengeStatus.PAYOUT_UNDER_REVIEW,
+        ChallengeStatus.PAYOUT_REJECTED,
+    ],
+    [ChallengeStatus.PAYOUT_UNDER_REVIEW]: [
         ChallengeStatus.PAYOUT_APPROVED,
         ChallengeStatus.PAYOUT_REJECTED,
     ],

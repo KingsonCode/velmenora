@@ -11,6 +11,7 @@ export enum AuditEventType {
     SUBMISSION_REVIEWED = "submission_reviewed",
     PAYOUT_REQUESTED = "payout_requested",
     PAYOUT_APPROVED = "payout_approved",
+    PAYOUT_REJECTED = "payout_rejected",
     PAYOUT_PAID = "payout_paid",
     ADMIN_ACTION = "admin_action",
 }
