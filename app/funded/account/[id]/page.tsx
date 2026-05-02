@@ -18,8 +18,13 @@ function pct(value: unknown) {
 export default async function FundedAccountPage({ params }: PageProps) {
   const { id } = await params;
 
+  const apiBase =
+    process.env.FUNDED_BACKEND_URL ??
+    process.env.NEXT_PUBLIC_FUNDED_API_URL ??
+    "https://api.velmenora.com";
+
   const res = await fetch(
-    `${process.env.FUNDED_BACKEND_URL}/api/funded/account/${id}`,
+    `${apiBase}/api/funded/account/${id}`,
     { cache: "no-store" }
   );
 
