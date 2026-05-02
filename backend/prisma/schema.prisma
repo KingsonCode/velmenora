@@ -86,12 +86,16 @@ enum PaymentProvider {
   flutterwave
   paystack
   mpesa
+  nowpayments
   other
 }
 
 enum AuditEventType {
   user_applied
+  payment_checkout_created
   payment_received
+  payment_failed
+  payment_mismatch_detected
   challenge_assigned
   challenge_started
   metrics_recorded
@@ -343,6 +347,7 @@ model Payment {
   challengeAccountId String?         @map("challenge_account_id")
   provider           PaymentProvider
   providerReference  String?         @unique @map("provider_reference")
+  checkoutUrl        String?         @map("checkout_url")
   amount             Decimal         @db.Decimal(12, 2)
   currency           String          @db.VarChar(10)
   status             PaymentStatus   @default(pending)

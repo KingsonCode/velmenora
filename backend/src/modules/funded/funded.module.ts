@@ -22,6 +22,9 @@ import { PayoutReviewService } from "./services/payout-review.service";
 import { PayoutExecutionService } from "./services/payout-execution.service";
 import { AdminGuardService } from "./services/admin-guard.service";
 
+import { NowPaymentsService } from "./payments/nowpayments.service";
+import { PaymentProcessingService } from "./payments/payment-processing.service";
+
 @Module({
   controllers: [
     FundedController,
@@ -49,6 +52,10 @@ import { AdminGuardService } from "./services/admin-guard.service";
     PayoutReviewService,
     PayoutExecutionService,
     AdminGuardService,
+
+    // payments
+    NowPaymentsService,
+    PaymentProcessingService,
   ],
 })
 export class FundedModule {}

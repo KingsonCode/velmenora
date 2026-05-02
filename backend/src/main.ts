@@ -2,10 +2,30 @@ import "dotenv/config";
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { RequestMethod } from "@nestjs/common";
+import { json, urlencoded } from "express";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
+
+  app.use(
+    json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString("utf8");
+      },
+    }),
+  );
+
+  app.use(
+    urlencoded({
+      extended: true,
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString("utf8");
+      },
+    }),
+  );
 
   app.setGlobalPrefix("api", {
     exclude: [{ path: "admin/payouts", method: RequestMethod.GET }],
