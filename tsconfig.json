@@ -1,57 +1,59 @@
 {
   "compilerOptions": {
-    /* 🔥 CORE */
     "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
-    /* 🔥 MODULE */
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    /* 🔥 NEXT / REACT */
     "jsx": "react-jsx",
     "plugins": [
       {
         "name": "next"
       }
     ],
-    /* 🔥 STRICT MODE (KEEP THIS) */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    /* 🔥 INTEROP */
     "esModuleInterop": true,
     "allowJs": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
-    /* 🔥 PATHS */
     "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ]
     },
-    /* 🔥 STABILITY */
     "forceConsistentCasingInFileNames": true,
-    /* 🔥 PERFORMANCE */
     "incremental": true,
-    /* 🔥 TYPES (IMPORTANT) */
     "types": [
       "node"
     ]
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "types/**/*.ts",
+    "types/**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next/cache",
+    "backend",
+    "backend/**",
+    "prisma",
+    "prisma/**"
   ]
 }
