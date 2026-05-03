@@ -31,6 +31,7 @@ export default function Navbar() {
     const blogHref = "/blog";
     const marketsHref = `${langPrefix}/markets`;
     const watchlistHref = `${langPrefix}/watchlist`;
+    const fundedHref = "/funded";
     const startHref = "/start";
 
     const isActive = (href: string) => {
@@ -130,6 +131,17 @@ export default function Navbar() {
                         }
                     >
                         Compare
+                    </Link>
+
+                    <Link
+                        href={fundedHref}
+                        className={
+                            isActive(fundedHref)
+                                ? "text-yellow-400"
+                                : "text-white/80 transition hover:text-yellow-400"
+                        }
+                    >
+                        Funded Challenge
                     </Link>
 
                     <Link
@@ -253,6 +265,7 @@ export default function Navbar() {
                         <Link href={homeHref}>Home</Link>
                         <Link href={explorerHref}>Explorer</Link>
                         <Link href={compareHref}>Compare</Link>
+                        <Link href={fundedHref}>Funded Challenge</Link>
                         <Link href={blogHref}>Blog</Link>
                         <Link href={academyHref}>Academy</Link>
                         <Link href={marketsHref}>Markets</Link>
