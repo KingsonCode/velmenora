@@ -40,6 +40,22 @@ function statusTone(status: string) {
   return "border-yellow-500/30 bg-yellow-950/20 text-yellow-300";
 }
 
+function brokerTone(status: string) {
+  if (status === "verified") {
+    return "border-green-500/30 bg-green-950/20 text-green-300";
+  }
+
+  if (status === "pending") {
+    return "border-yellow-500/30 bg-yellow-950/20 text-yellow-300";
+  }
+
+  if (status === "failed" || status === "rejected") {
+    return "border-red-500/30 bg-red-950/20 text-red-300";
+  }
+
+  return "border-white/10 bg-white/[0.03] text-gray-300";
+}
+
 function ProgressBar({
   value,
   tone,
@@ -78,6 +94,37 @@ export default async function FundedAccountPage({ params }: PageProps) {
   const challenge = account?.challenge;
   const payment = account?.payments?.[0];
   const latestPayout = account?.payoutRequests?.[0];
+  const brokerAccounts = account?.brokerAccounts ?? [];
+  const latestBrokerAccount = brokerAccounts[0] ?? null;
+  const brokerVerificationStatus =
+    latestBrokerAccount?.verificationStatus ?? "not_connected";
+
+  const brokerStatusConfig =
+    brokerVerificationStatus === "verified"
+      ? {
+          title: "Broker Verified",
+          description: "Metrics Sync Active",
+          actionLabel: null,
+        }
+      : brokerVerificationStatus === "pending"
+        ? {
+            title: "Broker Verification Pending",
+            description: "Your trading account is waiting for admin verification.",
+            actionLabel: null,
+          }
+        : brokerVerificationStatus === "failed" ||
+            brokerVerificationStatus === "rejected"
+          ? {
+              title: "Broker Verification Failed",
+              description: "Reconnect or resubmit your broker account details.",
+              actionLabel: "Reconnect Broker Account",
+            }
+          : {
+              title: "Connect Trading Account",
+              description:
+                "Submit your MT4/MT5 investor access so Velmenora can verify and sync your trading metrics.",
+              actionLabel: "Connect Trading Account",
+            };
 
   if (!data?.ok || !account) {
     return (
@@ -224,6 +271,83 @@ export default async function FundedAccountPage({ params }: PageProps) {
             <p className="mt-2 text-3xl font-black text-green-400">
               {money(rewardAmount)}
             </p>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-green-400">
+                Trading Account
+              </p>
+
+              <h2 className="mt-3 text-2xl font-black">
+                {brokerStatusConfig.title}
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm text-gray-400">
+                {brokerStatusConfig.description}
+              </p>
+
+              {latestBrokerAccount ? (
+                <div className="mt-5 grid gap-3 text-sm text-gray-300 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Broker
+                    </p>
+                    <p className="mt-1 font-bold text-white">
+                      {latestBrokerAccount.brokerName}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Platform
+                    </p>
+                    <p className="mt-1 font-bold text-white">
+                      {latestBrokerAccount.platformType ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Server
+                    </p>
+                    <p className="mt-1 font-bold text-white">
+                      {latestBrokerAccount.serverName ?? "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      Login
+                    </p>
+                    <p className="mt-1 font-bold text-white">
+                      {latestBrokerAccount.accountLogin ?? "—"}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-3">
+              <span
+                className={`w-fit rounded-full border px-4 py-2 text-sm font-black capitalize ${brokerTone(
+                  brokerVerificationStatus,
+                )}`}
+              >
+                {prettyStatus(brokerVerificationStatus)}
+              </span>
+
+              {brokerStatusConfig.actionLabel ? (
+                <a
+                  href={`/funded/account/${account.id}/connect-broker`}
+                  className="rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black transition hover:bg-green-400"
+                >
+                  {brokerStatusConfig.actionLabel}
+                </a>
+              ) : null}
+            </div>
           </div>
         </section>
 
