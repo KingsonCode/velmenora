@@ -18,6 +18,7 @@ const MARKET_LINKS = [
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
+    const [member, setMember] = useState<any>(null);
     const pathname = usePathname() || "/";
 
     const firstSegment = pathname.split("/")[1] || "";
@@ -32,6 +33,8 @@ export default function Navbar() {
     const marketsHref = `${langPrefix}/markets`;
     const watchlistHref = `${langPrefix}/watchlist`;
     const fundedHref = "/funded";
+    const signInHref = "/sign-in";
+    const memberHref = "/member";
     const startHref = "/start";
 
     const isActive = (href: string) => {
@@ -70,6 +73,36 @@ export default function Navbar() {
     useEffect(() => {
         setOpen(false);
     }, [pathname]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadMember() {
+            try {
+                const res = await fetch("/api/auth/me", { cache: "no-store" });
+
+                if (!res.ok) {
+                    if (!cancelled) setMember(null);
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (!cancelled) {
+                    setMember(data?.user ?? null);
+                }
+            } catch {
+                if (!cancelled) setMember(null);
+            }
+        }
+
+        loadMember();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pathname]);
+
 
     return (
         <nav className="w-full border-b border-white/10 bg-black text-white">
@@ -220,6 +253,17 @@ export default function Navbar() {
                     </div>
 
                     <Link
+                        href={member ? memberHref : signInHref}
+                        className={
+                            isActive(member ? memberHref : signInHref)
+                                ? "text-yellow-400"
+                                : "text-white/80 transition hover:text-yellow-400"
+                        }
+                    >
+                        {member ? "Member Area" : "Sign In"}
+                    </Link>
+
+                    <Link
                         href={startHref}
                         className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-5 py-2.5 font-semibold text-black transition hover:scale-[1.02] hover:bg-yellow-300"
                     >
@@ -266,6 +310,9 @@ export default function Navbar() {
                         <Link href={explorerHref}>Explorer</Link>
                         <Link href={compareHref}>Compare</Link>
                         <Link href={fundedHref}>Funded Challenge</Link>
+                        <Link href={member ? memberHref : signInHref}>
+                            {member ? "Member Area" : "Sign In"}
+                        </Link>
                         <Link href={blogHref}>Blog</Link>
                         <Link href={academyHref}>Academy</Link>
                         <Link href={marketsHref}>Markets</Link>

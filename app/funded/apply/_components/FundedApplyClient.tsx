@@ -43,6 +43,8 @@ export default function FundedApplyClient() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -51,6 +53,16 @@ export default function FundedApplyClient() {
 
     if (!selectedPlan) {
       setError("Invalid plan selected. Please go back and choose a challenge.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -70,6 +82,7 @@ export default function FundedApplyClient() {
           email,
           fullName: name,
           phone: phone || undefined,
+          password,
           planSlug: plan,
         }),
         signal: controller.signal,
@@ -249,23 +262,73 @@ export default function FundedApplyClient() {
               />
             </div>
 
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-300">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Create a secure password"
+                value={password}
+                disabled={loading}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+                required
+                minLength={8}
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Use at least 8 characters. You will use this to sign in to your member area.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-300">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                placeholder="Repeat your password"
+                value={confirmPassword}
+                disabled={loading}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+                required
+                minLength={8}
+              />
+            </div>
+
             {error && (
               <div className="rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
                 {error}
+                {error.includes("Sign in") || error.includes("sign in") ? (
+                  <a href="/sign-in" className="mt-3 block font-bold text-green-400 hover:text-green-300">
+                    Sign in to continue →
+                  </a>
+                ) : null}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={loading || !email || !name || !selectedPlan}
+              disabled={
+                loading ||
+                !email ||
+                !name ||
+                !password ||
+                !confirmPassword ||
+                !selectedPlan
+              }
               className="w-full rounded-2xl bg-green-500 py-4 font-black text-black transition hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400"
             >
               {loading ? "Creating Account..." : "Create Account & Continue"}
             </button>
 
             <p className="text-center text-xs text-gray-500">
-              Next: secure payment checkout. Account activates after payment
-              confirmation.
+              Already have a Velmenora account?{" "}
+              <a href="/sign-in" className="font-bold text-green-400 hover:text-green-300">
+                Sign in
+              </a>
+              . Next: secure payment checkout. Account activates after payment confirmation.
             </p>
           </form>
         </section>
