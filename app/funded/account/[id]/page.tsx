@@ -187,11 +187,10 @@ export default async function FundedAccountPage({ params }: PageProps) {
               </div>
 
               <div
-                className={`rounded-2xl border px-5 py-4 ${
-                  payment?.status === "paid"
+                className={`rounded-2xl border px-5 py-4 ${payment?.status === "paid"
                     ? "border-green-500/30 bg-green-950/20 text-green-300"
                     : "border-yellow-500/30 bg-yellow-950/20 text-yellow-300"
-                }`}
+                  }`}
               >
                 <p className="text-xs uppercase tracking-[0.2em] opacity-70">Payment</p>
                 <p className="mt-1 text-xl font-black capitalize">
@@ -202,7 +201,7 @@ export default async function FundedAccountPage({ params }: PageProps) {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
             <p className="text-sm text-gray-500">Balance</p>
             <p className="mt-2 text-3xl font-black">{money(currentBalance)}</p>
@@ -239,11 +238,10 @@ export default async function FundedAccountPage({ params }: PageProps) {
               </div>
 
               <span
-                className={`w-fit rounded-full border px-4 py-2 text-sm font-bold ${
-                  isReady
+                className={`w-fit rounded-full border px-4 py-2 text-sm font-bold ${isReady
                     ? "border-green-500/30 bg-green-950/20 text-green-300"
                     : "border-yellow-500/30 bg-yellow-950/20 text-yellow-300"
-                }`}
+                  }`}
               >
                 {isReady ? "Ready for review" : "Not ready yet"}
               </span>
