@@ -68,7 +68,18 @@ export class FundedController {
     const account = await this.prisma.challengeAccount.findUnique({
       where: { id },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            phone: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         challenge: true,
         payments: {
           orderBy: { createdAt: "desc" },
@@ -81,6 +92,23 @@ export class FundedController {
         metricSnapshots: {
           orderBy: { snapshotTime: "desc" },
           take: 10,
+        },
+        brokerAccounts: {
+          orderBy: { createdAt: "desc" },
+          take: 3,
+          select: {
+            id: true,
+            brokerName: true,
+            accountType: true,
+            platformType: true,
+            accountLogin: true,
+            serverName: true,
+            verificationStatus: true,
+            verificationNotes: true,
+            verifiedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
         },
       },
     });

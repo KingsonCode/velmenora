@@ -27,10 +27,13 @@ export class PayoutRequestService {
       throw new NotFoundException("challenge_account_not_found");
     }
 
-    if (account.status !== ChallengeStatus.PAYOUT_PENDING) {
+    if (
+      account.status !== ChallengeStatus.PASSED &&
+      account.status !== ChallengeStatus.PAYOUT_PENDING
+    ) {
       throw new BadRequestException({
         ok: false,
-        reason: "account_not_payout_pending",
+        reason: "account_not_eligible_for_payout_request",
         currentStatus: account.status,
       });
     }

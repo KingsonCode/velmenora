@@ -612,10 +612,17 @@ load();
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      const reviewerId =
+        (body as any)?.reviewerId ??
+        process.env.ADMIN_REVIEWER_ID ??
+        "cmoc3li2q0000c3kitgfuxj3m";
+
       const result = await tx.payoutRequest.update({
         where: { id },
         data: {
           status: nextStatus as any,
+          reviewerId:
+            action === "approve" || action === "pay" ? reviewerId : undefined,
           reviewedAt: action === "approve" ? new Date() : undefined,
           paidAt: action === "pay" ? new Date() : undefined,
         },
@@ -761,6 +768,41 @@ load();
       throw new NotFoundException("Challenge account not found");
     }
 
+    const existingPending = await this.prisma.brokerAccount.findFirst({
+      where: {
+        challengeAccountId,
+        brokerName,
+        accountType,
+        platformType,
+        accountLogin,
+        serverName,
+        verificationStatus: "pending",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existingPending) {
+      return {
+        ok: true,
+        duplicate: true,
+        message: "Broker account submission is already pending verification.",
+        record: {
+          id: existingPending.id,
+          challengeAccountId: existingPending.challengeAccountId,
+          brokerName: existingPending.brokerName,
+          accountType: existingPending.accountType,
+          platformType: existingPending.platformType,
+          accountLogin: existingPending.accountLogin,
+          serverName: existingPending.serverName,
+          verificationStatus: existingPending.verificationStatus,
+          verificationNotes: existingPending.verificationNotes,
+          verifiedAt: existingPending.verifiedAt,
+          createdAt: existingPending.createdAt,
+          updatedAt: existingPending.updatedAt,
+        },
+      };
+    }
+
     const record = await this.prisma.brokerAccount.create({
       data: {
         challengeAccountId,
@@ -797,6 +839,355 @@ load();
         investorPasswordEnc: undefined,
       },
     };
+  }
+
+  @Get("admin/broker-accounts")
+  brokerAccountsPage(@Res() res: Response) {
+    res.type("html").send(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Velmenora Admin - Broker Accounts</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; background: #f7f7f7; color:#111; }
+    h1 { margin-bottom: 8px; }
+    .topbar { display:flex; gap:8px; align-items:center; margin-bottom:16px; }
+    .filters { margin: 12px 0 18px; display:flex; gap:8px; flex-wrap:wrap; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; text-align: left; vertical-align: top; }
+    th { background: #eee; }
+    button { padding: 6px 10px; margin: 2px; cursor: pointer; border:1px solid #bbb; border-radius:6px; background:#fff; }
+    button.primary { background:#16a34a; color:#fff; border-color:#16a34a; }
+    button.danger { background:#dc2626; color:#fff; border-color:#dc2626; }
+    button.blue { background:#2563eb; color:#fff; border-color:#2563eb; }
+    input, select { padding: 7px; border:1px solid #ccc; border-radius:6px; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-weight: bold; font-size: 12px; display: inline-block; }
+    .badge-pending { background: #fff7d6; color: #7a5a00; }
+    .badge-verified { background: #e8fff0; color: #0b6b2b; }
+    .badge-failed { background: #fdecea; color: #b00020; }
+    .badge-default { background: #eee; color: #333; }
+    .muted { color:#666; font-size:12px; }
+    .card { background:#fff; border:1px solid #ddd; padding:14px; border-radius:10px; margin-bottom:14px; }
+    pre { background:#111; color:#eee; padding:12px; overflow:auto; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button onclick="location.href='/admin/payouts'">Payouts</button>
+    <button onclick="loadRows()">Reload</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <h1>Velmenora Admin - Broker Accounts</h1>
+  <p class="muted">Verify or reject submitted MT4/MT5 investor access. Passwords are never displayed here.</p>
+
+  <div class="card">
+    <label>Status filter:</label>
+    <select id="statusFilter" onchange="loadRows()">
+      <option value="pending">Pending</option>
+      <option value="verified">Verified</option>
+      <option value="failed">Failed</option>
+      <option value="all">All</option>
+    </select>
+
+    <input id="searchInput" placeholder="Search email, login, broker, account ID" style="width:320px;" oninput="debouncedLoad()" />
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Submitted</th>
+        <th>Trader</th>
+        <th>Challenge Account</th>
+        <th>Broker</th>
+        <th>Platform</th>
+        <th>Server</th>
+        <th>Login</th>
+        <th>Status</th>
+        <th>Notes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <h3>Last response</h3>
+  <pre id="resultBox">Ready.</pre>
+
+<script>
+let timer = null;
+
+function token() {
+  let t = localStorage.getItem("admin_token");
+  if (!t) {
+    t = prompt("Enter admin token") || "";
+    localStorage.setItem("admin_token", t);
+  }
+  return t;
+}
+
+function logout() {
+  localStorage.removeItem("admin_token");
+  location.reload();
+}
+
+function badge(status) {
+  const cls =
+    status === "pending" ? "badge-pending" :
+    status === "verified" ? "badge-verified" :
+    status === "failed" ? "badge-failed" :
+    "badge-default";
+  return '<span class="badge ' + cls + '">' + String(status || "unknown") + '</span>';
+}
+
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, function (c) {
+    return ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" })[c];
+  });
+}
+
+async function api(url, options) {
+  const res = await fetch(url, {
+    ...(options || {}),
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-token": token(),
+      ...((options && options.headers) || {}),
+    },
+  });
+
+  const text = await res.text();
+  let data = null;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = { raw: text };
+  }
+
+  if (!res.ok) {
+    throw new Error(data.message || data.error || text || "Request failed");
+  }
+
+  return data;
+}
+
+function debouncedLoad() {
+  clearTimeout(timer);
+  timer = setTimeout(loadRows, 250);
+}
+
+function actionButtons(item) {
+  const id = esc(item.id);
+
+  if (item.verificationStatus === "pending") {
+    return '' +
+      '<button class="primary" onclick="verifyBroker(\\'' + id + '\\')">Verify</button>' +
+      '<button class="danger" onclick="rejectBroker(\\'' + id + '\\')">Reject</button>';
+  }
+
+  if (item.verificationStatus === "verified") {
+    return '<button class="blue" onclick="openSync(\\'' + id + '\\')">Sync Metrics</button>';
+  }
+
+  if (item.verificationStatus === "failed") {
+    return '<span class="muted">No action</span>';
+  }
+
+  return '<span class="muted">Unknown status</span>';
+}
+
+
+async function loadRows() {
+  const status = document.getElementById("statusFilter").value;
+  const q = encodeURIComponent(document.getElementById("searchInput").value || "");
+  const rows = document.getElementById("rows");
+  const resultBox = document.getElementById("resultBox");
+
+  rows.innerHTML = '<tr><td colspan="10">Loading...</td></tr>';
+
+  try {
+    const data = await api("/api/admin/broker-accounts-list?status=" + status + "&q=" + q);
+    resultBox.textContent = JSON.stringify({ ok: true, count: data.items.length }, null, 2);
+
+    if (!data.items.length) {
+      rows.innerHTML = '<tr><td colspan="10">No broker accounts found.</td></tr>';
+      return;
+    }
+
+    rows.innerHTML = data.items.map(function (item) {
+      const user = item.challengeAccount && item.challengeAccount.user ? item.challengeAccount.user : {};
+      const account = item.challengeAccount || {};
+      return '<tr>' +
+        '<td>' + esc(new Date(item.createdAt).toLocaleString()) + '</td>' +
+        '<td><b>' + esc(user.fullName || "—") + '</b><br><span class="muted">' + esc(user.email || "—") + '</span></td>' +
+        '<td><a href="/api/admin/broker-account/' + esc(item.id) + '" target="_blank">' + esc(item.challengeAccountId) + '</a><br><span class="muted">' + esc(account.status || "") + '</span></td>' +
+        '<td>' + esc(item.brokerName) + '<br><span class="muted">' + esc(item.accountType) + '</span></td>' +
+        '<td>' + esc(item.platformType) + '</td>' +
+        '<td>' + esc(item.serverName) + '</td>' +
+        '<td>' + esc(item.accountLogin) + '</td>' +
+        '<td>' + badge(item.verificationStatus) + '</td>' +
+        '<td>' + esc(item.verificationNotes || "") + '</td>' +
+        '<td>' + actionButtons(item) + '</td>' +
+      '</tr>';
+    }).join("");
+  } catch (e) {
+    rows.innerHTML = '<tr><td colspan="10" style="color:#b00020;">' + esc(e.message) + '</td></tr>';
+    resultBox.textContent = e.message;
+  }
+}
+
+async function verifyBroker(id) {
+  const notes = prompt("Verification notes", "Investor access accepted by admin.");
+  if (notes === null) return;
+
+  try {
+    const data = await api("/api/admin/broker-account/" + id + "/verify", {
+      method: "POST",
+      body: JSON.stringify({ status: "verified", notes }),
+    });
+    document.getElementById("resultBox").textContent = JSON.stringify(data, null, 2);
+    await loadRows();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function rejectBroker(id) {
+  const notes = prompt("Rejection reason", "Investor credentials could not be verified.");
+  if (notes === null) return;
+
+  try {
+    const data = await api("/api/admin/broker-account/" + id + "/verify", {
+      method: "POST",
+      body: JSON.stringify({ status: "failed", notes }),
+    });
+    document.getElementById("resultBox").textContent = JSON.stringify(data, null, 2);
+    await loadRows();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+function openSync(id) {
+  const currentBalance = prompt("Current balance");
+  if (currentBalance === null) return;
+
+  const currentEquity = prompt("Current equity");
+  if (currentEquity === null) return;
+
+  syncMetrics(id, currentBalance, currentEquity);
+}
+
+async function syncMetrics(id, currentBalance, currentEquity) {
+  try {
+    const data = await api("/api/admin/broker-account/" + id + "/sync-metrics", {
+      method: "POST",
+      body: JSON.stringify({
+        currentBalance: Number(currentBalance),
+        currentEquity: Number(currentEquity),
+        pnl: Number(currentEquity) - 10000,
+        tradeCount: 0,
+        closedTrades: 0,
+        volume: 0,
+        tradingDurationMinutes: 0
+      }),
+    });
+    document.getElementById("resultBox").textContent = JSON.stringify(data, null, 2);
+    await loadRows();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+loadRows();
+</script>
+</body>
+</html>`);
+  }
+
+  @Get("admin/broker-accounts-list")
+  async listBrokerAccounts(
+    @Headers("x-admin-token") token?: string,
+    @Query("status") status?: string,
+    @Query("q") q?: string,
+  ) {
+    this.assertAdmin(token);
+
+    const allowedStatuses = ["pending", "verified", "failed"];
+    const normalizedStatus = status && status !== "all" ? status : undefined;
+
+    if (normalizedStatus && !allowedStatuses.includes(normalizedStatus)) {
+      throw new BadRequestException("Invalid broker account status");
+    }
+
+    const search = String(q || "").trim();
+
+    const where: any = {
+      ...(normalizedStatus ? { verificationStatus: normalizedStatus } : {}),
+      ...(search
+        ? {
+            OR: [
+              { id: { contains: search, mode: "insensitive" } },
+              { challengeAccountId: { contains: search, mode: "insensitive" } },
+              { brokerName: { contains: search, mode: "insensitive" } },
+              { accountLogin: { contains: search, mode: "insensitive" } },
+              { serverName: { contains: search, mode: "insensitive" } },
+              {
+                challengeAccount: {
+                  user: {
+                    OR: [
+                      { email: { contains: search, mode: "insensitive" } },
+                      { fullName: { contains: search, mode: "insensitive" } },
+                    ],
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const items = await this.prisma.brokerAccount.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        challengeAccountId: true,
+        brokerName: true,
+        accountType: true,
+        platformType: true,
+        accountLogin: true,
+        serverName: true,
+        verificationStatus: true,
+        verificationNotes: true,
+        verifiedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        challengeAccount: {
+          select: {
+            id: true,
+            status: true,
+            paymentStatus: true,
+            currentBalance: true,
+            currentEquity: true,
+            totalPnl: true,
+            tradingDaysCount: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                fullName: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return { ok: true, items };
   }
 
   @Get("admin/broker-account/:id")
