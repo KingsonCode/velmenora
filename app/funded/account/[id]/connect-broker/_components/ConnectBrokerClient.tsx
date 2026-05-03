@@ -56,9 +56,6 @@ const brokers: BrokerOption[] = [
   { slug: "pepperstone", name: "Pepperstone", active: false, href: "/go/pepperstone", platforms: [], servers: [] },
 ];
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_FUNDED_API_URL || "https://api.velmenora.com";
-
 export default function ConnectBrokerClient({ accountId }: Props) {
   const [brokerName, setBrokerName] = useState("exness");
   const [accountType, setAccountType] = useState<"DEMO" | "REAL">("DEMO");
@@ -123,7 +120,7 @@ export default function ConnectBrokerClient({ accountId }: Props) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/broker-account/submit`, {
+      const res = await fetch("/api/broker-account/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
