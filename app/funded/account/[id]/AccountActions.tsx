@@ -164,6 +164,29 @@ export default function AccountActions({
     );
   }
 
+  if (accountStatus === "active" && !isReady) {
+    return (
+      <div className="mt-5 space-y-3">
+        <a
+          href={`/funded/account/${accountId}/connect-broker`}
+          className="block w-full rounded-2xl bg-green-500 py-4 text-center font-black text-black transition hover:bg-green-400"
+        >
+          Connect Trading Account
+        </a>
+
+        <p className="text-center text-xs text-gray-500">
+          Submit MT4/MT5 investor access so Velmenora can verify your trading progress.
+        </p>
+
+        {error && (
+          <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   if (accountStatus === "active" && isReady) {
     return (
       <div className="mt-4">
