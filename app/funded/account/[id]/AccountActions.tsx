@@ -18,6 +18,49 @@ export default function AccountActions({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  async function startPayment() {
+    setLoading("payment");
+    setError("");
+
+    try {
+      const res = await fetch("/api/funded/payment/initiate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          challengeAccountId: accountId,
+        }),
+      });
+
+      let data: any = null;
+
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid payment server response");
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(
+          data?.message || data?.error || data?.reason || "Payment initiation failed",
+        );
+      }
+
+      const checkoutUrl =
+        data?.checkoutUrl || data?.payment?.checkoutUrl || data?.paymentUrl;
+
+      if (!checkoutUrl) {
+        throw new Error("Checkout URL was not returned");
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (err: any) {
+      setError(err.message || "Unexpected payment error");
+      setLoading(null);
+    }
+  }
+
   async function postAction(action: "submit-review" | "request-payout") {
     setLoading(action);
     setError("");
@@ -36,7 +79,6 @@ export default function AccountActions({
       };
 
       const res = await fetch(endpoint, init);
-
       const data = await res.json();
 
       if (!res.ok || data?.ok === false) {
@@ -46,16 +88,40 @@ export default function AccountActions({
       window.location.reload();
     } catch (err: any) {
       setError(err.message || "Unexpected error");
+      setLoading(null);
     }
+  }
 
-    setLoading(null);
+  if (accountStatus === "pending_payment") {
+    return (
+      <div className="mt-5">
+        <button
+          onClick={startPayment}
+          disabled={!!loading}
+          className="w-full rounded-2xl bg-green-500 py-4 font-black text-black transition hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400"
+        >
+          {loading === "payment" ? "Opening Secure Checkout..." : "Pay Now"}
+        </button>
+
+        <p className="mt-3 text-center text-xs text-gray-500">
+          Secure crypto checkout powered by NOWPayments. Your account activates
+          automatically after payment confirmation.
+        </p>
+
+        {error && (
+          <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   if (accountStatus === "payout_paid") {
     return (
-      <div className="mt-4 rounded-xl border border-green-500 bg-green-900/20 p-4">
-        <p className="text-green-400 font-semibold">✅ Payout Paid</p>
-        <p className="text-sm text-gray-300 mt-1">
+      <div className="mt-4 rounded-2xl border border-green-500 bg-green-900/20 p-4">
+        <p className="font-semibold text-green-400">✅ Payout Paid</p>
+        <p className="mt-1 text-sm text-gray-300">
           Your reward payout has been marked as paid.
         </p>
       </div>
@@ -68,9 +134,9 @@ export default function AccountActions({
     accountStatus === "payout_approved"
   ) {
     return (
-      <div className="mt-4 rounded-xl border border-blue-500/40 bg-blue-950/20 p-4">
-        <p className="text-blue-400 font-semibold">Payout in Progress</p>
-        <p className="text-sm text-gray-300 mt-1">
+      <div className="mt-4 rounded-2xl border border-blue-500/40 bg-blue-950/20 p-4">
+        <p className="font-semibold text-blue-400">Payout in Progress</p>
+        <p className="mt-1 text-sm text-gray-300">
           Current payout status:{" "}
           <span className="text-white">{latestPayoutStatus || accountStatus}</span>
         </p>
@@ -84,13 +150,13 @@ export default function AccountActions({
         <button
           onClick={() => postAction("request-payout")}
           disabled={!!loading}
-          className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-400 py-3 rounded-xl font-semibold text-black transition"
+          className="w-full rounded-2xl bg-green-500 py-4 font-black text-black transition hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400"
         >
           {loading === "request-payout" ? "Requesting Payout..." : "Request Payout"}
         </button>
 
         {error && (
-          <p className="mt-3 text-sm text-red-400 border border-red-900 bg-red-950/30 rounded-lg p-3">
+          <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
             {error}
           </p>
         )}
@@ -104,13 +170,13 @@ export default function AccountActions({
         <button
           onClick={() => postAction("submit-review")}
           disabled={!!loading}
-          className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-400 py-3 rounded-xl font-semibold text-black transition"
+          className="w-full rounded-2xl bg-green-500 py-4 font-black text-black transition hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400"
         >
           {loading === "submit-review" ? "Submitting..." : "Submit for Review"}
         </button>
 
         {error && (
-          <p className="mt-3 text-sm text-red-400 border border-red-900 bg-red-950/30 rounded-lg p-3">
+          <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
             {error}
           </p>
         )}
