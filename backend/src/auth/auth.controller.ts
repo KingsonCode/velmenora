@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,8 +14,11 @@ import { PrismaService } from "../prisma/prisma.service";
 import {
   buildLogoutCookie,
   buildSessionCookie,
+  createPasswordResetToken,
   createSessionToken,
   getSessionFromCookie,
+  hashPassword,
+  hashPasswordResetToken,
   verifyPassword,
 } from "./auth-utils";
 
@@ -72,6 +76,120 @@ export class AuthController {
         phone: user.phone,
         role: user.role,
       },
+    };
+  }
+
+  @Post("forgot-password")
+  async forgotPassword(@Body() body: { email?: string }) {
+    const email = String(body.email || "").trim().toLowerCase();
+
+    const genericResponse = {
+      ok: true,
+      message: "If an account exists for this email, reset instructions will be sent.",
+    };
+
+    if (!email) {
+      return genericResponse;
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        isActive: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      return genericResponse;
+    }
+
+    const token = createPasswordResetToken();
+    const tokenHash = hashPasswordResetToken(token);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+      },
+    });
+
+    const resetUrl = `https://velmenora.com/reset-password?token=${encodeURIComponent(token)}`;
+
+    return {
+      ...genericResponse,
+      resetUrl:
+        process.env.PASSWORD_RESET_DEBUG === "true" ? resetUrl : undefined,
+    };
+  }
+
+  @Post("reset-password")
+  async resetPassword(@Body() body: { token?: string; password?: string }) {
+    const token = String(body.token || "").trim();
+    const password = String(body.password || "");
+
+    if (!token) {
+      throw new BadRequestException("Reset token is required");
+    }
+
+    if (password.length < 8) {
+      throw new BadRequestException("Password must be at least 8 characters");
+    }
+
+    const tokenHash = hashPasswordResetToken(token);
+
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: {
+        user: true,
+      },
+    });
+
+    if (
+      !resetToken ||
+      resetToken.usedAt ||
+      resetToken.expiresAt.getTime() < Date.now() ||
+      !resetToken.user ||
+      !resetToken.user.isActive
+    ) {
+      throw new BadRequestException("Invalid or expired reset token");
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: resetToken.userId },
+        data: {
+          passwordHash: await hashPassword(password),
+        },
+      });
+
+      await tx.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+
+      await tx.passwordResetToken.updateMany({
+        where: {
+          userId: resetToken.userId,
+          usedAt: null,
+          id: {
+            not: resetToken.id,
+          },
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+    });
+
+    return {
+      ok: true,
+      message: "Password has been reset. You can now sign in.",
     };
   }
 

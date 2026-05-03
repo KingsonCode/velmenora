@@ -39,6 +39,17 @@ function sign(data: string) {
   return base64url(createHmac("sha256", getAuthSecret()).update(data).digest());
 }
 
+
+export function createPasswordResetToken() {
+  return randomBytes(32).toString("hex");
+}
+
+export function hashPasswordResetToken(token: string) {
+  return createHmac("sha256", getAuthSecret())
+    .update(`password-reset:${String(token || "")}`)
+    .digest("hex");
+}
+
 export async function hashPassword(password: string) {
   const normalized = String(password || "");
 
