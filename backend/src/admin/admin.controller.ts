@@ -809,9 +809,19 @@ load();
     if (!acc) throw new NotFoundException("Broker account not found");
 
     return {
-      ...acc,
-      investorPasswordEnc: undefined,
-      investorPassword: decrypt(acc.investorPasswordEnc),
+      id: acc.id,
+      challengeAccountId: acc.challengeAccountId,
+      brokerName: acc.brokerName,
+      accountType: acc.accountType,
+      platformType: acc.platformType,
+      accountLogin: acc.accountLogin,
+      serverName: acc.serverName,
+      verificationStatus: acc.verificationStatus,
+      verificationNotes: acc.verificationNotes,
+      verifiedAt: acc.verifiedAt,
+      createdAt: acc.createdAt,
+      updatedAt: acc.updatedAt,
+      hasInvestorPassword: Boolean(acc.investorPasswordEnc),
     };
   }
 
