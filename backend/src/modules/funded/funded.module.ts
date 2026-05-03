@@ -57,5 +57,6 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
     NowPaymentsService,
     PaymentProcessingService,
   ],
+  exports: [MetricsOrchestrator],
 })
 export class FundedModule {}

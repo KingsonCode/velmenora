@@ -20,11 +20,18 @@ export class DrawdownEngineService {
       account.dayStartEquity ?? account.dayStartBalance ?? initialBalance,
     );
 
-    const dailyLossPct =
-      ((dayStartEquity - currentEquity) / dayStartEquity) * 100;
+    const rawDailyLossPct =
+      dayStartEquity > 0
+        ? ((dayStartEquity - currentEquity) / dayStartEquity) * 100
+        : 0;
 
-    const overallDrawdownPct =
-      ((initialBalance - currentEquity) / initialBalance) * 100;
+    const rawOverallDrawdownPct =
+      initialBalance > 0
+        ? ((initialBalance - currentEquity) / initialBalance) * 100
+        : 0;
+
+    const dailyLossPct = Math.max(0, rawDailyLossPct);
+    const overallDrawdownPct = Math.max(0, rawOverallDrawdownPct);
 
     const dailyLossBreached = dailyLossPct >= maxDailyLossPct;
     const overallDrawdownBreached =

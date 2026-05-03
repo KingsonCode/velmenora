@@ -16,6 +16,7 @@ import type { Response } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateBroker } from "../config/brokers";
 import { encrypt, decrypt } from "../utils/crypto";
+import { MetricsOrchestrator } from "../modules/funded/orchestrators/metrics-orchestrator.service";
 
 type AdminAction = "review" | "approve" | "pay";
 
@@ -24,6 +25,9 @@ export class AdminController {
   constructor(
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+
+    @Inject(MetricsOrchestrator)
+    private readonly metricsOrchestrator: MetricsOrchestrator,
   ) {}
 
   private assertAdmin(token?: string) {
@@ -876,6 +880,87 @@ load();
         createdAt: updated.createdAt,
         updatedAt: updated.updatedAt,
       },
+    };
+  }
+
+  @Post("admin/broker-account/:id/sync-metrics")
+  async syncBrokerMetrics(
+    @Param("id") id: string,
+    @Body() body: any,
+    @Headers("x-admin-token") token?: string,
+  ) {
+    this.assertAdmin(token);
+
+    const brokerAccount = await this.prisma.brokerAccount.findUnique({
+      where: { id },
+      include: {
+        challengeAccount: true,
+      },
+    });
+
+    if (!brokerAccount) {
+      throw new NotFoundException("Broker account not found");
+    }
+
+    if (brokerAccount.verificationStatus !== "verified") {
+      throw new BadRequestException("Broker account must be verified before syncing metrics");
+    }
+
+    if (!brokerAccount.challengeAccountId || !brokerAccount.challengeAccount) {
+      throw new BadRequestException("Broker account is not linked to a challenge account");
+    }
+
+    const currentBalance = Number(body.currentBalance);
+    const currentEquity = Number(body.currentEquity);
+
+    if (!Number.isFinite(currentBalance) || !Number.isFinite(currentEquity)) {
+      throw new BadRequestException("currentBalance and currentEquity are required numbers");
+    }
+
+    const result = await this.metricsOrchestrator.process(
+      brokerAccount.challengeAccountId,
+      {
+        ...body,
+        currentBalance,
+        currentEquity,
+        source: "admin_broker_metrics_sync",
+        brokerAccountId: brokerAccount.id,
+        brokerName: brokerAccount.brokerName,
+        platformType: brokerAccount.platformType,
+        serverName: brokerAccount.serverName,
+        accountLogin: brokerAccount.accountLogin,
+      },
+    );
+
+    await this.prisma.auditLog.create({
+      data: {
+        eventType: "admin_action",
+        entityType: "challenge_account",
+        entityId: brokerAccount.challengeAccountId,
+        metadataJson: {
+          source: "broker_account_metrics_sync",
+          brokerAccountId: brokerAccount.id,
+          brokerName: brokerAccount.brokerName,
+          platformType: brokerAccount.platformType,
+          serverName: brokerAccount.serverName,
+          accountLogin: brokerAccount.accountLogin,
+          metrics: body,
+        },
+      },
+    });
+
+    return {
+      ok: true,
+      brokerAccount: {
+        id: brokerAccount.id,
+        challengeAccountId: brokerAccount.challengeAccountId,
+        brokerName: brokerAccount.brokerName,
+        platformType: brokerAccount.platformType,
+        accountLogin: brokerAccount.accountLogin,
+        serverName: brokerAccount.serverName,
+        verificationStatus: brokerAccount.verificationStatus,
+      },
+      result,
     };
   }
 
