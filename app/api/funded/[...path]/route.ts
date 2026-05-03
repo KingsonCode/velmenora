@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_BASE_URL =
-  process.env.FUNDED_BACKEND_URL || "http://127.0.0.1:8002";
+  process.env.FUNDED_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_FUNDED_API_URL ||
+  "https://api.velmenora.com";
 
 async function proxyRequest(
   req: NextRequest,
