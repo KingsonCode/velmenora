@@ -23,8 +23,17 @@ export const BROKERS = [
     servers: [
       { name: "XMGlobal-Demo", platform: "MT5", accountType: "DEMO" },
       { name: "XMGlobal-MT4 Demo", platform: "MT4", accountType: "DEMO" },
+
       { name: "XMGlobal-MT5", platform: "MT5", accountType: "REAL" },
       { name: "XMGlobal-MT4", platform: "MT4", accountType: "REAL" },
+
+      { name: "XMGlobal-Real", platform: "MT5", accountType: "REAL" },
+      { name: "XMGlobal-Real", platform: "MT4", accountType: "REAL" },
+
+      { name: "XMTrading-Demo", platform: "MT5", accountType: "DEMO" },
+      { name: "XMTrading-Demo", platform: "MT4", accountType: "DEMO" },
+      { name: "XMTrading-Real", platform: "MT5", accountType: "REAL" },
+      { name: "XMTrading-Real", platform: "MT4", accountType: "REAL" },
     ],
   },
 ] as const;
@@ -38,10 +47,23 @@ export function validateBroker(
   const broker = BROKERS.find((b) => b.slug === brokerName);
   if (!broker) return false;
 
-  return broker.servers.some(
-    (s) =>
-      s.name === server &&
-      s.platform === platform &&
-      s.accountType === accountType,
-  );
+  const normalizedServer = server.trim();
+
+  return broker.servers.some((s) => {
+    const accountAndPlatformMatch =
+      s.platform === platform && s.accountType === accountType;
+
+    if (!accountAndPlatformMatch) return false;
+
+    // Exact match is valid.
+    if (s.name === normalizedServer) return true;
+
+    // Allow numbered / suffixed server variants:
+    // Exness-MT5Trial9, Exness-MT5Real12, XMGlobal-Real 30, XMTrading-Demo2.
+    if (normalizedServer.startsWith(s.name)) {
+      return true;
+    }
+
+    return false;
+  });
 }
