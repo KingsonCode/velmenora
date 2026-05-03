@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import {
     AuditEntityType,
     AuditEventType,
@@ -7,11 +7,13 @@ import {
     PaymentStatus,
 } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
+import { hashPassword } from "../../auth/auth-utils";
 
 type ApplyInput = {
     email: string;
     fullName: string;
     phone?: string;
+    password?: string;
     planSlug: string;
 };
 
@@ -24,9 +26,14 @@ export class ChallengeLifecycleService {
         const fullName = input.fullName?.trim();
         const planSlug = input.planSlug?.trim();
 
-        if (!email) throw new Error("Email is required");
-        if (!fullName) throw new Error("fullName is required");
-        if (!planSlug) throw new Error("planSlug is required");
+        const password = String(input.password || "");
+
+        if (!email) throw new BadRequestException("Email is required");
+        if (!fullName) throw new BadRequestException("fullName is required");
+        if (!planSlug) throw new BadRequestException("planSlug is required");
+        if (password.length < 8) {
+            throw new BadRequestException("Password must be at least 8 characters");
+        }
 
         return this.prisma.$transaction(async (tx) => {
             const challenge = await tx.fundedChallenge.findUnique({
@@ -37,17 +44,24 @@ export class ChallengeLifecycleService {
                 throw new Error("Funded challenge not found or inactive");
             }
 
-            const user = await tx.user.upsert({
+            const existingUser = await tx.user.findUnique({
                 where: { email },
-                update: {
-                    fullName,
-                    phone: input.phone ?? undefined,
-                },
-                create: {
+            });
+
+            if (existingUser) {
+                throw new BadRequestException({
+                    ok: false,
+                    reason: "account_exists_sign_in_required",
+                    message: "This email already has a Velmenora account. Sign in to continue.",
+                });
+            }
+
+            const user = await tx.user.create({
+                data: {
                     email,
                     fullName,
                     phone: input.phone ?? null,
-                    passwordHash: "pending_external_auth",
+                    passwordHash: await hashPassword(password),
                 },
             });
 

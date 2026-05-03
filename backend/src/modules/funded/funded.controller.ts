@@ -21,6 +21,7 @@ type ApplyBody = {
   email: string;
   fullName: string;
   phone?: string;
+  password?: string;
   planSlug: string;
 };
 
@@ -59,6 +60,7 @@ export class FundedController {
       email: body.email,
       fullName: body.fullName,
       phone: body.phone,
+      password: body.password,
       planSlug: body.planSlug,
     });
   }
