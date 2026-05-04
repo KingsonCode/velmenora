@@ -455,3 +455,20 @@ model BrokerAccount {
   @@index([challengeAccountId])
   @@map("broker_accounts")
 }
+
+model CtaClickEvent {
+  id        String   @id @default(cuid())
+  placement String
+  label     String?
+  href      String?
+  pagePath  String?  @map("page_path")
+  referrer  String?
+  userAgent String?  @map("user_agent")
+  country   String?
+  ipHash    String?  @map("ip_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([placement])
+  @@index([createdAt])
+  @@map("cta_click_events")
+}

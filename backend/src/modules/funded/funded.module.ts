@@ -24,6 +24,8 @@ import { AdminGuardService } from "./services/admin-guard.service";
 
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PaymentProcessingService } from "./payments/payment-processing.service";
+import { CtaTrackingController } from './cta-tracking/cta-tracking.controller';
+import { CtaTrackingService } from './cta-tracking/cta-tracking.service';
 
 @Module({
   controllers: [
@@ -31,6 +33,7 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
     MetricsController,
     ReviewController,
     PayoutController,
+    CtaTrackingController,
   ],
   providers: [
     PrismaService,
@@ -56,6 +59,7 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
     // payments
     NowPaymentsService,
     PaymentProcessingService,
+    CtaTrackingService,
   ],
   exports: [MetricsOrchestrator],
 })
