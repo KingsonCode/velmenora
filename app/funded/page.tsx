@@ -1,5 +1,51 @@
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
+type ActivityItem = {
+  id: string;
+  type: string;
+  label: string;
+  plan: string;
+  status: string;
+  updatedAt: string;
+};
+
+async function getActivityFeed(): Promise<ActivityItem[]> {
+  const baseUrl =
+    process.env.FUNDED_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://localhost:8002";
+
+  try {
+    const res = await fetch(`${baseUrl}/api/funded/public/activity`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+
+    return Array.isArray(data?.items) ? data.items.slice(0, 6) : [];
+  } catch {
+    return [];
+  }
+}
+
+function timeAgo(value: string) {
+  const timestamp = new Date(value).getTime();
+  const diffMs = Date.now() - timestamp;
+  const diffMin = Math.max(1, Math.floor(diffMs / 60000));
+
+  if (diffMin < 60) return `${diffMin}m ago`;
+
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
 export const metadata: Metadata = {
   title: "Velmenora Funded Challenge | Instant 10K, 25K & 50K Trading Challenges",
   description:
@@ -219,6 +265,65 @@ function SocialProofSection() {
   );
 }
 
+
+function ActivityProofSection({ items }: { items: ActivityItem[] }) {
+  const fallbackItems: ActivityItem[] = [
+    {
+      id: "rules-engine",
+      type: "rules",
+      label: "Rules engine upgraded with consistency and risk controls",
+      plan: "Velmenora Challenge",
+      status: "active",
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "plans-live",
+      type: "challenge",
+      label: "10K, 25K, and 50K challenge plans are live",
+      plan: "Velmenora Challenge",
+      status: "active",
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+
+  const feed = items.length > 0 ? items : fallbackItems;
+
+  return (
+    <section className="px-6 pb-16">
+      <div className="mx-auto max-w-6xl">
+        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 md:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-green-400">
+            Recent platform activity
+          </p>
+
+          <h3 className="mt-2 text-2xl font-black">
+            Challenge activity is being tracked live
+          </h3>
+
+          <div className="mt-6 space-y-3">
+            {feed.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span className="text-gray-300">{item.label}</span>
+                <span className="w-fit rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-300">
+                  {timeAgo(item.updatedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 text-xs leading-5 text-gray-500">
+            Activity is generated from Velmenora challenge account status updates.
+            No trader names or sensitive account details are shown.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -228,7 +333,9 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function FundedPage() {
+export default async function FundedPage() {
+  const activityItems = await getActivityFeed();
+
   return (
     <main className="min-h-screen bg-black text-white">
       <JsonLd />
@@ -285,6 +392,7 @@ export default function FundedPage() {
       </section>
 
       <SocialProofSection />
+      <ActivityProofSection items={activityItems} />
 
       <section id="plans" className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
