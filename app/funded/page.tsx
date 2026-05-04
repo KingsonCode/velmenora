@@ -151,6 +151,74 @@ function JsonLd() {
   );
 }
 
+
+const socialProof = [
+  {
+    label: "Challenge plans live",
+    value: "3",
+    note: "10K, 25K, and 50K simulated accounts",
+  },
+  {
+    label: "Rules enforced",
+    value: "5",
+    note: "Target, drawdown, days, consistency, and risk cap",
+  },
+  {
+    label: "Review-first rewards",
+    value: "Manual",
+    note: "Eligible accounts are reviewed before reward approval",
+  },
+];
+
+function SocialProofSection() {
+  return (
+    <section className="px-6 py-14">
+      <div className="mx-auto max-w-6xl rounded-[2rem] border border-green-500/20 bg-green-950/10 p-6 md:p-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-green-400">
+              Platform proof
+            </p>
+            <h2 className="mt-3 text-3xl font-black md:text-4xl">
+              Built for serious challenge tracking
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
+              Velmenora now tracks account status, broker verification, metrics,
+              rule breaches, reviews, and reward progress in one system.
+            </p>
+          </div>
+
+          <a
+            href="/member"
+            className="rounded-2xl border border-white/15 px-5 py-3 text-center font-black text-white transition hover:border-green-500 hover:text-green-400"
+          >
+            View Member Area
+          </a>
+        </div>
+
+        <div className="mt-7 grid gap-4 md:grid-cols-3">
+          {socialProof.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-3xl border border-white/10 bg-black/40 p-5"
+            >
+              <p className="text-sm text-gray-500">{item.label}</p>
+              <p className="mt-2 text-3xl font-black text-white">{item.value}</p>
+              <p className="mt-2 text-sm leading-6 text-gray-400">{item.note}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-yellow-500/20 bg-yellow-950/10 p-4 text-sm leading-6 text-yellow-100/90">
+          <span className="font-black text-yellow-300">Trust note:</span>{" "}
+          Velmenora uses simulated accounts and fixed rewards. Passing requires
+          rule compliance and review approval, not only reaching the profit target.
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -215,6 +283,8 @@ export default function FundedPage() {
           <div className="rounded-xl border border-white/10 bg-black/40 p-4">✅ Risk cap protected</div>
         </div>
       </section>
+
+      <SocialProofSection />
 
       <section id="plans" className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
