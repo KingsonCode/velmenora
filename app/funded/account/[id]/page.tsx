@@ -194,13 +194,13 @@ export default async function FundedAccountPage({ params }: PageProps) {
             : account.status === "failed"
               ? "Challenge Failed"
               : account.status === "payout_requested"
-                ? "Payout Requested"
+                ? "Reward Requested"
                 : account.status === "payout_under_review"
-                  ? "Payout Under Review"
+                  ? "Reward Under Review"
                   : account.status === "payout_approved"
-                    ? "Payout Approved"
+                    ? "Reward Approved"
                     : account.status === "payout_paid"
-                      ? "Payout Paid"
+                      ? "Reward Paid"
                       : "Continue";
 
   return (

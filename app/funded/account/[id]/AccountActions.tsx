@@ -120,9 +120,9 @@ export default function AccountActions({
   if (accountStatus === "payout_paid") {
     return (
       <div className="mt-4 rounded-2xl border border-green-500 bg-green-900/20 p-4">
-        <p className="font-semibold text-green-400">✅ Payout Paid</p>
+        <p className="font-semibold text-green-400">✅ Reward Paid</p>
         <p className="mt-1 text-sm text-gray-300">
-          Your reward payout has been marked as paid.
+          Your reward has been marked as paid.
         </p>
       </div>
     );
@@ -135,9 +135,9 @@ export default function AccountActions({
   ) {
     return (
       <div className="mt-4 rounded-2xl border border-blue-500/40 bg-blue-950/20 p-4">
-        <p className="font-semibold text-blue-400">Payout in Progress</p>
+        <p className="font-semibold text-blue-400">Reward in Progress</p>
         <p className="mt-1 text-sm text-gray-300">
-          Current payout status:{" "}
+          Current reward status:{" "}
           <span className="text-white">{latestPayoutStatus || accountStatus}</span>
         </p>
       </div>

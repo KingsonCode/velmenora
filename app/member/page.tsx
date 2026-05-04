@@ -7,8 +7,50 @@ function money(value: unknown) {
   return `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
+function challengeCodeFromName(name: unknown) {
+  const value = String(name ?? "").toUpperCase();
+
+  if (value.includes("50K")) return "50K";
+  if (value.includes("25K")) return "25K";
+  if (value.includes("10K")) return "10K";
+
+  return "ACC";
+}
+
+function accountDisplayId(account: any) {
+  const suffix = String(account?.id ?? "").slice(-4).toUpperCase();
+  const code = challengeCodeFromName(account?.challenge?.name);
+
+  return `VM-${code}-${suffix || "0000"}`;
+}
+
 function prettyStatus(value: unknown) {
-  return String(value ?? "unknown").replaceAll("_", " ");
+  const status = String(value ?? "unknown").toLowerCase();
+
+  const labels: Record<string, string> = {
+    pending_payment: "Pending Payment",
+    payment_confirmed: "Payment Confirmed",
+    assigned: "Assigned",
+    active: "Active",
+    under_review: "Under Review",
+    passed: "Challenge Passed",
+    failed: "Challenge Failed",
+    payout_pending: "Reward Pending",
+    payout_requested: "Reward Requested",
+    payout_under_review: "Reward Under Review",
+    payout_approved: "Reward Approved",
+    payout_paid: "Reward Paid",
+    verified: "Verified",
+    rejected: "Rejected",
+    pending: "Pending",
+    not_connected: "Not Connected",
+  };
+
+  if (labels[status]) return labels[status];
+
+  return status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function statusTone(status: string) {
@@ -25,6 +67,10 @@ function statusTone(status: string) {
   }
 
   return "border-yellow-500/30 bg-yellow-950/20 text-yellow-300";
+}
+
+function isPendingPayment(account: any) {
+  return account?.status === "pending_payment" || account?.paymentStatus === "pending";
 }
 
 export default function MemberPage() {
@@ -53,7 +99,9 @@ export default function MemberPage() {
         const accountData = await accountRes.json();
 
         if (!accountRes.ok || accountData?.ok === false) {
-          throw new Error(accountData?.message || accountData?.error || "Failed to load challenges");
+          throw new Error(
+            accountData?.message || accountData?.error || "Failed to load challenges",
+          );
         }
 
         setAccounts(accountData.accounts || []);
@@ -74,8 +122,8 @@ export default function MemberPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black px-6 py-16 text-white">
-        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+      <main className="min-h-screen bg-black px-4 py-10 text-white sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
           Loading member area...
         </div>
       </main>
@@ -83,21 +131,21 @@ export default function MemberPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-12 text-white">
+    <main className="min-h-screen bg-black px-4 py-8 text-white sm:px-6 sm:py-12">
       <div className="mx-auto max-w-7xl">
-        <section className="rounded-[2rem] border border-green-500/20 bg-green-950/10 p-8">
+        <section className="rounded-[1.75rem] border border-green-500/20 bg-green-950/10 p-6 sm:rounded-[2rem] sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-green-400">
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-green-400 sm:text-sm">
                 Member Area
               </p>
 
-              <h1 className="mt-3 text-4xl font-black md:text-6xl">
+              <h1 className="mt-3 text-4xl font-black leading-tight md:text-6xl">
                 Welcome{user?.fullName ? `, ${user.fullName}` : ""}
               </h1>
 
-              <p className="mt-3 text-gray-400">
-                Track your funded challenges, broker verification, metrics, reviews, and payouts.
+              <p className="mt-3 max-w-2xl text-gray-400">
+                Track your funded challenges, broker verification, metrics, reviews, and rewards.
               </p>
             </div>
 
@@ -111,12 +159,12 @@ export default function MemberPage() {
         </section>
 
         {error && (
-          <div className="mt-6 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
+          <div className="mt-5 rounded-2xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
             {error}
           </div>
         )}
 
-        <section className="mt-8">
+        <section className="mt-7 sm:mt-8">
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="text-3xl font-black">My Challenges</h2>
@@ -127,14 +175,14 @@ export default function MemberPage() {
 
             <a
               href="/funded"
-              className="rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black transition hover:bg-green-400"
+              className="sticky top-3 z-20 rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black shadow-[0_12px_40px_rgba(34,197,94,0.18)] transition hover:bg-green-400 md:static"
             >
               Start New Challenge
             </a>
           </div>
 
           {accounts.length === 0 ? (
-            <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8 text-center">
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 text-center sm:rounded-[2rem] sm:p-8">
               <h3 className="text-2xl font-black">No challenges yet</h3>
               <p className="mt-2 text-gray-400">
                 Start a funded challenge to create your first account.
@@ -147,27 +195,33 @@ export default function MemberPage() {
               </a>
             </div>
           ) : (
-            <div className="grid gap-5 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2">
               {accounts.map((account) => {
                 const broker = account.brokerAccounts?.[0];
                 const payout = account.payoutRequests?.[0];
+                const pendingPayment = isPendingPayment(account);
 
                 return (
-                  <a
+                  <article
                     key={account.id}
-                    href={`/funded/account/${account.id}`}
-                    className="block rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 transition hover:border-green-500/40 hover:bg-white/[0.05]"
+                    className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 transition hover:border-green-500/40 hover:bg-white/[0.05] sm:rounded-[2rem] sm:p-6"
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <h3 className="text-2xl font-black">
+                        <h3 className="text-2xl font-black leading-tight">
                           {account.challenge?.name ?? "Challenge Account"}
                         </h3>
-                        <p className="mt-1 text-xs text-gray-500">{account.id}</p>
+
+                        <p className="mt-1 text-xs font-semibold text-gray-500">
+                          Account ID:{" "}
+                          <span className="font-black text-gray-400">
+                            {accountDisplayId(account)}
+                          </span>
+                        </p>
                       </div>
 
                       <span
-                        className={`w-fit rounded-full border px-3 py-1 text-xs font-black capitalize ${statusTone(
+                        className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${statusTone(
                           account.status,
                         )}`}
                       >
@@ -175,34 +229,52 @@ export default function MemberPage() {
                       </span>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                    <div className="mt-4 grid grid-cols-2 gap-2.5 text-sm md:grid-cols-4 md:gap-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 sm:p-4">
                         <p className="text-gray-500">Balance</p>
                         <p className="mt-1 font-black">{money(account.currentBalance)}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                      <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 sm:p-4">
                         <p className="text-gray-500">Equity</p>
                         <p className="mt-1 font-black">{money(account.currentEquity)}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                      <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 sm:p-4">
                         <p className="text-gray-500">Broker</p>
-                        <p className="mt-1 font-black capitalize">
+                        <p className="mt-1 font-black">
                           {broker?.verificationStatus
                             ? prettyStatus(broker.verificationStatus)
-                            : "Not connected"}
+                            : "Not Connected"}
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                        <p className="text-gray-500">Payout</p>
-                        <p className="mt-1 font-black capitalize">
+                      <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 sm:p-4">
+                        <p className="text-gray-500">Reward</p>
+                        <p className="mt-1 font-black">
                           {payout?.status ? prettyStatus(payout.status) : "—"}
                         </p>
                       </div>
                     </div>
-                  </a>
+
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      {pendingPayment ? (
+                        <a
+                          href={`/funded/account/${account.id}`}
+                          className="flex min-h-12 flex-1 items-center justify-center rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black transition hover:bg-green-400"
+                        >
+                          Complete Payment
+                        </a>
+                      ) : (
+                        <a
+                          href={`/funded/account/${account.id}`}
+                          className="flex min-h-12 flex-1 items-center justify-center rounded-2xl border border-white/10 px-5 py-3 text-center font-black text-white transition hover:border-green-500/40 hover:text-green-300"
+                        >
+                          View Dashboard
+                        </a>
+                      )}
+                    </div>
+                  </article>
                 );
               })}
             </div>
