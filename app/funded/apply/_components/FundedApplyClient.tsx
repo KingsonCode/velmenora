@@ -17,7 +17,7 @@ const planDetails: Record<
 > = {
   "instant-10k": {
     name: "Instant 10K Challenge",
-    fee: "$25",
+    fee: "$35",
     balance: "$10,000",
     reward: "$100",
     target: "10%",
@@ -26,9 +26,18 @@ const planDetails: Record<
   },
   "instant-25k": {
     name: "Instant 25K Challenge",
-    fee: "$59",
+    fee: "$79",
     balance: "$25,000",
-    reward: "$115",
+    reward: "$150",
+    target: "10%",
+    dailyLoss: "5%",
+    drawdown: "10%",
+  },
+  "instant-50k": {
+    name: "Instant 50K Challenge",
+    fee: "$149",
+    balance: "$50,000",
+    reward: "$250",
     target: "10%",
     dailyLoss: "5%",
     drawdown: "10%",
@@ -195,7 +204,7 @@ export default function FundedApplyClient() {
             <p className="font-bold text-yellow-300">Risk rules</p>
             <p className="mt-2">
               Daily loss limit: {selectedPlan.dailyLoss}. Max drawdown:{" "}
-              {selectedPlan.drawdown}. Minimum trading days: 3.
+              {selectedPlan.drawdown}. Minimum trading days: 7.
             </p>
           </div>
 
