@@ -184,6 +184,95 @@ export class FundedController {
     return this.paymentProcessingService.getPaymentStatus(paymentId);
   }
 
+
+  @Get("public/activity")
+  async publicActivity() {
+    const accounts = await this.prisma.challengeAccount.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 12,
+      include: {
+        challenge: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+        payoutRequests: {
+          orderBy: { updatedAt: "desc" },
+          take: 1,
+          select: {
+            status: true,
+            requestedAmount: true,
+            currency: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    const items = accounts.map((account) => {
+      const payout = account.payoutRequests?.[0];
+      const planName = account.challenge?.name ?? "Velmenora Challenge";
+
+      let label = `${planName} account created`;
+      let type = "challenge";
+
+      if (account.status === "active") {
+        label = `${planName} account is active`;
+        type = "active";
+      }
+
+      if (account.status === "under_review") {
+        label = `${planName} account submitted for review`;
+        type = "review";
+      }
+
+      if (account.status === "failed") {
+        label = `${planName} account closed after rule review`;
+        type = "rules";
+      }
+
+      if (account.status === "payout_requested") {
+        label = `${planName} reward request submitted`;
+        type = "reward";
+      }
+
+      if (account.status === "payout_approved") {
+        label = `${planName} reward approved after review`;
+        type = "reward";
+      }
+
+      if (account.status === "payout_paid") {
+        label = `${planName} reward marked as paid`;
+        type = "reward";
+      }
+
+      if (payout?.status === "approved") {
+        label = `${planName} reward approved`;
+        type = "reward";
+      }
+
+      if (payout?.status === "paid") {
+        label = `${planName} reward paid`;
+        type = "reward";
+      }
+
+      return {
+        id: account.id,
+        type,
+        label,
+        plan: planName,
+        status: account.status,
+        updatedAt: account.updatedAt,
+      };
+    });
+
+    return {
+      ok: true,
+      items,
+    };
+  }
+
   @Post("account/:id/payout/request")
   async requestPayout(
     @Param("id") id: string,
