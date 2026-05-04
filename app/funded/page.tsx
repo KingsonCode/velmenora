@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import TrackedCtaLink from "@/components/funded/TrackedCtaLink";
 
 export const metadata: Metadata = {
   title: "Velmenora Funded Challenge | Instant 10K, 25K & 50K Trading Challenges",
@@ -305,12 +306,14 @@ export default function FundedPage() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <a
+            <TrackedCtaLink
               href="/funded/apply?plan=instant-25k"
+              placement="hero"
+              label="Hero CTA - Start Most Popular Plan"
               className="rounded-2xl bg-green-500 px-7 py-4 font-black text-black transition hover:bg-green-400"
             >
               Start Most Popular Plan
-            </a>
+            </TrackedCtaLink>
             <a
               href="#plans"
               className="rounded-2xl border border-white/15 px-7 py-4 font-black text-white transition hover:border-green-500 hover:text-green-400"
@@ -406,8 +409,10 @@ export default function FundedPage() {
                   </p>
                 </div>
 
-                <a
+                <TrackedCtaLink
                   href={`/funded/apply?plan=${plan.slug}`}
+                  placement="plan_card"
+                  label={`Plan Card CTA - ${plan.name}`}
                   className={`mt-7 block rounded-2xl px-5 py-4 text-center font-black transition ${
                     plan.featured
                       ? "bg-green-500 text-black hover:bg-green-400"
@@ -415,7 +420,7 @@ export default function FundedPage() {
                   }`}
                 >
                   Start {plan.name} →
-                </a>
+                </TrackedCtaLink>
               </article>
             ))}
           </div>
@@ -489,15 +494,47 @@ export default function FundedPage() {
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <a href="/funded/apply?plan=instant-25k" className="rounded-2xl bg-green-500 px-7 py-4 font-black text-black transition hover:bg-green-400">
+            <TrackedCtaLink
+              href="/funded/apply?plan=instant-25k"
+              placement="final"
+              label="Final CTA - Start 25K Challenge"
+              className="rounded-2xl bg-green-500 px-7 py-4 font-black text-black transition hover:bg-green-400"
+            >
               Start 25K Challenge
-            </a>
-            <a href="/funded/apply?plan=instant-50k" className="rounded-2xl border border-white/15 px-7 py-4 font-black text-white transition hover:border-green-500 hover:text-green-400">
+            </TrackedCtaLink>
+            <TrackedCtaLink
+              href="/funded/apply?plan=instant-50k"
+              placement="final"
+              label="Final CTA - Start 50K Challenge"
+              className="rounded-2xl border border-white/15 px-7 py-4 font-black text-white transition hover:border-green-500 hover:text-green-400"
+            >
               Start 50K Challenge
-            </a>
+            </TrackedCtaLink>
           </div>
         </div>
       </section>
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black/90 p-4 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold uppercase tracking-[0.18em] text-green-400">
+              Most popular
+            </p>
+            <p className="truncate text-sm font-black text-white">
+              Start 25K Challenge
+            </p>
+          </div>
+
+          <TrackedCtaLink
+            href="/funded/apply?plan=instant-25k"
+            placement="sticky_mobile"
+            label="Sticky Mobile CTA - Start 25K Challenge"
+            className="shrink-0 rounded-2xl bg-green-500 px-5 py-3 text-sm font-black text-black transition hover:bg-green-400"
+          >
+            Start Now
+          </TrackedCtaLink>
+        </div>
+      </div>
+
     </main>
   );
 }
