@@ -89,40 +89,6 @@ export class MetricsOrchestrator {
       };
     }
 
-        if (previousStatus !== ChallengeStatus.active) {
-      await this.prisma.auditLog.create({
-        data: {
-          actorUserId: null,
-          entityType: AuditEntityType.challenge_account,
-          entityId: accountId,
-          eventType: AuditEventType.admin_action,
-          oldValuesJson: {
-            status: previousStatus,
-          },
-          newValuesJson: {
-            status: previousStatus,
-          },
-          metadataJson: {
-            source: "metrics_orchestrator",
-            action: "metrics_rejected",
-            reason: "account_not_active",
-            attemptedMetrics: metrics,
-          },
-        },
-      });
-
-      return {
-        ok: false,
-        rejected: true,
-        reason: "account_not_active",
-        challengeAccount: account,
-        decision: {
-          previousStatus,
-          nextStatus: previousStatus,
-        },
-      };
-    }
-
     const prevMetrics = await this.prisma.metricSnapshot.findFirst({
       where: { challengeAccountId: accountId },
       orderBy: { snapshotTime: "desc" },
@@ -137,6 +103,36 @@ export class MetricsOrchestrator {
     const totalPnl = currentBalance - initialBalance;
     const realizedPnl = Number(metrics.realizedPnl ?? metrics.pnl ?? totalPnl);
     const unrealizedPnl = currentEquity - currentBalance;
+
+    const incomingMaxObservedLot = Number(metrics.maxObservedLot ?? 0);
+    const incomingMaxObservedRiskPct = Number(metrics.maxObservedRiskPct ?? 0);
+    const previousMaxObservedLot = Number(account.maxObservedLot ?? 0);
+    const previousMaxObservedRiskPct = Number(account.maxObservedRiskPct ?? 0);
+
+    const maxObservedLot = Math.max(previousMaxObservedLot, incomingMaxObservedLot);
+    const maxObservedRiskPct = Math.max(
+      previousMaxObservedRiskPct,
+      incomingMaxObservedRiskPct,
+    );
+
+    const maxLotSize = Number(account.challenge?.maxLotSize ?? 1);
+    const maxRiskPerTradePct = Number(account.challenge?.maxRiskPerTradePct ?? 2);
+
+    const riskCheck = {
+      maxObservedLot,
+      maxObservedRiskPct,
+      maxLotSize,
+      maxRiskPerTradePct,
+      breached:
+        maxObservedLot > maxLotSize ||
+        maxObservedRiskPct > maxRiskPerTradePct,
+      failureReason:
+        maxObservedLot > maxLotSize
+          ? "max_lot_size_breached"
+          : maxObservedRiskPct > maxRiskPerTradePct
+            ? "max_risk_per_trade_breached"
+            : null,
+    };
 
     const dayReset = this.dayReset.apply(account, currentBalance, currentEquity);
     const dayId = dayReset.dayId;
@@ -161,7 +157,39 @@ export class MetricsOrchestrator {
     };
 
     const drawdownCheck = this.drawdown.evaluate(projectedAccount);
-    const profitCheck = this.profitGuard.evaluate(projectedAccount);
+
+    const bestDayProfitResult = await this.prisma.metricSnapshot.groupBy({
+      by: ["dayId"],
+      where: {
+        challengeAccountId: accountId,
+        dayId: { not: null },
+      },
+      _max: {
+        realizedPnl: true,
+      },
+    });
+
+    const historicalBestDayProfit = bestDayProfitResult.reduce((max, row) => {
+      return Math.max(max, Number(row._max.realizedPnl ?? 0));
+    }, 0);
+
+    const bestDayProfit = Math.max(historicalBestDayProfit, realizedPnl);
+
+    const profitCheck = this.profitGuard.evaluate({
+      ...projectedAccount,
+      bestDayProfit,
+    });
+
+    const consistencyCheck = {
+      breached: Boolean(profitCheck.consistencyBreached),
+      failureReason: profitCheck.consistencyBreached
+        ? "consistency_rule_breached"
+        : null,
+      bestDayProfit,
+      bestDayProfitPctOfTotal: profitCheck.bestDayProfitPctOfTotal,
+      maxDailyProfitPct: profitCheck.maxDailyProfitPct,
+    };
+
     const fraudCheck = this.fraud.analyze(projectedAccount, prevMetrics);
 
     let nextStatus: ChallengeStatus = previousStatus;
@@ -175,6 +203,14 @@ export class MetricsOrchestrator {
     } else if (drawdownCheck.breached) {
       nextStatus = ChallengeStatus.failed;
       failureReason = drawdownCheck.failureReason;
+      eventType = AuditEventType.rule_breached;
+    } else if (riskCheck.breached) {
+      nextStatus = ChallengeStatus.failed;
+      failureReason = riskCheck.failureReason;
+      eventType = AuditEventType.rule_breached;
+    } else if (consistencyCheck.breached) {
+      nextStatus = ChallengeStatus.failed;
+      failureReason = consistencyCheck.failureReason;
       eventType = AuditEventType.rule_breached;
     } else if (profitCheck.canPass) {
       nextStatus = ChallengeStatus.under_review;
@@ -199,6 +235,10 @@ export class MetricsOrchestrator {
           overallDrawdownPct,
           dailyLossBreached: drawdownCheck.dailyLossBreached,
           overallDrawdownBreached: drawdownCheck.overallDrawdownBreached,
+          consistencyBreached: consistencyCheck.breached,
+          riskBreached: riskCheck.breached,
+          maxObservedLot,
+          maxObservedRiskPct,
           status: nextStatus,
           failureReason,
           tradingDaysCount: projectedTradingDaysCount,
@@ -229,6 +269,8 @@ export class MetricsOrchestrator {
           overallDrawdownPct,
           tradingDaysCount: projectedTradingDaysCount,
           snapshotTime: new Date(),
+          maxObservedLot,
+          maxObservedRiskPct,
           rawPayloadJson: metrics,
         },
       });
@@ -255,6 +297,8 @@ export class MetricsOrchestrator {
             source: "metrics_orchestrator",
             drawdownCheck,
             profitCheck,
+            consistencyCheck,
+            riskCheck,
             fraudCheck,
             isValidTradingDay,
             dayReset,
@@ -275,6 +319,8 @@ export class MetricsOrchestrator {
         nextStatus,
         drawdownCheck,
         profitCheck,
+        consistencyCheck,
+        riskCheck,
         fraudCheck,
         isValidTradingDay,
         dayReset,

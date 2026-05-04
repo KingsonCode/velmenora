@@ -133,21 +133,20 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  challengeAccounts ChallengeAccount[]
-  submissions       Submission[]
-  payoutRequests    PayoutRequest[]    @relation("PayoutRequester")
-  payments          Payment[]
+  challengeAccounts   ChallengeAccount[]
+  submissions         Submission[]
+  payoutRequests      PayoutRequest[]      @relation("PayoutRequester")
+  payments            Payment[]
   passwordResetTokens PasswordResetToken[]
-  reviewDecisions   ReviewDecision[]   @relation("ReviewerReviewDecisions")
-  payoutReviews     PayoutRequest[]    @relation("PayoutReviewer")
-  adminNotes        AdminNote[]
-  auditLogs         AuditLog[]         @relation("AuditActorUser")
+  reviewDecisions     ReviewDecision[]     @relation("ReviewerReviewDecisions")
+  payoutReviews       PayoutRequest[]      @relation("PayoutReviewer")
+  adminNotes          AdminNote[]
+  auditLogs           AuditLog[]           @relation("AuditActorUser")
 
   @@index([role])
   @@index([createdAt])
   @@map("users")
 }
-
 
 model PasswordResetToken {
   id        String    @id @default(cuid())
@@ -175,6 +174,9 @@ model FundedChallenge {
   profitTargetPct       Decimal  @map("profit_target_pct") @db.Decimal(5, 2)
   maxDailyLossPct       Decimal  @map("max_daily_loss_pct") @db.Decimal(5, 2)
   maxOverallDrawdownPct Decimal  @map("max_overall_drawdown_pct") @db.Decimal(5, 2)
+  maxDailyProfitPct     Decimal  @default(35.00) @map("max_daily_profit_pct") @db.Decimal(5, 2)
+  maxRiskPerTradePct    Decimal  @default(2.00) @map("max_risk_per_trade_pct") @db.Decimal(5, 2)
+  maxLotSize            Decimal  @default(1.00) @map("max_lot_size") @db.Decimal(8, 2)
   minTradingDays        Int      @map("min_trading_days")
   maxDurationDays       Int?     @map("max_duration_days")
   payoutRatioPct        Decimal  @map("payout_ratio_pct") @db.Decimal(5, 2)
@@ -204,6 +206,10 @@ model ChallengeAccount {
   intradayMinEquity       Decimal?        @map("intraday_min_equity") @db.Decimal(14, 2)
   dailyLossBreached       Boolean         @default(false) @map("daily_loss_breached")
   overallDrawdownBreached Boolean         @default(false) @map("overall_drawdown_breached")
+  consistencyBreached     Boolean         @default(false) @map("consistency_breached")
+  riskBreached            Boolean         @default(false) @map("risk_breached")
+  maxObservedLot          Decimal         @default(0) @map("max_observed_lot") @db.Decimal(8, 2)
+  maxObservedRiskPct      Decimal         @default(0) @map("max_observed_risk_pct") @db.Decimal(5, 2)
   dayStartAt              DateTime?       @map("day_start_at")
   dayId                   String?         @map("day_id")
   currentBalance          Decimal         @default(0) @map("current_balance") @db.Decimal(14, 2)
@@ -229,6 +235,7 @@ model ChallengeAccount {
   payoutRequests  PayoutRequest[]
   payments        Payment[]
   adminNotes      AdminNote[]
+  brokerAccounts  BrokerAccount[]
 
   @@index([userId])
   @@index([challengeId])
@@ -238,7 +245,6 @@ model ChallengeAccount {
   @@index([userId, challengeId])
   @@index([userId, status])
   @@map("challenge_accounts")
-  brokerAccounts BrokerAccount[]
 }
 
 model ChallengeRuleSnapshot {
@@ -247,6 +253,9 @@ model ChallengeRuleSnapshot {
   profitTargetPct       Decimal  @map("profit_target_pct") @db.Decimal(5, 2)
   maxDailyLossPct       Decimal  @map("max_daily_loss_pct") @db.Decimal(5, 2)
   maxOverallDrawdownPct Decimal  @map("max_overall_drawdown_pct") @db.Decimal(5, 2)
+  maxDailyProfitPct     Decimal  @default(35.00) @map("max_daily_profit_pct") @db.Decimal(5, 2)
+  maxRiskPerTradePct    Decimal  @default(2.00) @map("max_risk_per_trade_pct") @db.Decimal(5, 2)
+  maxLotSize            Decimal  @default(1.00) @map("max_lot_size") @db.Decimal(8, 2)
   minTradingDays        Int      @map("min_trading_days")
   maxDurationDays       Int?     @map("max_duration_days")
   payoutRatioPct        Decimal  @map("payout_ratio_pct") @db.Decimal(5, 2)
@@ -274,6 +283,8 @@ model MetricSnapshot {
   overallDrawdownPct Decimal      @map("overall_drawdown_pct") @db.Decimal(5, 2)
   tradingDaysCount   Int          @map("trading_days_count")
   snapshotTime       DateTime     @map("snapshot_time")
+  maxObservedLot     Decimal?     @map("max_observed_lot") @db.Decimal(8, 2)
+  maxObservedRiskPct Decimal?     @map("max_observed_risk_pct") @db.Decimal(5, 2)
   rawPayloadJson     Json?        @map("raw_payload_json")
   createdAt          DateTime     @default(now()) @map("created_at")
 
@@ -421,27 +432,25 @@ model AdminNote {
   @@map("admin_notes")
 }
 
-
-
 model BrokerAccount {
-  id                    String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  challengeAccountId    String   @map("challenge_account_id")
-  challengeAccount      ChallengeAccount @relation(fields: [challengeAccountId], references: [id])
+  challengeAccountId String           @map("challenge_account_id")
+  challengeAccount   ChallengeAccount @relation(fields: [challengeAccountId], references: [id])
 
-  brokerName            String   @map("broker_name")
-  accountType           String   @map("account_type") // DEMO | REAL
-  platformType          String   @map("platform_type") // MT4 | MT5
-  accountLogin          String   @map("account_login")
-  serverName            String   @map("server_name")
-  investorPasswordEnc   String   @map("investor_password_enc")
+  brokerName          String @map("broker_name")
+  accountType         String @map("account_type") // DEMO | REAL
+  platformType        String @map("platform_type") // MT4 | MT5
+  accountLogin        String @map("account_login")
+  serverName          String @map("server_name")
+  investorPasswordEnc String @map("investor_password_enc")
 
-  verificationStatus    String   @default("pending") @map("verification_status") // pending | verified | failed
-  verificationNotes     String?  @map("verification_notes")
-  verifiedAt            DateTime? @map("verified_at")
+  verificationStatus String    @default("pending") @map("verification_status") // pending | verified | failed
+  verificationNotes  String?   @map("verification_notes")
+  verifiedAt         DateTime? @map("verified_at")
 
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([challengeAccountId])
   @@map("broker_accounts")
