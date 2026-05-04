@@ -1,51 +1,5 @@
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
-
-type ActivityItem = {
-  id: string;
-  type: string;
-  label: string;
-  plan: string;
-  status: string;
-  updatedAt: string;
-};
-
-async function getActivityFeed(): Promise<ActivityItem[]> {
-  const baseUrl =
-    process.env.FUNDED_BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://localhost:8002";
-
-  try {
-    const res = await fetch(`${baseUrl}/api/funded/public/activity`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-
-    return Array.isArray(data?.items) ? data.items.slice(0, 6) : [];
-  } catch {
-    return [];
-  }
-}
-
-function timeAgo(value: string) {
-  const timestamp = new Date(value).getTime();
-  const diffMs = Date.now() - timestamp;
-  const diffMin = Math.max(1, Math.floor(diffMs / 60000));
-
-  if (diffMin < 60) return `${diffMin}m ago`;
-
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-}
-
 export const metadata: Metadata = {
   title: "Velmenora Funded Challenge | Instant 10K, 25K & 50K Trading Challenges",
   description:
@@ -266,61 +220,53 @@ function SocialProofSection() {
 }
 
 
-function ActivityProofSection({ items }: { items: ActivityItem[] }) {
-  const fallbackItems: ActivityItem[] = [
-    {
-      id: "rules-engine",
-      type: "rules",
-      label: "Rules engine upgraded with consistency and risk controls",
-      plan: "Velmenora Challenge",
-      status: "active",
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "plans-live",
-      type: "challenge",
-      label: "10K, 25K, and 50K challenge plans are live",
-      plan: "Velmenora Challenge",
-      status: "active",
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  const feed = items.length > 0 ? items : fallbackItems;
-
+function ConversionKillerBar() {
   return (
-    <section className="px-6 pb-16">
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-white/10 bg-black/40 p-6 md:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-green-400">
-            Recent platform activity
-          </p>
-
-          <h3 className="mt-2 text-2xl font-black">
-            Challenge activity is being tracked live
-          </h3>
-
-          <div className="mt-6 space-y-3">
-            {feed.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span className="text-gray-300">{item.label}</span>
-                <span className="w-fit rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-xs font-bold text-green-300">
-                  {timeAgo(item.updatedAt)}
-                </span>
-              </div>
-            ))}
+    <section className="px-6 pb-6">
+      <div className="mx-auto max-w-6xl rounded-3xl border border-yellow-500/25 bg-yellow-950/10 p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-300">
+              Limited review capacity
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-white">
+              New challenge reviews are processed in daily batches
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-gray-400">
+              Start earlier to enter the next review cycle after completing the
+              rules. Passing still requires compliance and manual review approval.
+            </p>
           </div>
 
-          <p className="mt-5 text-xs leading-5 text-gray-500">
-            Activity is generated from Velmenora challenge account status updates.
-            No trader names or sensitive account details are shown.
-          </p>
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-4 text-center">
+            <p className="text-xs text-gray-500">Next review window</p>
+            <p className="mt-1 text-2xl font-black text-yellow-300">Daily</p>
+            <p className="mt-1 text-xs text-gray-500">UTC processing cycle</p>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function MobileStickyCTA() {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black/90 p-3 backdrop-blur md:hidden">
+      <div className="mx-auto flex max-w-md gap-2">
+        <a
+          href="/funded/apply?plan=instant-25k"
+          className="flex-1 rounded-2xl bg-green-500 px-4 py-3 text-center text-sm font-black text-black"
+        >
+          Start 25K
+        </a>
+        <a
+          href="#plans"
+          className="flex-1 rounded-2xl border border-white/15 px-4 py-3 text-center text-sm font-black text-white"
+        >
+          Plans
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -333,12 +279,12 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function FundedPage() {
-  const activityItems = await getActivityFeed();
-
+export default function FundedPage() {
   return (
     <main className="min-h-screen bg-black text-white">
       <JsonLd />
+
+      <MobileStickyCTA />
 
       <section className="relative overflow-hidden px-6 py-20">
         <div className="absolute left-1/2 top-0 h-[560px] w-[560px] -translate-x-1/2 rounded-full bg-green-500/10 blur-3xl" />
@@ -392,7 +338,7 @@ export default async function FundedPage() {
       </section>
 
       <SocialProofSection />
-      <ActivityProofSection items={activityItems} />
+      <ConversionKillerBar />
 
       <section id="plans" className="px-6 py-20">
         <div className="mx-auto max-w-6xl">
