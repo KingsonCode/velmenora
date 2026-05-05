@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import TrackedCtaLink from "@/components/funded/TrackedCtaLink";
+import { fundedFaqs, fundedPlans, fundedSocialProof } from "@/lib/funded/config";
 
 export const metadata: Metadata = {
   title: "Velmenora Funded Challenge | Instant 10K, 25K & 50K Trading Challenges",
@@ -23,85 +24,9 @@ export const metadata: Metadata = {
   },
 };
 
-const plans = [
-  {
-    badge: "Starter",
-    name: "Instant 10K",
-    slug: "instant-10k",
-    fee: "$35",
-    balance: "$10,000",
-    reward: "$100",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-    tradingDays: "7 days",
-    consistency: "35%",
-    risk: "2%",
-    lot: "1.00",
-    featured: false,
-    description:
-      "Best for disciplined traders who want a lower-cost path into the Velmenora challenge system.",
-  },
-  {
-    badge: "Most Popular",
-    name: "Instant 25K",
-    slug: "instant-25k",
-    fee: "$79",
-    balance: "$25,000",
-    reward: "$150",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-    tradingDays: "7 days",
-    consistency: "35%",
-    risk: "2%",
-    lot: "2.00",
-    featured: true,
-    description:
-      "The strongest balance between entry fee, account size, and fixed reward potential.",
-  },
-  {
-    badge: "High Ticket",
-    name: "Instant 50K",
-    slug: "instant-50k",
-    fee: "$149",
-    balance: "$50,000",
-    reward: "$250",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-    tradingDays: "7 days",
-    consistency: "35%",
-    risk: "1.5%",
-    lot: "3.00",
-    featured: false,
-    description:
-      "Built for serious traders who want a larger simulated account and higher fixed reward ceiling.",
-  },
-];
-
-const faqs = [
-  {
-    q: "Is Velmenora Funded Challenge a real-money trading account?",
-    a: "No. It is a simulated funded challenge. Traders use a virtual balance and may qualify for fixed rewards after meeting the rules and passing review.",
-  },
-  {
-    q: "What are the main rules?",
-    a: "Each plan uses a 10% profit target, 5% daily loss limit, 10% overall drawdown limit, 7 minimum trading days, consistency rule, and maximum risk or lot-size controls.",
-  },
-  {
-    q: "How does the consistency rule work?",
-    a: "No single trading day should contribute more than 35% of the total profit used to pass the challenge. This discourages lucky spikes and high-risk gambling behavior.",
-  },
-  {
-    q: "When can I request a reward?",
-    a: "After hitting the profit target, completing the minimum trading days, staying within risk limits, and passing manual review.",
-  },
-  {
-    q: "What happens if I fail?",
-    a: "Failed accounts are not eligible for reward review. A retry discount system may be offered to eligible traders in a later release.",
-  },
-];
+const plans = fundedPlans;
+const faqs = fundedFaqs;
+const socialProof = fundedSocialProof;
 
 function JsonLd() {
   const data = [
@@ -153,23 +78,6 @@ function JsonLd() {
 }
 
 
-const socialProof = [
-  {
-    label: "Challenge plans live",
-    value: "3",
-    note: "10K, 25K, and 50K simulated accounts",
-  },
-  {
-    label: "Rules enforced",
-    value: "5",
-    note: "Target, drawdown, days, consistency, and risk cap",
-  },
-  {
-    label: "Review-first rewards",
-    value: "Manual",
-    note: "Eligible accounts are reviewed before reward approval",
-  },
-];
 
 function SocialProofSection() {
   return (
@@ -250,26 +158,6 @@ function ConversionKillerBar() {
   );
 }
 
-function MobileStickyCTA() {
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-black/90 p-3 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-md gap-2">
-        <a
-          href="/funded/apply?plan=instant-25k"
-          className="flex-1 rounded-2xl bg-green-500 px-4 py-3 text-center text-sm font-black text-black"
-        >
-          Start 25K
-        </a>
-        <a
-          href="#plans"
-          className="flex-1 rounded-2xl border border-white/15 px-4 py-3 text-center text-sm font-black text-white"
-        >
-          Plans
-        </a>
-      </div>
-    </div>
-  );
-}
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -285,7 +173,6 @@ export default function FundedPage() {
     <main className="min-h-screen bg-black text-white">
       <JsonLd />
 
-      <MobileStickyCTA />
 
       <section className="relative overflow-hidden px-6 py-20">
         <div className="absolute left-1/2 top-0 h-[560px] w-[560px] -translate-x-1/2 rounded-full bg-green-500/10 blur-3xl" />
@@ -448,7 +335,7 @@ export default function FundedPage() {
               ["Profit Target", "10%", "Reach the required net profit."],
               ["Minimum Trading Days", "7", "Show consistency across multiple days."],
               ["Consistency Rule", "35%", "No single day should dominate total profit."],
-              ["Risk Cap", "1.5–2%", "Risk and lot size are monitored."],
+              ["Risk Cap", "1.5%", "Risk and lot size are monitored."],
             ].map(([title, value, text]) => (
               <div key={title} className="rounded-3xl border border-white/10 bg-black p-6">
                 <p className="font-bold text-green-400">{title}</p>

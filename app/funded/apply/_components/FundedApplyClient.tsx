@@ -1,53 +1,13 @@
 "use client";
 
+import { getFundedPlan } from "@/lib/funded/config";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-
-const planDetails: Record<
-  string,
-  {
-    name: string;
-    fee: string;
-    balance: string;
-    reward: string;
-    target: string;
-    dailyLoss: string;
-    drawdown: string;
-  }
-> = {
-  "instant-10k": {
-    name: "Instant 10K Challenge",
-    fee: "$35",
-    balance: "$10,000",
-    reward: "$100",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-  },
-  "instant-25k": {
-    name: "Instant 25K Challenge",
-    fee: "$79",
-    balance: "$25,000",
-    reward: "$150",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-  },
-  "instant-50k": {
-    name: "Instant 50K Challenge",
-    fee: "$149",
-    balance: "$50,000",
-    reward: "$250",
-    target: "10%",
-    dailyLoss: "5%",
-    drawdown: "10%",
-  },
-};
 
 export default function FundedApplyClient() {
   const params = useSearchParams();
   const plan = params.get("plan") ?? "";
-  const selectedPlan = planDetails[plan];
+  const selectedPlan = getFundedPlan(plan);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");

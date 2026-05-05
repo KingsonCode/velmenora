@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 export type CtaPlacement =
@@ -17,6 +18,34 @@ type TrackedCtaLinkProps = {
   children: ReactNode;
 };
 
+const PRESERVED_PARAMS = [
+  "ref",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+] as const;
+
+function withPreservedParams(href: string, sourceSearch: string): string {
+  const parts = href.split("?");
+  const path = parts[0] || "/";
+  const query = parts[1] || "";
+
+  const nextParams = new URLSearchParams(query);
+  const currentParams = new URLSearchParams(sourceSearch);
+
+  for (const key of PRESERVED_PARAMS) {
+    const value = currentParams.get(key);
+    if (value && !nextParams.has(key)) {
+      nextParams.set(key, value);
+    }
+  }
+
+  const qs = nextParams.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
 function trackCtaClick(payload: {
   placement: CtaPlacement;
   label: string;
@@ -27,6 +56,7 @@ function trackCtaClick(payload: {
   const body = JSON.stringify({
     ...payload,
     pagePath: window.location.pathname,
+    pageSearch: window.location.search || undefined,
     referrer: document.referrer || undefined,
   });
 
@@ -58,11 +88,17 @@ export default function TrackedCtaLink({
   className,
   children,
 }: TrackedCtaLinkProps) {
+  const [trackedHref, setTrackedHref] = useState(href);
+
+  useEffect(() => {
+    setTrackedHref(withPreservedParams(href, window.location.search));
+  }, [href]);
+
   return (
     <Link
-      href={href}
+      href={trackedHref}
       className={className}
-      onClick={() => trackCtaClick({ placement, label, href })}
+      onClick={() => trackCtaClick({ placement, label, href: trackedHref })}
     >
       {children}
     </Link>
