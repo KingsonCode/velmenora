@@ -1,3 +1,6 @@
+import { AffiliateMembershipService } from './services/affiliate-membership.service';
+import { AdminAffiliateApplicationsController } from './admin-affiliate-applications.controller';
+import { AffiliateMeController } from './affiliate-me.controller';
 import { Module } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
@@ -38,7 +41,8 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     PayoutController,
     AffiliateCommissionReviewController,
     CtaTrackingController,
-  ],
+    AffiliateMeController,
+    AdminAffiliateApplicationsController,],
   providers: [
     PrismaService,
     ChallengeLifecycleService,
@@ -66,7 +70,7 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     NowPaymentsService,
     PaymentProcessingService,
     CtaTrackingService,
-  ],
+    AffiliateMembershipService,],
   exports: [MetricsOrchestrator],
 })
 export class FundedModule {}

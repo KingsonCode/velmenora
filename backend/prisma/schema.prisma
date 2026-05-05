@@ -160,7 +160,11 @@ model User {
   affiliatePayoutReviews AffiliatePayout[]    @relation("AffiliatePayoutReviewer")
   adminNotes             AdminNote[]
   auditLogs              AuditLog[]           @relation("AuditActorUser")
-  affiliateProfile       Affiliate?
+
+  affiliateApplication    AffiliateApplication?
+  affiliateProfile        AffiliateProfile?
+  affiliatePayoutRequests AffiliatePayoutRequest[]
+  affiliate               Affiliate?
 
   @@index([role])
   @@index([createdAt])
@@ -578,4 +582,82 @@ model CtaClickEvent {
   @@index([placement])
   @@index([createdAt])
   @@map("cta_click_events")
+}
+
+enum AffiliateApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+model AffiliateApplication {
+  id              String                     @id @default(cuid())
+  userId          String                     @unique @map("user_id")
+  status          AffiliateApplicationStatus @default(pending)
+  displayName     String?                    @map("display_name")
+  audience        String?
+  channelsJson    Json?                      @map("channels_json")
+  reason          String?
+  reviewedAt      DateTime?                  @map("reviewed_at")
+  reviewedBy      String?                    @map("reviewed_by")
+  rejectionReason String?                    @map("rejection_reason")
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  updatedAt       DateTime                   @updatedAt @map("updated_at")
+
+  user             User              @relation(fields: [userId], references: [id])
+  affiliateProfile AffiliateProfile?
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("affiliate_applications")
+}
+
+model AffiliateProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  applicationId     String?  @unique @map("application_id")
+  affiliateCode     String   @unique @map("affiliate_code")
+  displayName       String?  @map("display_name")
+  commissionRatePct Decimal  @default(20.00) @map("commission_rate_pct") @db.Decimal(7, 2)
+  totalEarned       Decimal  @default(0.00) @map("total_earned") @db.Decimal(12, 2)
+  totalPaid         Decimal  @default(0.00) @map("total_paid") @db.Decimal(12, 2)
+  payoutBalance     Decimal  @default(0.00) @map("payout_balance") @db.Decimal(12, 2)
+  isActive          Boolean  @default(true) @map("is_active")
+  approvedAt        DateTime @default(now()) @map("approved_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user        User                     @relation(fields: [userId], references: [id])
+  application AffiliateApplication?    @relation(fields: [applicationId], references: [id])
+  payouts     AffiliatePayoutRequest[]
+
+  @@index([affiliateCode])
+  @@index([isActive])
+  @@map("affiliate_profiles")
+}
+
+model AffiliatePayoutRequest {
+  id                 String                @id @default(cuid())
+  affiliateProfileId String                @map("affiliate_profile_id")
+  userId             String                @map("user_id")
+  amount             Decimal               @db.Decimal(12, 2)
+  currency           String                @default("TZS")
+  status             AffiliatePayoutStatus @default(requested)
+  payoutMethod       String?               @map("payout_method")
+  payoutDetailsJson  Json?                 @map("payout_details_json")
+  adminNote          String?               @map("admin_note")
+  requestedAt        DateTime              @default(now()) @map("requested_at")
+  reviewedAt         DateTime?             @map("reviewed_at")
+  paidAt             DateTime?             @map("paid_at")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+
+  affiliateProfile AffiliateProfile @relation(fields: [affiliateProfileId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
+
+  @@index([affiliateProfileId])
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("affiliate_payout_requests")
 }
