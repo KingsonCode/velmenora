@@ -13,6 +13,7 @@ import { Request } from "express";
 
 import { ChallengeLifecycleService } from "./ChallengeLifecycleService";
 import { PayoutRequestService } from "./services/payout-request.service";
+import { AffiliatePayoutService } from "./services/affiliate-payout.service";
 import { PaymentProcessingService } from "./payments/payment-processing.service";
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -30,6 +31,19 @@ type RequestPayoutBody = {
   requestedAmount?: number;
 };
 
+type AffiliatePayoutRequestBody = {
+  ref?: string;
+  method?: string;
+  notes?: string;
+};
+
+type AffiliatePayoutAdminBody = {
+  payoutId?: string;
+  reviewerId?: string;
+  method?: string;
+  reference?: string;
+  notes?: string;
+};
 
 @Controller("funded")
 export class FundedController {
@@ -38,6 +52,8 @@ export class FundedController {
     private readonly lifecycle: ChallengeLifecycleService,
     @Inject(PayoutRequestService)
     private readonly payoutRequestService: PayoutRequestService,
+    @Inject(AffiliatePayoutService)
+    private readonly affiliatePayoutService: AffiliatePayoutService,
     @Inject(PaymentProcessingService)
     private readonly paymentProcessingService: PaymentProcessingService,
     @Inject(NowPaymentsService)
@@ -204,35 +220,84 @@ export class FundedController {
     return this.paymentProcessingService.getPaymentStatus(paymentId);
   }
 
+  @Get("affiliate/my-stats")
+  async affiliateMyStats(@Query("ref") ref?: string) {
+    return this.affiliatePayoutService.myStats(ref ?? "");
+  }
+
+  @Get("affiliate/payouts")
+  async affiliatePayouts(@Query("ref") ref?: string) {
+    return this.affiliatePayoutService.listPayouts(ref ?? "");
+  }
+
+  @Post("affiliate/payout/request")
+  async requestAffiliatePayout(@Body() body: AffiliatePayoutRequestBody) {
+    return this.affiliatePayoutService.requestPayout({
+      ref: body.ref ?? "",
+      method: body.method,
+      notes: body.notes,
+    });
+  }
+
+  @Post("affiliate/payout/approve")
+  async approveAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+    return this.affiliatePayoutService.approvePayout({
+      payoutId: body.payoutId ?? "",
+      reviewerId: body.reviewerId,
+      notes: body.notes,
+    });
+  }
+
+  @Post("affiliate/payout/pay")
+  async payAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+    return this.affiliatePayoutService.payPayout({
+      payoutId: body.payoutId ?? "",
+      reviewerId: body.reviewerId,
+      method: body.method,
+      reference: body.reference,
+      notes: body.notes,
+    });
+  }
+
+  @Post("affiliate/payout/reject")
+  async rejectAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+    return this.affiliatePayoutService.rejectPayout({
+      payoutId: body.payoutId ?? "",
+      reviewerId: body.reviewerId,
+      notes: body.notes,
+    });
+  }
 
   @Get("affiliate/summary")
   async affiliateSummary() {
-    const [total, pending, approved, payoutRequested, paid] = await Promise.all([
-      this.prisma.affiliateCommission.aggregate({
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-      this.prisma.affiliateCommission.aggregate({
-        where: { status: "pending" },
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-      this.prisma.affiliateCommission.aggregate({
-        where: { status: "approved" },
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-      this.prisma.affiliateCommission.aggregate({
-        where: { status: "payout_requested" },
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-      this.prisma.affiliateCommission.aggregate({
-        where: { status: "paid" },
-        _sum: { amount: true },
-        _count: { id: true },
-      }),
-    ]);
+    const [total, pending, approved, payoutRequested, paid] = await Promise.all(
+      [
+        this.prisma.affiliateCommission.aggregate({
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+        this.prisma.affiliateCommission.aggregate({
+          where: { status: "pending" },
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+        this.prisma.affiliateCommission.aggregate({
+          where: { status: "approved" },
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+        this.prisma.affiliateCommission.aggregate({
+          where: { status: "payout_requested" },
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+        this.prisma.affiliateCommission.aggregate({
+          where: { status: "paid" },
+          _sum: { amount: true },
+          _count: { id: true },
+        }),
+      ],
+    );
 
     return {
       ok: true,

@@ -21,11 +21,12 @@ import { PayoutRequestService } from "./services/payout-request.service";
 import { PayoutReviewService } from "./services/payout-review.service";
 import { PayoutExecutionService } from "./services/payout-execution.service";
 import { AdminGuardService } from "./services/admin-guard.service";
+import { AffiliatePayoutService } from "./services/affiliate-payout.service";
 
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PaymentProcessingService } from "./payments/payment-processing.service";
-import { CtaTrackingController } from './cta-tracking/cta-tracking.controller';
-import { CtaTrackingService } from './cta-tracking/cta-tracking.service';
+import { CtaTrackingController } from "./cta-tracking/cta-tracking.controller";
+import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
 
 @Module({
   controllers: [
@@ -55,6 +56,7 @@ import { CtaTrackingService } from './cta-tracking/cta-tracking.service';
     PayoutReviewService,
     PayoutExecutionService,
     AdminGuardService,
+    AffiliatePayoutService,
 
     // payments
     NowPaymentsService,
