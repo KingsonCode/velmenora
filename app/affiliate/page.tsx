@@ -282,15 +282,15 @@ export default function AffiliateDashboardPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.25em] text-green-400 sm:text-sm">
-                Velmenora Affiliate
+                Velmenora Affiliate Program
               </p>
 
               <h1 className="mt-3 text-4xl font-black leading-tight md:text-6xl">
-                Affiliate Dashboard
+                Earn Money Promoting Velmenora
               </h1>
 
               <p className="mt-3 max-w-2xl text-gray-400">
-                Track your referrals, funded challenge conversions, commissions, and payout requests.
+                Promote Velmenora Funded Challenge, refer serious traders, and get paid commissions when your referrals purchase verified challenge plans.
               </p>
             </div>
 
@@ -298,7 +298,7 @@ export default function AffiliateDashboardPage() {
               href="/funded"
               className="rounded-2xl border border-white/10 px-5 py-3 text-center font-bold text-white transition hover:border-green-500 hover:text-green-300"
             >
-              View Challenge Plans
+              View What You’ll Promote
             </a>
           </div>
         </section>
@@ -307,7 +307,7 @@ export default function AffiliateDashboardPage() {
           <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
             <div>
               <label className="text-xs font-black uppercase tracking-[0.22em] text-gray-500">
-                Affiliate Ref
+                Affiliate Access
               </label>
 
               <input
@@ -318,7 +318,7 @@ export default function AffiliateDashboardPage() {
                     void loadAffiliate(draftRef);
                   }
                 }}
-                placeholder="e.g. johntrader"
+                placeholder="Enter your approved affiliate ref"
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 font-semibold text-white outline-none transition placeholder:text-gray-700 focus:border-green-500"
               />
             </div>
@@ -328,7 +328,7 @@ export default function AffiliateDashboardPage() {
               disabled={loading}
               className="rounded-2xl bg-green-500 px-6 py-3 font-black text-black transition hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60 lg:self-end"
             >
-              {loading ? "Loading..." : "Load Dashboard"}
+              {loading ? "Loading..." : "Open Affiliate Dashboard"}
             </button>
           </div>
 

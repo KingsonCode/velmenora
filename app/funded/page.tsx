@@ -376,13 +376,13 @@ export default function FundedPage() {
               </p>
 
               <h2 className="mt-3 text-3xl font-black md:text-4xl">
-                Promote Velmenora Funded Challenge
+                Earn Commissions Promoting Velmenora Funded Challenge
               </h2>
 
               <p className="mt-3 max-w-2xl text-gray-300">
                 Are you an influencer, educator, signal provider, or trading community owner?
-                Refer traders to Velmenora and track conversions, commissions, and payout requests
-                from the affiliate dashboard.
+                Promote Velmenora Funded Challenge, refer traders, and earn commissions
+                when verified referrals purchase challenge plans.
               </p>
             </div>
 
@@ -390,7 +390,7 @@ export default function FundedPage() {
               href="/affiliate"
               className="rounded-2xl bg-white px-7 py-4 text-center font-black text-black transition hover:bg-cyan-200"
             >
-              Open Affiliate Dashboard
+              Join Affiliate Program
             </a>
           </div>
         </div>
