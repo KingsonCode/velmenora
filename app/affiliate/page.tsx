@@ -46,10 +46,10 @@ export default function AffiliateLandingPage() {
                 </Link>
 
                 <Link
-                  href="/affiliate/dashboard"
+                  href="/affiliate/sign-in"
                   className="rounded-2xl border border-white/15 px-7 py-4 text-center text-lg font-black text-white hover:bg-white/10"
                 >
-                  Open Affiliate Dashboard
+                  Affiliate Sign In
                 </Link>
               </div>
 
