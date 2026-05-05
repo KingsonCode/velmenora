@@ -160,6 +160,24 @@ export class FundedController {
     return this.paymentProcessingService.handleNowPaymentsIpn(body);
   }
 
+  @Post("payment/manual-confirm")
+  async manualConfirmPayment(@Body() body: { paymentId: string }) {
+    if (!body.paymentId) {
+      return {
+        ok: false,
+        error: "missing_payment_id",
+      };
+    }
+
+    return this.paymentProcessingService.confirmPaymentAndActivate(
+      body.paymentId,
+      "manual_confirm",
+      {
+        sourceEndpoint: "POST /api/funded/payment/manual-confirm",
+      },
+    );
+  }
+
   @Post("payment/nowpayments/reconcile")
   async reconcileNowPaymentsPayment(@Body() body: { paymentId: string }) {
     if (!body.paymentId) {

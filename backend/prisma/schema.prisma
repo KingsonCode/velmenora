@@ -142,7 +142,7 @@ model User {
   payoutReviews       PayoutRequest[]      @relation("PayoutReviewer")
   adminNotes          AdminNote[]
   auditLogs           AuditLog[]           @relation("AuditActorUser")
-  affiliateProfile     Affiliate?
+  affiliateProfile    Affiliate?
 
   @@index([role])
   @@index([createdAt])
@@ -200,7 +200,8 @@ model Affiliate {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commissions AffiliateCommission[]
 
   @@index([isActive])
   @@index([createdAt])
@@ -243,16 +244,17 @@ model ChallengeAccount {
   createdAt               DateTime        @default(now()) @map("created_at")
   updatedAt               DateTime        @updatedAt @map("updated_at")
 
-  user            User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
-  challenge       FundedChallenge         @relation(fields: [challengeId], references: [id], onDelete: Restrict)
-  ruleSnapshots   ChallengeRuleSnapshot[]
-  metricSnapshots MetricSnapshot[]
-  submissions     Submission[]
-  reviewDecisions ReviewDecision[]
-  payoutRequests  PayoutRequest[]
-  payments        Payment[]
-  adminNotes      AdminNote[]
-  brokerAccounts  BrokerAccount[]
+  user                 User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  challenge            FundedChallenge         @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  ruleSnapshots        ChallengeRuleSnapshot[]
+  metricSnapshots      MetricSnapshot[]
+  submissions          Submission[]
+  reviewDecisions      ReviewDecision[]
+  payoutRequests       PayoutRequest[]
+  payments             Payment[]
+  affiliateCommissions AffiliateCommission[]
+  adminNotes           AdminNote[]
+  brokerAccounts       BrokerAccount[]
 
   @@index([userId])
   @@index([challengeId])
@@ -387,6 +389,31 @@ model PayoutRequest {
   @@map("payout_requests")
 }
 
+model AffiliateCommission {
+  id                 String       @id @default(cuid())
+  affiliateId        String       @map("affiliate_id")
+  challengeAccountId String       @map("challenge_account_id")
+  paymentId          String       @map("payment_id")
+  ref                String       @db.VarChar(80)
+  planSlug           String       @map("plan_slug") @db.VarChar(100)
+  amount             Decimal      @db.Decimal(12, 2)
+  currency           String       @db.VarChar(10)
+  status             PayoutStatus @default(requested)
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  affiliate        Affiliate        @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  challengeAccount ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Restrict)
+  payment          Payment          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@unique([paymentId])
+  @@index([affiliateId])
+  @@index([challengeAccountId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("affiliate_commissions")
+}
+
 model Payment {
   id                 String          @id @default(cuid())
   userId             String          @map("user_id")
@@ -402,8 +429,9 @@ model Payment {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
-  challengeAccount ChallengeAccount? @relation(fields: [challengeAccountId], references: [id], onDelete: SetNull)
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  challengeAccount     ChallengeAccount?     @relation(fields: [challengeAccountId], references: [id], onDelete: SetNull)
+  affiliateCommissions AffiliateCommission[]
 
   @@index([userId])
   @@index([challengeAccountId])

@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { Prisma, PaymentProvider, PaymentStatus, ChallengeStatus } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { calculateFundedAffiliateCommission } from "../affiliates/commission-rules";
 import {
   NowPaymentsIpnPayload,
   NowPaymentsService,
@@ -287,6 +288,13 @@ export class PaymentProcessingService {
 
       const freshAccount = await tx.challengeAccount.findUniqueOrThrow({
         where: { id: payment.challengeAccountId ?? "" },
+        include: {
+          challenge: {
+            select: {
+              slug: true,
+            },
+          },
+        },
       });
 
       if (
@@ -321,6 +329,42 @@ export class PaymentProcessingService {
           startedAt: freshAccount.startedAt ?? new Date(),
         },
       });
+
+      if (freshAccount.ref) {
+        const affiliate = await tx.affiliate.findFirst({
+          where: {
+            slug: freshAccount.ref,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            slug: true,
+          },
+        });
+
+        const commissionAmount = calculateFundedAffiliateCommission(
+          freshAccount.challenge.slug,
+        );
+
+        if (affiliate && commissionAmount > 0) {
+          await tx.affiliateCommission.upsert({
+            where: {
+              paymentId: paidPayment.id,
+            },
+            update: {},
+            create: {
+              affiliateId: affiliate.id,
+              challengeAccountId: freshAccount.id,
+              paymentId: paidPayment.id,
+              ref: affiliate.slug,
+              planSlug: freshAccount.challenge.slug,
+              amount: commissionAmount,
+              currency: paidPayment.currency,
+              status: "requested",
+            },
+          });
+        }
+      }
 
       await tx.auditLog.createMany({
         data: [
@@ -363,6 +407,134 @@ export class PaymentProcessingService {
       ok: true,
       paid: true,
       providerStatus,
+      ...result,
+    };
+  }
+
+
+  async confirmPaymentAndActivate(
+    paymentId: string,
+    source: string,
+    metadata: Prisma.JsonObject = {},
+  ) {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const freshPayment = await tx.payment.findUniqueOrThrow({
+        where: { id: paymentId },
+      });
+
+      const freshAccount = await tx.challengeAccount.findUniqueOrThrow({
+        where: { id: freshPayment.challengeAccountId ?? "" },
+        include: {
+          challenge: {
+            select: {
+              id: true,
+              slug: true,
+            },
+          },
+        },
+      });
+
+      if (
+        freshPayment.status === PaymentStatus.paid &&
+        freshAccount.status === ChallengeStatus.active
+      ) {
+        return {
+          idempotent: true,
+          payment: freshPayment,
+          challengeAccount: freshAccount,
+        };
+      }
+
+      const paidPayment = await tx.payment.update({
+        where: { id: freshPayment.id },
+        data: {
+          status: PaymentStatus.paid,
+          paidAt: freshPayment.paidAt ?? new Date(),
+        },
+      });
+
+      const activatedAccount = await tx.challengeAccount.update({
+        where: { id: freshAccount.id },
+        data: {
+          paymentStatus: PaymentStatus.paid,
+          status: ChallengeStatus.active,
+          assignedAt: freshAccount.assignedAt ?? new Date(),
+          startedAt: freshAccount.startedAt ?? new Date(),
+        },
+      });
+
+      if (freshAccount.ref) {
+        const affiliate = await tx.affiliate.findFirst({
+          where: {
+            slug: freshAccount.ref,
+            isActive: true,
+          },
+          select: {
+            id: true,
+            slug: true,
+          },
+        });
+
+        const commissionAmount = calculateFundedAffiliateCommission(
+          freshAccount.challenge.slug,
+        );
+
+        if (affiliate && commissionAmount > 0) {
+          await tx.affiliateCommission.upsert({
+            where: {
+              paymentId: paidPayment.id,
+            },
+            update: {},
+            create: {
+              affiliateId: affiliate.id,
+              challengeAccountId: freshAccount.id,
+              paymentId: paidPayment.id,
+              ref: affiliate.slug,
+              planSlug: freshAccount.challenge.slug,
+              amount: commissionAmount,
+              currency: paidPayment.currency,
+              status: "requested",
+            },
+          });
+        }
+      }
+
+      await tx.auditLog.createMany({
+        data: [
+          {
+            eventType: "payment_received",
+            entityType: "payment",
+            entityId: paidPayment.id,
+            metadataJson: {
+              source,
+              challengeAccountId: freshAccount.id,
+              ...metadata,
+            },
+          },
+          {
+            eventType: "challenge_started",
+            entityType: "challenge_account",
+            entityId: freshAccount.id,
+            metadataJson: {
+              source,
+              paymentId: paidPayment.id,
+              previousStatus: freshAccount.status,
+              nextStatus: "active",
+            },
+          },
+        ],
+      });
+
+      return {
+        idempotent: false,
+        payment: paidPayment,
+        challengeAccount: activatedAccount,
+      };
+    });
+
+    return {
+      ok: true,
+      paid: true,
       ...result,
     };
   }
