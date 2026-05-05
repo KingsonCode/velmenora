@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type AuthState = "checking" | "guest" | "member";
+type AccessState = "unknown" | "approved" | "pending" | "not_applied" | "rejected";
 
 function messageFrom(value: unknown, fallback: string) {
   if (value instanceof Error) return value.message;
@@ -15,30 +16,50 @@ export default function AffiliateSignInPage() {
   const router = useRouter();
 
   const [authState, setAuthState] = useState<AuthState>("checking");
+  const [accessState, setAccessState] = useState<AccessState>("unknown");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function routeMember() {
+  async function checkAffiliateAccess() {
     const affiliateRes = await fetch("/api/funded/affiliate/me", {
       credentials: "include",
       cache: "no-store",
     });
 
     if (!affiliateRes.ok) {
-      router.push("/affiliate/apply");
+      setAccessState("not_applied");
+      setStatus("No approved affiliate dashboard was found for this account.");
       return;
     }
 
     const affiliate = await affiliateRes.json().catch(() => null);
 
     if (affiliate?.approved) {
+      setAccessState("approved");
+      setStatus("Affiliate account found. Opening dashboard...");
       router.push("/affiliate/dashboard");
       return;
     }
 
-    router.push("/affiliate/apply");
+    const appStatus = affiliate?.application?.status;
+
+    if (appStatus === "pending") {
+      setAccessState("pending");
+      setStatus("Your affiliate application is still under review.");
+      return;
+    }
+
+    if (appStatus === "rejected") {
+      setAccessState("rejected");
+      setStatus("Your affiliate application was not approved. You may apply again.");
+      return;
+    }
+
+    setAccessState("not_applied");
+    setStatus("You do not have an approved affiliate dashboard yet. Apply first to join the program.");
   }
 
   async function checkSession() {
@@ -53,8 +74,8 @@ export default function AffiliateSignInPage() {
     }
 
     setAuthState("member");
-    setStatus("You are already signed in. Checking affiliate access...");
-    await routeMember();
+    setStatus("You are signed in. Checking affiliate access...");
+    await checkAffiliateAccess();
   }
 
   useEffect(() => {
@@ -66,6 +87,7 @@ export default function AffiliateSignInPage() {
     e.preventDefault();
     setBusy(true);
     setStatus(null);
+    setAccessState("unknown");
 
     try {
       const res = await fetch("/api/auth/signin", {
@@ -82,8 +104,8 @@ export default function AffiliateSignInPage() {
       }
 
       setAuthState("member");
-      setStatus("Signed in. Opening your affiliate area...");
-      await routeMember();
+      setStatus("Signed in. Checking affiliate access...");
+      await checkAffiliateAccess();
     } catch (err: unknown) {
       setStatus(messageFrom(err, "Sign in failed."));
     } finally {
@@ -100,8 +122,8 @@ export default function AffiliateSignInPage() {
 
         <h1 className="mt-6 text-4xl font-black">Affiliate Sign In</h1>
         <p className="mt-3 text-slate-300">
-          Sign in to open your affiliate dashboard. If you are not approved yet, we will
-          take you to the application page.
+          Sign in to open your affiliate dashboard. If your account is not approved yet,
+          you will see your current affiliate status.
         </p>
 
         {authState === "checking" && (
@@ -110,7 +132,7 @@ export default function AffiliateSignInPage() {
           </div>
         )}
 
-        {authState !== "checking" && (
+        {authState === "guest" && (
           <form
             onSubmit={signIn}
             className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-6"
@@ -145,7 +167,7 @@ export default function AffiliateSignInPage() {
               disabled={busy}
               className="w-full rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 disabled:opacity-60"
             >
-              {busy ? "Signing in..." : "Sign In & Open Affiliate Area"}
+              {busy ? "Signing in..." : "Sign In & Open Dashboard"}
             </button>
 
             <div className="flex flex-wrap gap-4 text-sm">
@@ -163,6 +185,39 @@ export default function AffiliateSignInPage() {
               </div>
             )}
           </form>
+        )}
+
+        {authState === "member" && accessState !== "approved" && (
+          <div className="mt-8 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-6">
+            <h2 className="text-2xl font-black">
+              {accessState === "pending"
+                ? "Affiliate application pending"
+                : accessState === "rejected"
+                  ? "Affiliate application not approved"
+                  : "No approved affiliate dashboard yet"}
+            </h2>
+
+            <p className="mt-3 text-slate-300">
+              {status ||
+                "Your account does not have an approved affiliate profile. Apply first, then admin approval will unlock your dashboard."}
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/affiliate/apply"
+                className="rounded-2xl bg-emerald-400 px-5 py-3 font-black text-slate-950"
+              >
+                Apply as Affiliate
+              </Link>
+
+              <Link
+                href="/member"
+                className="rounded-2xl border border-white/15 px-5 py-3 font-black text-white"
+              >
+                Member Area
+              </Link>
+            </div>
+          </div>
         )}
       </section>
     </main>
