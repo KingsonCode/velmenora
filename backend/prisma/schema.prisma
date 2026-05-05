@@ -260,6 +260,8 @@ model ChallengeAccount {
   failedAt                DateTime?       @map("failed_at")
   failureReason           String?         @map("failure_reason") @db.Text
   ref                     String?         @db.VarChar(100)
+  applicationIpAddress    String?         @map("application_ip_address") @db.VarChar(80)
+  applicationUserAgent    String?         @map("application_user_agent") @db.Text
   createdAt               DateTime        @default(now()) @map("created_at")
   updatedAt               DateTime        @updatedAt @map("updated_at")
 
@@ -280,6 +282,7 @@ model ChallengeAccount {
   @@index([status])
   @@index([paymentStatus])
   @@index([ref])
+  @@index([applicationIpAddress])
   @@index([createdAt])
   @@index([userId, challengeId])
   @@index([userId, status])

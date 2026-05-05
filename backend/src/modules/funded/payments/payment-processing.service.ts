@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Prisma, PaymentProvider, PaymentStatus, ChallengeStatus } from "@prisma/client";
+import {
+  Prisma,
+  PaymentProvider,
+  PaymentStatus,
+  ChallengeStatus,
+} from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { calculateFundedAffiliateCommission } from "../affiliates/commission-rules";
 import {
@@ -23,6 +28,8 @@ function buildAffiliateFraudDecision(input: {
   affiliateUserId: string;
   buyerUserId: string;
   recentCommissionCount: number;
+  recentSameIpConversionCount: number;
+  buyerIpAddress?: string | null;
 }) {
   if (input.affiliateUserId === input.buyerUserId) {
     return {
@@ -30,6 +37,15 @@ function buildAffiliateFraudDecision(input: {
       status: "rejected" as const,
       fraudFlag: "blocked",
       fraudReason: "self_referral",
+    };
+  }
+
+  if (input.buyerIpAddress && input.recentSameIpConversionCount >= 2) {
+    return {
+      shouldCreateCommission: true,
+      status: "pending" as const,
+      fraudFlag: "review",
+      fraudReason: "same_ip_velocity_24h",
     };
   }
 
@@ -120,7 +136,9 @@ export class PaymentProcessingService {
       cancelUrl: `${appUrl}/funded/payment/cancel?paymentId=${payment.id}`,
     });
 
-    const providerReference = String(invoice.id ?? invoice.invoice_id ?? orderId);
+    const providerReference = String(
+      invoice.id ?? invoice.invoice_id ?? orderId,
+    );
 
     const updatedPayment = await this.prisma.payment.update({
       where: { id: payment.id },
@@ -183,7 +201,9 @@ export class PaymentProcessingService {
       throw new BadRequestException("Payment provider mismatch");
     }
 
-    const providerStatus = String(payload.payment_status ?? "unknown").toLowerCase();
+    const providerStatus = String(
+      payload.payment_status ?? "unknown",
+    ).toLowerCase();
 
     const paidStatuses = new Set(["confirmed", "sending", "finished"]);
     const failedStatuses = new Set(["failed", "expired", "refunded"]);
@@ -191,7 +211,9 @@ export class PaymentProcessingService {
     const expectedAmount = Number(payment.amount);
     const actualPriceAmount = Number(payload.price_amount ?? 0);
     const expectedCurrency = payment.currency.toLowerCase();
-    const actualPriceCurrency = String(payload.price_currency ?? "").toLowerCase();
+    const actualPriceCurrency = String(
+      payload.price_currency ?? "",
+    ).toLowerCase();
 
     const amountMatches =
       actualPriceAmount === expectedAmount ||
@@ -390,10 +412,27 @@ export class PaymentProcessingService {
             },
           });
 
+          const recentSameIpConversionCount = freshAccount.applicationIpAddress
+            ? await tx.challengeAccount.count({
+                where: {
+                  ref: affiliate.slug,
+                  applicationIpAddress: freshAccount.applicationIpAddress,
+                  createdAt: {
+                    gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                  },
+                  NOT: {
+                    id: freshAccount.id,
+                  },
+                },
+              })
+            : 0;
+
           const fraudDecision = buildAffiliateFraudDecision({
             affiliateUserId: affiliate.userId,
             buyerUserId: freshAccount.userId,
             recentCommissionCount,
+            recentSameIpConversionCount,
+            buyerIpAddress: freshAccount.applicationIpAddress,
           });
 
           if (fraudDecision.shouldCreateCommission) {
@@ -419,6 +458,8 @@ export class PaymentProcessingService {
                   ruleVersion: "affiliate_fraud_v1",
                   recentWindowMinutes: 60,
                   recentCommissionCount,
+                  recentSameIpConversionCount,
+                  buyerIpAddress: freshAccount.applicationIpAddress ?? null,
                   buyerUserId: freshAccount.userId,
                   affiliateUserId: affiliate.userId,
                 },
@@ -438,6 +479,7 @@ export class PaymentProcessingService {
                   ref: affiliate.slug,
                   buyerUserId: freshAccount.userId,
                   affiliateUserId: affiliate.userId,
+                  buyerIpAddress: freshAccount.applicationIpAddress ?? null,
                   challengeAccountId: freshAccount.id,
                   planSlug: freshAccount.challenge.slug,
                   commissionAmount,
@@ -493,7 +535,6 @@ export class PaymentProcessingService {
       ...result,
     };
   }
-
 
   async confirmPaymentAndActivate(
     paymentId: string,
@@ -575,10 +616,27 @@ export class PaymentProcessingService {
             },
           });
 
+          const recentSameIpConversionCount = freshAccount.applicationIpAddress
+            ? await tx.challengeAccount.count({
+                where: {
+                  ref: affiliate.slug,
+                  applicationIpAddress: freshAccount.applicationIpAddress,
+                  createdAt: {
+                    gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                  },
+                  NOT: {
+                    id: freshAccount.id,
+                  },
+                },
+              })
+            : 0;
+
           const fraudDecision = buildAffiliateFraudDecision({
             affiliateUserId: affiliate.userId,
             buyerUserId: freshAccount.userId,
             recentCommissionCount,
+            recentSameIpConversionCount,
+            buyerIpAddress: freshAccount.applicationIpAddress,
           });
 
           if (fraudDecision.shouldCreateCommission) {
@@ -604,6 +662,8 @@ export class PaymentProcessingService {
                   ruleVersion: "affiliate_fraud_v1",
                   recentWindowMinutes: 60,
                   recentCommissionCount,
+                  recentSameIpConversionCount,
+                  buyerIpAddress: freshAccount.applicationIpAddress ?? null,
                   buyerUserId: freshAccount.userId,
                   affiliateUserId: affiliate.userId,
                 },
@@ -623,6 +683,7 @@ export class PaymentProcessingService {
                   ref: affiliate.slug,
                   buyerUserId: freshAccount.userId,
                   affiliateUserId: affiliate.userId,
+                  buyerIpAddress: freshAccount.applicationIpAddress ?? null,
                   challengeAccountId: freshAccount.id,
                   planSlug: freshAccount.challenge.slug,
                   commissionAmount,
@@ -673,7 +734,6 @@ export class PaymentProcessingService {
       ...result,
     };
   }
-
 
   async reconcileNowPaymentsPayment(paymentId: string) {
     const payment = await this.prisma.payment.findUnique({

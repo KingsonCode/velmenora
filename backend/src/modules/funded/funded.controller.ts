@@ -18,6 +18,32 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PrismaService } from "../../prisma/prisma.service";
 
+type HeaderMap = Record<string, string | string[] | undefined>;
+
+function headerValue(headers: HeaderMap, key: string): string | undefined {
+  const value = headers[key] ?? headers[key.toLowerCase()];
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function normalizeIp(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const first = value.split(",")[0]?.trim();
+  if (!first) return undefined;
+  return first.replace(/^::ffff:/, "").slice(0, 80);
+}
+
+function extractClientIp(req: Request, headers: HeaderMap): string | undefined {
+  return normalizeIp(
+    headerValue(headers, "cf-connecting-ip") ??
+      headerValue(headers, "x-vercel-forwarded-for") ??
+      headerValue(headers, "x-forwarded-for") ??
+      headerValue(headers, "x-real-ip") ??
+      req.ip ??
+      req.socket.remoteAddress,
+  );
+}
+
 type ApplyBody = {
   email: string;
   fullName: string;
@@ -72,7 +98,11 @@ export class FundedController {
   }
 
   @Post("apply")
-  async apply(@Body() body: ApplyBody) {
+  async apply(
+    @Body() body: ApplyBody,
+    @Req() req: Request,
+    @Headers() headers: HeaderMap,
+  ) {
     return this.lifecycle.apply({
       email: body.email,
       fullName: body.fullName,
@@ -80,6 +110,8 @@ export class FundedController {
       password: body.password,
       planSlug: body.planSlug,
       ref: body.ref,
+      ipAddress: extractClientIp(req, headers),
+      userAgent: headerValue(headers, "user-agent"),
     });
   }
 
