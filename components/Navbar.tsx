@@ -33,6 +33,7 @@ export default function Navbar() {
     const marketsHref = `${langPrefix}/markets`;
     const watchlistHref = `${langPrefix}/watchlist`;
     const fundedHref = "/funded";
+    const affiliateHref = "/affiliate";
     const signInHref = "/sign-in";
     const memberHref = "/member";
     const startHref = "/start";
@@ -178,6 +179,17 @@ export default function Navbar() {
                     </Link>
 
                     <Link
+                        href={affiliateHref}
+                        className={
+                            isActive(affiliateHref)
+                                ? "text-yellow-400"
+                                : "text-white/80 transition hover:text-yellow-400"
+                        }
+                    >
+                        Affiliate
+                    </Link>
+
+                    <Link
                         href={blogHref}
                         className={
                             isActive(blogHref)
@@ -310,6 +322,7 @@ export default function Navbar() {
                         <Link href={explorerHref}>Explorer</Link>
                         <Link href={compareHref}>Compare</Link>
                         <Link href={fundedHref}>Funded Challenge</Link>
+                        <Link href={affiliateHref}>Affiliate Program</Link>
                         <Link href={member ? memberHref : signInHref}>
                             {member ? "Member Area" : "Sign In"}
                         </Link>

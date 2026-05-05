@@ -367,6 +367,35 @@ export default function FundedPage() {
         </div>
       </section>
 
+      <section className="px-6 py-10">
+        <div className="mx-auto max-w-5xl rounded-[2rem] border border-cyan-400/25 bg-cyan-950/10 p-8 shadow-[0_0_70px_rgba(34,211,238,0.08)] md:p-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-cyan-300">
+                Affiliate Program
+              </p>
+
+              <h2 className="mt-3 text-3xl font-black md:text-4xl">
+                Promote Velmenora Funded Challenge
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-gray-300">
+                Are you an influencer, educator, signal provider, or trading community owner?
+                Refer traders to Velmenora and track conversions, commissions, and payout requests
+                from the affiliate dashboard.
+              </p>
+            </div>
+
+            <a
+              href="/affiliate"
+              className="rounded-2xl bg-white px-7 py-4 text-center font-black text-black transition hover:bg-cyan-200"
+            >
+              Open Affiliate Dashboard
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section className="px-6 py-20">
         <div className="mx-auto max-w-5xl rounded-[2rem] border border-green-500/30 bg-green-950/20 p-8 text-center shadow-[0_0_70px_rgba(34,197,94,0.12)] md:p-12">
           <p className="text-sm font-black uppercase tracking-[0.25em] text-green-400">

@@ -173,12 +173,21 @@ export default function MemberPage() {
               </p>
             </div>
 
-            <a
-              href="/funded"
-              className="sticky top-3 z-20 rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black shadow-[0_12px_40px_rgba(34,197,94,0.18)] transition hover:bg-green-400 md:static"
-            >
-              Start New Challenge
-            </a>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <a
+                href="/affiliate"
+                className="rounded-2xl border border-white/10 px-5 py-3 text-center font-black text-white transition hover:border-green-500 hover:text-green-300"
+              >
+                Affiliate Dashboard
+              </a>
+
+              <a
+                href="/funded"
+                className="sticky top-3 z-20 rounded-2xl bg-green-500 px-5 py-3 text-center font-black text-black shadow-[0_12px_40px_rgba(34,197,94,0.18)] transition hover:bg-green-400 md:static"
+              >
+                Start New Challenge
+              </a>
+            </div>
           </div>
 
           {accounts.length === 0 ? (

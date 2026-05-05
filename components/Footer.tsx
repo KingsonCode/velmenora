@@ -150,6 +150,16 @@ export default function Footer() {
                                     </Link>
                                 </li>
                                 <li>
+                                    <Link href="/funded" className="transition hover:text-cyan-300">
+                                        Funded Challenge
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/affiliate" className="transition hover:text-cyan-300">
+                                        Affiliate Program
+                                    </Link>
+                                </li>
+                                <li>
                                     <Link href={academyHref} className="transition hover:text-cyan-300">
                                         Forex Academy
                                     </Link>
@@ -366,6 +376,16 @@ export default function Footer() {
                                     <li>
                                         <Link href={compareHref} className="transition hover:text-cyan-300">
                                             Compare Brokers
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/funded" className="transition hover:text-cyan-300">
+                                            Funded Challenge
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="/affiliate" className="transition hover:text-cyan-300">
+                                            Affiliate Program
                                         </Link>
                                     </li>
                                     <li>
