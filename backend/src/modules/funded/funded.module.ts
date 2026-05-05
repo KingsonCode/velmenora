@@ -6,6 +6,7 @@ import { FundedController } from "./funded.controller";
 import { MetricsController } from "./metrics.controller";
 import { ReviewController } from "./review.controller";
 import { PayoutController } from "./payout.controller";
+import { AffiliateCommissionReviewController } from "./affiliate-commission-review.controller";
 
 import { MetricsOrchestrator } from "./orchestrators/metrics-orchestrator.service";
 
@@ -22,6 +23,7 @@ import { PayoutReviewService } from "./services/payout-review.service";
 import { PayoutExecutionService } from "./services/payout-execution.service";
 import { AdminGuardService } from "./services/admin-guard.service";
 import { AffiliatePayoutService } from "./services/affiliate-payout.service";
+import { AffiliateCommissionReviewService } from "./services/affiliate-commission-review.service";
 
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PaymentProcessingService } from "./payments/payment-processing.service";
@@ -34,6 +36,7 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     MetricsController,
     ReviewController,
     PayoutController,
+    AffiliateCommissionReviewController,
     CtaTrackingController,
   ],
   providers: [
@@ -57,6 +60,7 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     PayoutExecutionService,
     AdminGuardService,
     AffiliatePayoutService,
+    AffiliateCommissionReviewService,
 
     // payments
     NowPaymentsService,
