@@ -205,6 +205,70 @@ export class FundedController {
   }
 
 
+  @Get("affiliate/summary")
+  async affiliateSummary() {
+    const [total, requested, approved, paid] = await Promise.all([
+      this.prisma.affiliateCommission.aggregate({
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "requested" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "approved" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "paid" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+    ]);
+
+    return {
+      ok: true,
+      summary: {
+        totalCommissions: String(total._sum.amount ?? 0),
+        totalCount: total._count.id,
+        requestedCommissions: String(requested._sum.amount ?? 0),
+        requestedCount: requested._count.id,
+        approvedCommissions: String(approved._sum.amount ?? 0),
+        approvedCount: approved._count.id,
+        paidCommissions: String(paid._sum.amount ?? 0),
+        paidCount: paid._count.id,
+      },
+    };
+  }
+
+  @Get("affiliate/leaderboard")
+  async affiliateLeaderboard() {
+    const rows = await this.prisma.affiliateCommission.groupBy({
+      by: ["affiliateId", "ref"],
+      _sum: { amount: true },
+      _count: { id: true },
+      orderBy: {
+        _sum: {
+          amount: "desc",
+        },
+      },
+      take: 20,
+    });
+
+    return {
+      ok: true,
+      affiliates: rows.map((row) => ({
+        affiliateId: row.affiliateId,
+        ref: row.ref,
+        totalCommissions: String(row._sum.amount ?? 0),
+        conversions: row._count.id,
+      })),
+    };
+  }
+
   @Get("public/activity")
   async publicActivity() {
     const accounts = await this.prisma.challengeAccount.findMany({
