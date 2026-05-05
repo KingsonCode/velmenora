@@ -207,18 +207,23 @@ export class FundedController {
 
   @Get("affiliate/summary")
   async affiliateSummary() {
-    const [total, requested, approved, paid] = await Promise.all([
+    const [total, pending, approved, payoutRequested, paid] = await Promise.all([
       this.prisma.affiliateCommission.aggregate({
         _sum: { amount: true },
         _count: { id: true },
       }),
       this.prisma.affiliateCommission.aggregate({
-        where: { status: "requested" },
+        where: { status: "pending" },
         _sum: { amount: true },
         _count: { id: true },
       }),
       this.prisma.affiliateCommission.aggregate({
         where: { status: "approved" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "payout_requested" },
         _sum: { amount: true },
         _count: { id: true },
       }),
@@ -234,10 +239,12 @@ export class FundedController {
       summary: {
         totalCommissions: String(total._sum.amount ?? 0),
         totalCount: total._count.id,
-        requestedCommissions: String(requested._sum.amount ?? 0),
-        requestedCount: requested._count.id,
+        pendingCommissions: String(pending._sum.amount ?? 0),
+        pendingCount: pending._count.id,
         approvedCommissions: String(approved._sum.amount ?? 0),
         approvedCount: approved._count.id,
+        payoutRequestedCommissions: String(payoutRequested._sum.amount ?? 0),
+        payoutRequestedCount: payoutRequested._count.id,
         paidCommissions: String(paid._sum.amount ?? 0),
         paidCount: paid._count.id,
       },

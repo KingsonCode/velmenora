@@ -65,6 +65,22 @@ enum PayoutStatus {
   cancelled
 }
 
+enum AffiliateCommissionStatus {
+  pending
+  approved
+  rejected
+  payout_requested
+  paid
+}
+
+enum AffiliatePayoutStatus {
+  requested
+  approved
+  rejected
+  paid
+  cancelled
+}
+
 enum MetricSource {
   manual
   admin
@@ -119,6 +135,7 @@ enum AuditEntityType {
   submission
   review_decision
   payout_request
+  affiliate_payout
   admin_note
 }
 
@@ -133,16 +150,17 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  challengeAccounts   ChallengeAccount[]
-  submissions         Submission[]
-  payoutRequests      PayoutRequest[]      @relation("PayoutRequester")
-  payments            Payment[]
-  passwordResetTokens PasswordResetToken[]
-  reviewDecisions     ReviewDecision[]     @relation("ReviewerReviewDecisions")
-  payoutReviews       PayoutRequest[]      @relation("PayoutReviewer")
-  adminNotes          AdminNote[]
-  auditLogs           AuditLog[]           @relation("AuditActorUser")
-  affiliateProfile    Affiliate?
+  challengeAccounts      ChallengeAccount[]
+  submissions            Submission[]
+  payoutRequests         PayoutRequest[]      @relation("PayoutRequester")
+  payments               Payment[]
+  passwordResetTokens    PasswordResetToken[]
+  reviewDecisions        ReviewDecision[]     @relation("ReviewerReviewDecisions")
+  payoutReviews          PayoutRequest[]      @relation("PayoutReviewer")
+  affiliatePayoutReviews AffiliatePayout[]    @relation("AffiliatePayoutReviewer")
+  adminNotes             AdminNote[]
+  auditLogs              AuditLog[]           @relation("AuditActorUser")
+  affiliateProfile       Affiliate?
 
   @@index([role])
   @@index([createdAt])
@@ -202,6 +220,7 @@ model Affiliate {
 
   user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   commissions AffiliateCommission[]
+  payouts     AffiliatePayout[]
 
   @@index([isActive])
   @@index([createdAt])
@@ -390,28 +409,62 @@ model PayoutRequest {
 }
 
 model AffiliateCommission {
-  id                 String       @id @default(cuid())
-  affiliateId        String       @map("affiliate_id")
-  challengeAccountId String       @map("challenge_account_id")
-  paymentId          String       @map("payment_id")
-  ref                String       @db.VarChar(80)
-  planSlug           String       @map("plan_slug") @db.VarChar(100)
-  amount             Decimal      @db.Decimal(12, 2)
-  currency           String       @db.VarChar(10)
-  status             PayoutStatus @default(requested)
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @updatedAt @map("updated_at")
+  id                 String                    @id @default(cuid())
+  affiliateId        String                    @map("affiliate_id")
+  challengeAccountId String                    @map("challenge_account_id")
+  paymentId          String                    @map("payment_id")
+  affiliatePayoutId  String?                   @map("affiliate_payout_id")
+  ref                String                    @db.VarChar(80)
+  planSlug           String                    @map("plan_slug") @db.VarChar(100)
+  amount             Decimal                   @db.Decimal(12, 2)
+  currency           String                    @db.VarChar(10)
+  status             AffiliateCommissionStatus @default(approved)
+  createdAt          DateTime                  @default(now()) @map("created_at")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
 
   affiliate        Affiliate        @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
   challengeAccount ChallengeAccount @relation(fields: [challengeAccountId], references: [id], onDelete: Restrict)
   payment          Payment          @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  affiliatePayout  AffiliatePayout? @relation(fields: [affiliatePayoutId], references: [id], onDelete: SetNull)
 
   @@unique([paymentId])
   @@index([affiliateId])
   @@index([challengeAccountId])
+  @@index([affiliatePayoutId])
   @@index([status])
   @@index([createdAt])
   @@map("affiliate_commissions")
+}
+
+model AffiliatePayout {
+  id          String                @id @default(cuid())
+  affiliateId String                @map("affiliate_id")
+  amount      Decimal               @db.Decimal(12, 2)
+  currency    String                @db.VarChar(10)
+  status      AffiliatePayoutStatus @default(requested)
+  method      String?               @db.VarChar(50)
+  reference   String?               @db.VarChar(120)
+  notes       String?               @db.Text
+
+  requestedAt DateTime  @default(now()) @map("requested_at")
+  approvedAt  DateTime? @map("approved_at")
+  rejectedAt  DateTime? @map("rejected_at")
+  paidAt      DateTime? @map("paid_at")
+
+  reviewerId String? @map("reviewer_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  affiliate   Affiliate             @relation(fields: [affiliateId], references: [id], onDelete: Restrict)
+  reviewer    User?                 @relation("AffiliatePayoutReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  commissions AffiliateCommission[]
+
+  @@index([affiliateId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([reviewerId])
+  @@map("affiliate_payouts")
 }
 
 model Payment {

@@ -1,0 +1,2 @@
+-- Placeholder migration restored locally because 20260426120000_daily_loss_engine_hardening already exists in production _prisma_migrations.
+-- Do not edit. This keeps Prisma migration history consistent across environments.

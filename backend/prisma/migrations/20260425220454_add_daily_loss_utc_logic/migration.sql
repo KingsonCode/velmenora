@@ -1,0 +1,2 @@
+-- Placeholder migration restored locally because 20260425220454_add_daily_loss_utc_logic already exists in production _prisma_migrations.
+-- Do not edit. This keeps Prisma migration history consistent across environments.

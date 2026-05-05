@@ -360,7 +360,7 @@ export class PaymentProcessingService {
               planSlug: freshAccount.challenge.slug,
               amount: commissionAmount,
               currency: paidPayment.currency,
-              status: "requested",
+              status: "approved",
             },
           });
         }
@@ -493,7 +493,7 @@ export class PaymentProcessingService {
               planSlug: freshAccount.challenge.slug,
               amount: commissionAmount,
               currency: paidPayment.currency,
-              status: "requested",
+              status: "approved",
             },
           });
         }

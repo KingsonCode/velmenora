@@ -1,0 +1,2 @@
+-- Placeholder migration restored locally because 20260425110000_add_metric_snapshot_peak_equity already exists in production _prisma_migrations.
+-- Do not edit. This keeps Prisma migration history consistent across environments.
