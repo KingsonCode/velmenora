@@ -24,6 +24,15 @@ function headerValue(req: RequestLike, name: string): string | undefined {
   return raw;
 }
 
+function isTrustedInternalRequest(req: RequestLike): boolean {
+  const configured = process.env.INTERNAL_API_SECRET;
+  const provided = headerValue(req, 'x-internal-api-secret');
+
+  if (!configured || !provided) return false;
+
+  return provided === configured;
+}
+
 function slugifyCode(input: string) {
   return input
     .toLowerCase()
@@ -36,13 +45,17 @@ export class AffiliateMembershipService {
   constructor(private readonly prisma: PrismaService) {}
 
   async requireCurrentUser(req: RequestLike) {
+    const trustedInternal = isTrustedInternalRequest(req);
+
     const authUserId =
       req.user?.id ||
       req.user?.userId ||
       req.user?.sub ||
-      headerValue(req, 'x-member-user-id');
+      (trustedInternal ? headerValue(req, 'x-member-user-id') : undefined);
 
-    const authEmail = req.user?.email || headerValue(req, 'x-member-email');
+    const authEmail =
+      req.user?.email ||
+      (trustedInternal ? headerValue(req, 'x-member-email') : undefined);
 
     if (authUserId) {
       const user = await this.prisma.user.findUnique({ where: { id: authUserId } });
@@ -58,7 +71,11 @@ export class AffiliateMembershipService {
   }
 
   async requireAdmin(req: RequestLike) {
-    const role = req.user?.role || headerValue(req, 'x-member-role');
+    const trustedInternal = isTrustedInternalRequest(req);
+    const role =
+      req.user?.role ||
+      (trustedInternal ? headerValue(req, 'x-member-role') : undefined);
+
     const adminSecret = headerValue(req, 'x-admin-secret');
 
     if (role === 'admin' || role === 'super_admin') return true;

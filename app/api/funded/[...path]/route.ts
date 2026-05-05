@@ -1,62 +1,165 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_BASE_URL =
+type RouteContext = {
+  params: Promise<{ path: string[] }>;
+};
+
+const BACKEND_URL =
   process.env.FUNDED_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_FUNDED_API_URL ||
-  "https://api.velmenora.com";
+  process.env.NEXT_PUBLIC_FUNDED_BACKEND_URL ||
+  "http://localhost:8002";
 
-async function proxyRequest(
-  req: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  const { path } = await context.params;
-  const targetUrl = `${BACKEND_BASE_URL}/api/funded/${path.join("/")}`;
+const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
 
-  const body =
-    req.method === "GET" || req.method === "HEAD"
-      ? undefined
-      : await req.arrayBuffer();
+function backendUrl(path: string[], search: string) {
+  const joined = path.join("/");
+  return `${BACKEND_URL.replace(/\/$/, "")}/api/funded/${joined}${search}`;
+}
 
-  const init: RequestInit = {
-    method: req.method,
+function isAffiliateMemberPath(path: string[]) {
+  const joined = path.join("/");
+  return (
+    joined === "affiliate/apply" ||
+    joined === "affiliate/me" ||
+    joined === "affiliate/me/stats" ||
+    joined === "affiliate/me/payouts" ||
+    joined === "affiliate/me/payout/request"
+  );
+}
+
+function isAffiliateAdminPath(path: string[]) {
+  return path.join("/").startsWith("admin/affiliate/applications");
+}
+
+async function readCurrentUser(req: NextRequest) {
+  const origin = req.nextUrl.origin;
+
+  const res = await fetch(`${origin}/api/auth/me`, {
+    method: "GET",
     headers: {
-      "Content-Type": req.headers.get("content-type") || "application/json",
+      cookie: req.headers.get("cookie") || "",
     },
-  };
+    cache: "no-store",
+  });
 
-  if (body !== undefined) {
-    init.body = body;
+  if (!res.ok) return null;
+
+  const data = await res.json().catch(() => null);
+
+  const rawUser =
+    data?.user ||
+    data?.member ||
+    data?.account ||
+    data?.data?.user ||
+    data?.data?.member ||
+    data;
+
+  const id =
+    rawUser?.id ||
+    rawUser?.userId ||
+    rawUser?.sub ||
+    rawUser?.memberId;
+
+  const email = rawUser?.email || rawUser?.emailAddress;
+  const role = rawUser?.role || rawUser?.userRole || rawUser?.type;
+
+  if (!id && !email) return null;
+
+  return {
+    id: String(id || ""),
+    email: email ? String(email) : "",
+    role: role ? String(role) : "",
+  };
+}
+
+function copySafeRequestHeaders(req: NextRequest) {
+  const headers = new Headers();
+
+  const contentType = req.headers.get("content-type");
+  const accept = req.headers.get("accept");
+  const userAgent = req.headers.get("user-agent");
+  const xForwardedFor = req.headers.get("x-forwarded-for");
+
+  if (contentType) headers.set("content-type", contentType);
+  if (accept) headers.set("accept", accept);
+  if (userAgent) headers.set("user-agent", userAgent);
+  if (xForwardedFor) headers.set("x-forwarded-for", xForwardedFor);
+
+  return headers;
+}
+
+async function proxy(req: NextRequest, context: RouteContext) {
+  const { path } = await context.params;
+  const needsMember = isAffiliateMemberPath(path);
+  const needsAdmin = isAffiliateAdminPath(path);
+
+  const headers = copySafeRequestHeaders(req);
+
+  if (needsMember || needsAdmin) {
+    if (!INTERNAL_API_SECRET) {
+      return NextResponse.json(
+        { ok: false, error: "internal_secret_not_configured" },
+        { status: 500 }
+      );
+    }
+
+    const user = await readCurrentUser(req);
+
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: "member_auth_required" },
+        { status: 401 }
+      );
+    }
+
+    headers.set("x-internal-api-secret", INTERNAL_API_SECRET);
+    if (user.id) headers.set("x-member-user-id", user.id);
+    if (user.email) headers.set("x-member-email", user.email);
+    if (user.role) headers.set("x-member-role", user.role);
   }
 
-  const res = await fetch(targetUrl, init);
+  const method = req.method;
+  const hasBody = !["GET", "HEAD"].includes(method);
 
-  const text = await res.text();
+  const upstreamInit: RequestInit = {
+    method,
+    headers,
+    cache: "no-store",
+  };
 
-  return new NextResponse(text, {
-    status: res.status,
-    headers: {
-      "Content-Type": res.headers.get("content-type") || "application/json",
-    },
+  if (hasBody) {
+    upstreamInit.body = await req.arrayBuffer();
+  }
+
+  const upstream = await fetch(backendUrl(path, req.nextUrl.search), upstreamInit);
+
+  const responseHeaders = new Headers(upstream.headers);
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("transfer-encoding");
+
+  return new NextResponse(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: responseHeaders,
   });
 }
 
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  return proxyRequest(req, context);
+export async function GET(req: NextRequest, context: RouteContext) {
+  return proxy(req, context);
 }
 
-export async function POST(
-  req: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  return proxyRequest(req, context);
+export async function POST(req: NextRequest, context: RouteContext) {
+  return proxy(req, context);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  context: { params: Promise<{ path: string[] }> }
-) {
-  return proxyRequest(req, context);
+export async function PUT(req: NextRequest, context: RouteContext) {
+  return proxy(req, context);
+}
+
+export async function PATCH(req: NextRequest, context: RouteContext) {
+  return proxy(req, context);
+}
+
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  return proxy(req, context);
 }
