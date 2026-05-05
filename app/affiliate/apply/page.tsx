@@ -1,16 +1,103 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+
+type AuthState = "checking" | "guest" | "member";
+
+type AffiliateMe = {
+  ok?: boolean;
+  approved?: boolean;
+  application?: {
+    status?: string;
+    rejectionReason?: string | null;
+  } | null;
+  affiliate?: {
+    affiliateCode?: string;
+  } | null;
+};
+
+function getErrorMessage(value: unknown, fallback: string) {
+  if (value instanceof Error) return value.message;
+  return fallback;
+}
 
 export default function AffiliateApplyPage() {
+  const [authState, setAuthState] = useState<AuthState>("checking");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [displayName, setDisplayName] = useState("");
   const [audience, setAudience] = useState("");
   const [reason, setReason] = useState("");
+
+  const [affiliateMe, setAffiliateMe] = useState<AffiliateMe | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
 
-  async function submit(e: FormEvent<HTMLFormElement>) {
+  async function loadState() {
+    setStatus(null);
+
+    const authRes = await fetch("/api/auth/me", {
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (!authRes.ok) {
+      setAuthState("guest");
+      setAffiliateMe(null);
+      return;
+    }
+
+    setAuthState("member");
+
+    const affiliateRes = await fetch("/api/funded/affiliate/me", {
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (affiliateRes.ok) {
+      const data = await affiliateRes.json();
+      setAffiliateMe(data);
+    }
+  }
+
+  useEffect(() => {
+    loadState().catch(() => {
+      setAuthState("guest");
+    });
+  }, []);
+
+  async function signIn(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoginBusy(true);
+    setStatus(null);
+
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.message || data?.error || "Sign in failed");
+      }
+
+      setStatus("Signed in successfully. Loading affiliate application...");
+      await loadState();
+    } catch (err: unknown) {
+      setStatus(getErrorMessage(err, "Sign in failed."));
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  async function submitApplication(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
     setStatus(null);
@@ -34,23 +121,33 @@ export default function AffiliateApplyPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok || !data.ok) {
-        throw new Error(data.message || data.reason || "Application failed");
+      if (!res.ok || !data?.ok) {
+        if (res.status === 401) {
+          setAuthState("guest");
+          throw new Error("Please sign in before applying.");
+        }
+
+        throw new Error(data?.message || data?.error || "Application failed");
       }
 
       setStatus(
         data.alreadyApproved
-          ? "You are already approved. Open your dashboard."
+          ? "You are already approved. Open your affiliate dashboard."
           : "Application submitted. Admin review is pending."
       );
-    } catch (err: any) {
-      setStatus(err?.message || "Failed to submit application.");
+
+      await loadState();
+    } catch (err: unknown) {
+      setStatus(getErrorMessage(err, "Failed to submit application."));
     } finally {
       setBusy(false);
     }
   }
+
+  const applicationStatus = affiliateMe?.application?.status;
+  const approved = Boolean(affiliateMe?.approved);
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-12 text-white">
@@ -61,54 +158,169 @@ export default function AffiliateApplyPage() {
 
         <h1 className="mt-6 text-4xl font-black">Apply to become an affiliate</h1>
         <p className="mt-3 text-slate-300">
-          This page is for logged-in members. Applications are reviewed before dashboard
-          and payout access are enabled.
+          Sign in first, then submit your affiliate application. Referral links are
+          issued only after approval.
         </p>
 
-        <form onSubmit={submit} className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-200">Display name</span>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
-              placeholder="Your public partner name"
-            />
-          </label>
+        {authState === "checking" && (
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            Checking your session...
+          </div>
+        )}
 
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-200">Audience / channel</span>
-            <textarea
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-              className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
-              placeholder="Example: TikTok traders, WhatsApp forex group, blog traffic..."
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-200">Why should we approve you?</span>
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
-              placeholder="Explain your traffic source and promotion plan."
-            />
-          </label>
-
-          <button
-            disabled={busy}
-            className="w-full rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 disabled:opacity-60"
+        {authState === "guest" && (
+          <form
+            onSubmit={signIn}
+            className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-6"
           >
-            {busy ? "Submitting..." : "Submit Application"}
-          </button>
-
-          {status && (
-            <div className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-200">
-              {status}
+            <div>
+              <h2 className="text-2xl font-black">Sign in to continue</h2>
+              <p className="mt-2 text-slate-400">
+                Already registered? Enter your login details to apply as an affiliate.
+              </p>
             </div>
-          )}
-        </form>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Email</span>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="you@example.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Password</span>
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="Your password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            <button
+              disabled={loginBusy}
+              className="w-full rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 disabled:opacity-60"
+            >
+              {loginBusy ? "Signing in..." : "Sign In & Continue"}
+            </button>
+
+            <div className="flex flex-wrap gap-4 text-sm">
+              <Link href="/sign-in" className="text-emerald-300 hover:underline">
+                Open full sign-in page
+              </Link>
+              <Link href="/forgot-password" className="text-slate-300 hover:underline">
+                Forgot password?
+              </Link>
+              <Link href="/funded/apply" className="text-slate-300 hover:underline">
+                Create account through funded challenge
+              </Link>
+            </div>
+
+            {status && (
+              <div className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-200">
+                {status}
+              </div>
+            )}
+          </form>
+        )}
+
+        {authState === "member" && approved && (
+          <div className="mt-8 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-6">
+            <h2 className="text-2xl font-black">You are already approved</h2>
+            <p className="mt-2 text-slate-300">
+              Your affiliate code is active. Open your dashboard to copy your referral link.
+            </p>
+            <Link
+              href="/affiliate/dashboard"
+              className="mt-5 inline-block rounded-2xl bg-emerald-400 px-6 py-3 font-black text-slate-950"
+            >
+              Open Affiliate Dashboard
+            </Link>
+          </div>
+        )}
+
+        {authState === "member" && !approved && applicationStatus === "pending" && (
+          <div className="mt-8 rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-6">
+            <h2 className="text-2xl font-black">Application under review</h2>
+            <p className="mt-2 text-slate-300">
+              Your affiliate application has been submitted. Admin review is pending.
+            </p>
+          </div>
+        )}
+
+        {authState === "member" && !approved && applicationStatus === "rejected" && (
+          <div className="mt-8 rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
+            <h2 className="text-2xl font-black">Application rejected</h2>
+            <p className="mt-2 text-slate-300">
+              {affiliateMe?.application?.rejectionReason ||
+                "Your application was not approved. You may update your details and submit again."}
+            </p>
+          </div>
+        )}
+
+        {authState === "member" && !approved && applicationStatus !== "pending" && (
+          <form
+            onSubmit={submitApplication}
+            className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-6"
+          >
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Display name</span>
+              <input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="Your public partner name"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Audience / channel</span>
+              <textarea
+                value={audience}
+                onChange={(e) => setAudience(e.target.value)}
+                className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="Example: TikTok traders, WhatsApp forex group, blog traffic..."
+                required
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">
+                Why should we approve you?
+              </span>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="mt-2 min-h-28 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="Explain your traffic source and promotion plan."
+                required
+              />
+            </label>
+
+            <button
+              disabled={busy}
+              className="w-full rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 disabled:opacity-60"
+            >
+              {busy ? "Submitting..." : "Submit Application"}
+            </button>
+
+            {status && (
+              <div className="rounded-2xl border border-white/10 bg-slate-900 p-4 text-sm text-slate-200">
+                {status}
+              </div>
+            )}
+          </form>
+        )}
       </section>
     </main>
   );
