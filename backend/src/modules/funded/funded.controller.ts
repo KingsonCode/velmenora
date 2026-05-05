@@ -23,6 +23,7 @@ type ApplyBody = {
   phone?: string;
   password?: string;
   planSlug: string;
+  ref?: string;
 };
 
 type RequestPayoutBody = {
@@ -62,6 +63,7 @@ export class FundedController {
       phone: body.phone,
       password: body.password,
       planSlug: body.planSlug,
+      ref: body.ref,
     });
   }
 

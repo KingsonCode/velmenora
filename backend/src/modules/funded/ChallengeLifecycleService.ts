@@ -15,6 +15,7 @@ type ApplyInput = {
     phone?: string;
     password?: string;
     planSlug: string;
+    ref?: string;
 };
 
 @Injectable()
@@ -25,6 +26,8 @@ export class ChallengeLifecycleService {
         const email = input.email?.trim().toLowerCase();
         const fullName = input.fullName?.trim();
         const planSlug = input.planSlug?.trim();
+        const rawRef = input.ref?.trim().toLowerCase().slice(0, 80) || null;
+        let ref: string | null = null;
 
         const password = String(input.password || "");
 
@@ -42,6 +45,20 @@ export class ChallengeLifecycleService {
 
             if (!challenge || !challenge.isActive) {
                 throw new Error("Funded challenge not found or inactive");
+            }
+
+            if (rawRef) {
+                const affiliate = await tx.affiliate.findFirst({
+                    where: {
+                        slug: rawRef,
+                        isActive: true,
+                    },
+                    select: {
+                        slug: true,
+                    },
+                });
+
+                ref = affiliate?.slug ?? null;
             }
 
             const existingUser = await tx.user.findUnique({
@@ -71,6 +88,7 @@ export class ChallengeLifecycleService {
                     challengeId: challenge.id,
                     status: ChallengeStatus.pending_payment,
                     paymentStatus: PaymentStatus.pending,
+                    ref,
                     initialBalance: challenge.virtualBalance,
                     dayStartBalance: challenge.virtualBalance,
                     currentBalance: challenge.virtualBalance,
@@ -104,11 +122,13 @@ export class ChallengeLifecycleService {
                         status: challengeAccount.status,
                         paymentStatus: challengeAccount.paymentStatus,
                         paymentId: payment.id,
+                        ref,
                     },
                     metadataJson: {
                         source: "POST /api/funded/apply",
                         planSlug: challenge.slug,
                         challengeId: challenge.id,
+                        ref,
                     },
                 },
             });
