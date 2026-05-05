@@ -19,6 +19,37 @@ function jsonObject(value: Prisma.JsonValue | null): Prisma.JsonObject {
   return {};
 }
 
+function buildAffiliateFraudDecision(input: {
+  affiliateUserId: string;
+  buyerUserId: string;
+  recentCommissionCount: number;
+}) {
+  if (input.affiliateUserId === input.buyerUserId) {
+    return {
+      shouldCreateCommission: false,
+      status: "rejected" as const,
+      fraudFlag: "blocked",
+      fraudReason: "self_referral",
+    };
+  }
+
+  if (input.recentCommissionCount >= 3) {
+    return {
+      shouldCreateCommission: true,
+      status: "pending" as const,
+      fraudFlag: "review",
+      fraudReason: "high_velocity_1h",
+    };
+  }
+
+  return {
+    shouldCreateCommission: true,
+    status: "approved" as const,
+    fraudFlag: "none",
+    fraudReason: null,
+  };
+}
+
 @Injectable()
 export class PaymentProcessingService {
   constructor(
@@ -339,6 +370,7 @@ export class PaymentProcessingService {
           select: {
             id: true,
             slug: true,
+            userId: true,
           },
         });
 
@@ -347,22 +379,73 @@ export class PaymentProcessingService {
         );
 
         if (affiliate && commissionAmount > 0) {
-          await tx.affiliateCommission.upsert({
+          const recentWindowStart = new Date(Date.now() - 60 * 60 * 1000);
+
+          const recentCommissionCount = await tx.affiliateCommission.count({
             where: {
-              paymentId: paidPayment.id,
-            },
-            update: {},
-            create: {
               affiliateId: affiliate.id,
-              challengeAccountId: freshAccount.id,
-              paymentId: paidPayment.id,
-              ref: affiliate.slug,
-              planSlug: freshAccount.challenge.slug,
-              amount: commissionAmount,
-              currency: paidPayment.currency,
-              status: "approved",
+              createdAt: {
+                gte: recentWindowStart,
+              },
             },
           });
+
+          const fraudDecision = buildAffiliateFraudDecision({
+            affiliateUserId: affiliate.userId,
+            buyerUserId: freshAccount.userId,
+            recentCommissionCount,
+          });
+
+          if (fraudDecision.shouldCreateCommission) {
+            await tx.affiliateCommission.upsert({
+              where: {
+                paymentId: paidPayment.id,
+              },
+              update: {},
+              create: {
+                affiliateId: affiliate.id,
+                challengeAccountId: freshAccount.id,
+                paymentId: paidPayment.id,
+                ref: affiliate.slug,
+                planSlug: freshAccount.challenge.slug,
+                amount: commissionAmount,
+                currency: paidPayment.currency,
+                status: fraudDecision.status,
+                fraudFlag: fraudDecision.fraudFlag,
+                fraudReason: fraudDecision.fraudReason,
+                fraudCheckedAt: new Date(),
+                fraudMetadataJson: {
+                  source: "payment_processing_service",
+                  ruleVersion: "affiliate_fraud_v1",
+                  recentWindowMinutes: 60,
+                  recentCommissionCount,
+                  buyerUserId: freshAccount.userId,
+                  affiliateUserId: affiliate.userId,
+                },
+              },
+            });
+          } else {
+            await tx.auditLog.create({
+              data: {
+                eventType: "admin_action",
+                entityType: "payment",
+                entityId: paidPayment.id,
+                metadataJson: {
+                  source: "affiliate_fraud_guard",
+                  action: "commission_blocked",
+                  reason: fraudDecision.fraudReason,
+                  affiliateId: affiliate.id,
+                  ref: affiliate.slug,
+                  buyerUserId: freshAccount.userId,
+                  affiliateUserId: affiliate.userId,
+                  challengeAccountId: freshAccount.id,
+                  planSlug: freshAccount.challenge.slug,
+                  commissionAmount,
+                  currency: paidPayment.currency,
+                },
+              },
+            });
+          }
         }
       }
 
@@ -472,6 +555,7 @@ export class PaymentProcessingService {
           select: {
             id: true,
             slug: true,
+            userId: true,
           },
         });
 
@@ -480,22 +564,73 @@ export class PaymentProcessingService {
         );
 
         if (affiliate && commissionAmount > 0) {
-          await tx.affiliateCommission.upsert({
+          const recentWindowStart = new Date(Date.now() - 60 * 60 * 1000);
+
+          const recentCommissionCount = await tx.affiliateCommission.count({
             where: {
-              paymentId: paidPayment.id,
-            },
-            update: {},
-            create: {
               affiliateId: affiliate.id,
-              challengeAccountId: freshAccount.id,
-              paymentId: paidPayment.id,
-              ref: affiliate.slug,
-              planSlug: freshAccount.challenge.slug,
-              amount: commissionAmount,
-              currency: paidPayment.currency,
-              status: "approved",
+              createdAt: {
+                gte: recentWindowStart,
+              },
             },
           });
+
+          const fraudDecision = buildAffiliateFraudDecision({
+            affiliateUserId: affiliate.userId,
+            buyerUserId: freshAccount.userId,
+            recentCommissionCount,
+          });
+
+          if (fraudDecision.shouldCreateCommission) {
+            await tx.affiliateCommission.upsert({
+              where: {
+                paymentId: paidPayment.id,
+              },
+              update: {},
+              create: {
+                affiliateId: affiliate.id,
+                challengeAccountId: freshAccount.id,
+                paymentId: paidPayment.id,
+                ref: affiliate.slug,
+                planSlug: freshAccount.challenge.slug,
+                amount: commissionAmount,
+                currency: paidPayment.currency,
+                status: fraudDecision.status,
+                fraudFlag: fraudDecision.fraudFlag,
+                fraudReason: fraudDecision.fraudReason,
+                fraudCheckedAt: new Date(),
+                fraudMetadataJson: {
+                  source: "payment_processing_service",
+                  ruleVersion: "affiliate_fraud_v1",
+                  recentWindowMinutes: 60,
+                  recentCommissionCount,
+                  buyerUserId: freshAccount.userId,
+                  affiliateUserId: affiliate.userId,
+                },
+              },
+            });
+          } else {
+            await tx.auditLog.create({
+              data: {
+                eventType: "admin_action",
+                entityType: "payment",
+                entityId: paidPayment.id,
+                metadataJson: {
+                  source: "affiliate_fraud_guard",
+                  action: "commission_blocked",
+                  reason: fraudDecision.fraudReason,
+                  affiliateId: affiliate.id,
+                  ref: affiliate.slug,
+                  buyerUserId: freshAccount.userId,
+                  affiliateUserId: affiliate.userId,
+                  challengeAccountId: freshAccount.id,
+                  planSlug: freshAccount.challenge.slug,
+                  commissionAmount,
+                  currency: paidPayment.currency,
+                },
+              },
+            });
+          }
         }
       }
 

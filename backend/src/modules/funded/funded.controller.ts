@@ -270,34 +270,56 @@ export class FundedController {
 
   @Get("affiliate/summary")
   async affiliateSummary() {
-    const [total, pending, approved, payoutRequested, paid] = await Promise.all(
-      [
-        this.prisma.affiliateCommission.aggregate({
-          _sum: { amount: true },
-          _count: { id: true },
-        }),
-        this.prisma.affiliateCommission.aggregate({
-          where: { status: "pending" },
-          _sum: { amount: true },
-          _count: { id: true },
-        }),
-        this.prisma.affiliateCommission.aggregate({
-          where: { status: "approved" },
-          _sum: { amount: true },
-          _count: { id: true },
-        }),
-        this.prisma.affiliateCommission.aggregate({
-          where: { status: "payout_requested" },
-          _sum: { amount: true },
-          _count: { id: true },
-        }),
-        this.prisma.affiliateCommission.aggregate({
-          where: { status: "paid" },
-          _sum: { amount: true },
-          _count: { id: true },
-        }),
-      ],
-    );
+    const [
+      total,
+      pending,
+      approved,
+      payoutRequested,
+      paid,
+      fraudNone,
+      fraudReview,
+      fraudBlocked,
+    ] = await Promise.all([
+      this.prisma.affiliateCommission.aggregate({
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "pending" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "approved" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "payout_requested" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { status: "paid" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { fraudFlag: "none" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { fraudFlag: "review" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+      this.prisma.affiliateCommission.aggregate({
+        where: { fraudFlag: "blocked" },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+    ]);
 
     return {
       ok: true,
@@ -312,6 +334,12 @@ export class FundedController {
         payoutRequestedCount: payoutRequested._count.id,
         paidCommissions: String(paid._sum.amount ?? 0),
         paidCount: paid._count.id,
+        fraudNoneCommissions: String(fraudNone._sum.amount ?? 0),
+        fraudNoneCount: fraudNone._count.id,
+        fraudReviewCommissions: String(fraudReview._sum.amount ?? 0),
+        fraudReviewCount: fraudReview._count.id,
+        fraudBlockedCommissions: String(fraudBlocked._sum.amount ?? 0),
+        fraudBlockedCount: fraudBlocked._count.id,
       },
     };
   }

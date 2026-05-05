@@ -419,6 +419,10 @@ model AffiliateCommission {
   amount             Decimal                   @db.Decimal(12, 2)
   currency           String                    @db.VarChar(10)
   status             AffiliateCommissionStatus @default(approved)
+  fraudFlag          String                    @default("none") @map("fraud_flag") @db.VarChar(40)
+  fraudReason        String?                   @map("fraud_reason") @db.Text
+  fraudCheckedAt     DateTime?                 @map("fraud_checked_at")
+  fraudMetadataJson  Json?                     @map("fraud_metadata_json")
   createdAt          DateTime                  @default(now()) @map("created_at")
   updatedAt          DateTime                  @updatedAt @map("updated_at")
 
@@ -432,6 +436,7 @@ model AffiliateCommission {
   @@index([challengeAccountId])
   @@index([affiliatePayoutId])
   @@index([status])
+  @@index([fraudFlag])
   @@index([createdAt])
   @@map("affiliate_commissions")
 }
