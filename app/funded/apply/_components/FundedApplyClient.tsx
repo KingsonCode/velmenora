@@ -1,5 +1,6 @@
 "use client";
 
+import { getStoredRef } from "@/lib/affiliate/ref";
 import { getFundedPlan } from "@/lib/funded/config";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -41,6 +42,7 @@ export default function FundedApplyClient() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
+      const ref = getStoredRef();
 
       const res = await fetch("/api/funded/apply", {
         method: "POST",
@@ -53,6 +55,7 @@ export default function FundedApplyClient() {
           phone: phone || undefined,
           password,
           planSlug: plan,
+          ref: ref || undefined,
         }),
         signal: controller.signal,
       });

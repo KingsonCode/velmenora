@@ -5,6 +5,7 @@ import "./globals.css";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import RefCapture from "@/components/affiliate/RefCapture";
 
 /* =========================
    FONTS (OPTIMIZED)
@@ -107,6 +108,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#020617] text-white`}
             >
+                <RefCapture />
                 <div className="flex flex-col min-h-screen">
 
                     {/* 🔝 NAVBAR */}
