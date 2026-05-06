@@ -272,7 +272,18 @@ export class AffiliateMembershipService {
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            phone: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
