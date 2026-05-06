@@ -8,7 +8,6 @@ import {
   Post,
   Query,
   Req,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { Request } from "express";
 
@@ -18,6 +17,7 @@ import { AffiliatePayoutService } from "./services/affiliate-payout.service";
 import { PaymentProcessingService } from "./payments/payment-processing.service";
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { assertAdminSecret } from "./security/admin-secret";
 
 type HeaderMap = Record<string, string | string[] | undefined>;
 
@@ -214,11 +214,7 @@ export class FundedController {
     @Headers("x-admin-secret") adminSecret: string | undefined,
     @Body() body: { paymentId: string },
   ) {
-    const expectedSecret = process.env.FUNDED_ADMIN_SECRET;
-
-    if (!expectedSecret || adminSecret !== expectedSecret) {
-      throw new UnauthorizedException("Invalid admin secret");
-    }
+    assertAdminSecret(adminSecret);
 
     if (!body.paymentId) {
       return {
@@ -282,7 +278,12 @@ export class FundedController {
   }
 
   @Post("affiliate/payout/approve")
-  async approveAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+  async approveAffiliatePayout(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Body() body: AffiliatePayoutAdminBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.affiliatePayoutService.approvePayout({
       payoutId: body.payoutId ?? "",
       reviewerId: body.reviewerId,
@@ -291,7 +292,12 @@ export class FundedController {
   }
 
   @Post("affiliate/payout/pay")
-  async payAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+  async payAffiliatePayout(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Body() body: AffiliatePayoutAdminBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.affiliatePayoutService.payPayout({
       payoutId: body.payoutId ?? "",
       reviewerId: body.reviewerId,
@@ -302,7 +308,12 @@ export class FundedController {
   }
 
   @Post("affiliate/payout/reject")
-  async rejectAffiliatePayout(@Body() body: AffiliatePayoutAdminBody) {
+  async rejectAffiliatePayout(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Body() body: AffiliatePayoutAdminBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.affiliatePayoutService.rejectPayout({
       payoutId: body.payoutId ?? "",
       reviewerId: body.reviewerId,
