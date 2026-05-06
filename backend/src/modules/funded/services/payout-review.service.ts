@@ -152,6 +152,7 @@ export class PayoutReviewService {
           eventType: AuditEventType.PAYOUT_APPROVED,
           metadataJson: {
             source: "payout_review_service",
+            action: "payout_approved",
             challengeAccountId: payout.challengeAccountId,
             requestedAmount: payout.requestedAmount,
             previousPayoutStatus: payout.status,
@@ -235,6 +236,7 @@ export class PayoutReviewService {
           eventType: AuditEventType.PAYOUT_REJECTED,
           metadataJson: {
             source: "payout_review_service",
+            action: "payout_rejected",
             challengeAccountId: payout.challengeAccountId,
             rejectionReason: input.rejectionReason,
             previousPayoutStatus: payout.status,
