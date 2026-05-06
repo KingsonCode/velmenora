@@ -281,14 +281,14 @@ export default function AffiliateSignInPage() {
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <Link
                   href="/affiliate/apply"
-                  className="rounded-2xl bg-emerald-400 px-5 py-3 text-center font-black text-slate-950 hover:bg-emerald-300"
+                  className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-emerald-400 px-7 py-4 text-center font-black text-slate-950 hover:bg-emerald-300"
                 >
                   {accessState === "pending" ? "View Application" : "Apply as Affiliate"}
                 </Link>
 
                 <Link
                   href="/member"
-                  className="rounded-2xl border border-white/15 px-5 py-3 text-center font-black text-white hover:bg-white/10"
+                  className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/15 px-7 py-4 text-center font-black text-white hover:bg-white/10"
                 >
                   View Member Area
                 </Link>
