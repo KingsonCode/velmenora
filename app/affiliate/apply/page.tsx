@@ -30,6 +30,13 @@ export default function AffiliateApplyPage() {
   const [displayName, setDisplayName] = useState("");
   const [audience, setAudience] = useState("");
   const [reason, setReason] = useState("");
+  const [channels, setChannels] = useState({
+    tiktok: "",
+    instagram: "",
+    youtube: "",
+    whatsapp: "",
+    website: "",
+  });
 
   const [affiliateMe, setAffiliateMe] = useState<AffiliateMe | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -97,6 +104,10 @@ export default function AffiliateApplyPage() {
     }
   }
 
+  function updateChannel(key: keyof typeof channels, value: string) {
+    setChannels((current) => ({ ...current, [key]: value }));
+  }
+
   async function submitApplication(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -111,13 +122,7 @@ export default function AffiliateApplyPage() {
           displayName,
           audience,
           reason,
-          channels: {
-            website: "",
-            tiktok: "",
-            instagram: "",
-            whatsapp: "",
-            youtube: "",
-          },
+          channels,
         }),
       });
 
@@ -280,6 +285,59 @@ export default function AffiliateApplyPage() {
                 className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
                 placeholder="Your public partner name"
                 required
+              />
+            </label>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-200">TikTok / Short-form</span>
+                <input
+                  value={channels.tiktok}
+                  onChange={(e) => updateChannel("tiktok", e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                  placeholder="@velmenora"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-200">Instagram</span>
+                <input
+                  value={channels.instagram}
+                  onChange={(e) => updateChannel("instagram", e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                  placeholder="@velmenora"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-200">YouTube</span>
+                <input
+                  value={channels.youtube}
+                  onChange={(e) => updateChannel("youtube", e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                  placeholder="@VelmenoraOfficial"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-200">WhatsApp / Community</span>
+                <input
+                  value={channels.whatsapp}
+                  onChange={(e) => updateChannel("whatsapp", e.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                  placeholder="+255700000000 or group name"
+                />
+              </label>
+            </div>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Website / Blog</span>
+              <input
+                value={channels.website}
+                onChange={(e) => updateChannel("website", e.target.value)}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-300"
+                placeholder="https://www.example.com"
+                type="url"
               />
             </label>
 

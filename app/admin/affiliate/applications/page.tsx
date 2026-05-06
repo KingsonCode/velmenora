@@ -9,6 +9,7 @@ type AffiliateApplication = {
   displayName?: string | null;
   audience?: string | null;
   reason?: string | null;
+  channelsJson?: Record<string, unknown> | null;
   rejectionReason?: string | null;
   reviewedAt?: string | null;
   createdAt?: string | null;
@@ -25,6 +26,12 @@ function statusClass(status: string) {
   if (status === "approved") return "border-emerald-400/25 bg-emerald-400/10 text-emerald-300";
   if (status === "rejected") return "border-red-400/25 bg-red-400/10 text-red-300";
   return "border-yellow-400/25 bg-yellow-400/10 text-yellow-300";
+}
+
+function channelValue(app: AffiliateApplication, key: string) {
+  const channels = app.channelsJson as Record<string, unknown> | null | undefined;
+  const value = channels?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : "—";
 }
 
 function prettyDate(value?: string | null) {
@@ -197,6 +204,29 @@ export default function AdminAffiliateApplicationsPage() {
           <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
             <p className="font-black text-slate-300">Reason</p>
             <p className="mt-2 leading-6 text-slate-400">{app.reason || "—"}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 text-sm md:grid-cols-5">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="font-black text-slate-300">TikTok</p>
+            <p className="mt-2 break-words leading-6 text-slate-400">{channelValue(app, "tiktok")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="font-black text-slate-300">Instagram</p>
+            <p className="mt-2 break-words leading-6 text-slate-400">{channelValue(app, "instagram")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="font-black text-slate-300">YouTube</p>
+            <p className="mt-2 break-words leading-6 text-slate-400">{channelValue(app, "youtube")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="font-black text-slate-300">WhatsApp</p>
+            <p className="mt-2 break-words leading-6 text-slate-400">{channelValue(app, "whatsapp")}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="font-black text-slate-300">Website / Blog</p>
+            <p className="mt-2 break-words leading-6 text-slate-400">{channelValue(app, "website")}</p>
           </div>
         </div>
 
