@@ -53,6 +53,7 @@ export default function AffiliateDashboardPage() {
       body: JSON.stringify({
         amount: Number(amount),
         payoutMethod: "manual",
+        currency: "USD",
         payoutDetails: {},
       }),
     });
@@ -121,8 +122,8 @@ export default function AffiliateDashboardPage() {
           {[
             ["Code", affiliate.affiliateCode],
             ["Rate", `${stats?.commissionRatePct ?? affiliate.commissionRatePct ?? 0}%`],
-            ["Earned", `TZS ${Number(stats?.totalEarned ?? affiliate.totalEarned ?? 0).toLocaleString()}`],
-            ["Balance", `TZS ${Number(stats?.payoutBalance ?? affiliate.payoutBalance ?? 0).toLocaleString()}`],
+            ["Earned", `$${Number(stats?.totalEarned ?? affiliate.totalEarned ?? 0).toLocaleString()}`],
+            ["Balance", `$${Number(stats?.payoutBalance ?? affiliate.payoutBalance ?? 0).toLocaleString()}`],
           ].map(([label, value]) => (
             <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
               <p className="text-sm text-slate-400">{label}</p>
@@ -145,7 +146,7 @@ export default function AffiliateDashboardPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="flex-1 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none"
-              placeholder="Amount in TZS"
+              placeholder="Amount in USD"
               inputMode="numeric"
             />
             <button className="rounded-xl bg-emerald-400 px-6 py-3 font-black text-slate-950">
@@ -163,7 +164,7 @@ export default function AffiliateDashboardPage() {
               payouts.map((payout) => (
                 <div key={payout.id} className="rounded-2xl border border-white/10 bg-slate-900 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="font-bold">TZS {Number(payout.amount).toLocaleString()}</span>
+                    <span className="font-bold">${Number(payout.amount).toLocaleString()}</span>
                     <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase text-slate-300">
                       {String(payout.status).replaceAll("_", " ")}
                     </span>

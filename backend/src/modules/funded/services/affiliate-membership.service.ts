@@ -252,7 +252,7 @@ export class AffiliateMembershipService {
         affiliateProfileId: affiliate.id,
         userId: user.id,
         amount,
-        currency: 'TZS',
+        currency: 'USD',
         payoutMethod,
         payoutDetailsJson,
       },
