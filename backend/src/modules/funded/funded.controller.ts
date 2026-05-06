@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { Request } from "express";
 
@@ -209,7 +210,16 @@ export class FundedController {
   }
 
   @Post("payment/manual-confirm")
-  async manualConfirmPayment(@Body() body: { paymentId: string }) {
+  async manualConfirmPayment(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Body() body: { paymentId: string },
+  ) {
+    const expectedSecret = process.env.FUNDED_ADMIN_SECRET;
+
+    if (!expectedSecret || adminSecret !== expectedSecret) {
+      throw new UnauthorizedException("Invalid admin secret");
+    }
+
     if (!body.paymentId) {
       return {
         ok: false,
