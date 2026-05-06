@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AffiliateNotificationService } from './affiliate-notification.service';
 
 type RequestLike = {
   user?: {
@@ -42,7 +43,10 @@ function slugifyCode(input: string) {
 
 @Injectable()
 export class AffiliateMembershipService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly affiliateNotifications: AffiliateNotificationService,
+  ) {}
 
   async requireCurrentUser(req: RequestLike) {
     const trustedInternal = isTrustedInternalRequest(req);
@@ -335,6 +339,13 @@ export class AffiliateMembershipService {
       });
 
       return { application: updatedApplication, affiliate: profile };
+    });
+
+    await this.affiliateNotifications.sendApprovalEmail({
+      to: app.user.email,
+      displayName: app.displayName,
+      affiliateCode: result.affiliate.affiliateCode,
+      commissionRatePct: result.affiliate.commissionRatePct,
     });
 
     return { ok: true, ...result };

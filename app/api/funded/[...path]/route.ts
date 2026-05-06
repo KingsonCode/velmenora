@@ -85,6 +85,9 @@ function copySafeRequestHeaders(req: NextRequest) {
   if (userAgent) headers.set("user-agent", userAgent);
   if (xForwardedFor) headers.set("x-forwarded-for", xForwardedFor);
 
+  const adminSecret = req.headers.get("x-admin-secret");
+  if (adminSecret) headers.set("x-admin-secret", adminSecret);
+
   return headers;
 }
 
@@ -95,7 +98,20 @@ async function proxy(req: NextRequest, context: RouteContext) {
 
   const headers = copySafeRequestHeaders(req);
 
-  if (needsMember || needsAdmin) {
+  if (needsAdmin) {
+    const adminSecret = req.headers.get("x-admin-secret");
+
+    if (!adminSecret) {
+      return NextResponse.json(
+        { ok: false, error: "admin_secret_required" },
+        { status: 403 }
+      );
+    }
+
+    headers.set("x-admin-secret", adminSecret);
+  }
+
+  if (needsMember) {
     if (!INTERNAL_API_SECRET) {
       return NextResponse.json(
         { ok: false, error: "internal_secret_not_configured" },

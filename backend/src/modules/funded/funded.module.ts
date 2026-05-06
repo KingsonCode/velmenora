@@ -1,4 +1,5 @@
 import { AffiliateMembershipService } from './services/affiliate-membership.service';
+import { AffiliateNotificationService } from './services/affiliate-notification.service';
 import { AdminAffiliateApplicationsController } from './admin-affiliate-applications.controller';
 import { AffiliateMeController } from './affiliate-me.controller';
 import { Module } from "@nestjs/common";
@@ -70,7 +71,8 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     NowPaymentsService,
     PaymentProcessingService,
     CtaTrackingService,
-    AffiliateMembershipService,],
+    AffiliateMembershipService,
+    AffiliateNotificationService,],
   exports: [MetricsOrchestrator],
 })
 export class FundedModule {}
