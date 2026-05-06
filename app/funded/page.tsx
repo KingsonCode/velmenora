@@ -1,3 +1,4 @@
+import AffiliateRefCapture from "./_components/AffiliateRefCapture";
 import type { Metadata } from "next";
 import TrackedCtaLink from "@/components/funded/TrackedCtaLink";
 import { fundedFaqs, fundedPlans, fundedSocialProof } from "@/lib/funded/config";
@@ -171,6 +172,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 export default function FundedPage() {
   return (
     <main className="min-h-screen bg-black text-white">
+      <AffiliateRefCapture />
       <JsonLd />
 
 
