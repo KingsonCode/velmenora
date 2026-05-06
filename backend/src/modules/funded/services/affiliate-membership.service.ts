@@ -378,6 +378,15 @@ export class AffiliateMembershipService {
         reviewedBy: req.user?.id || req.user?.email || 'admin',
         rejectionReason: reason,
       },
+      include: {
+        user: true,
+      },
+    });
+
+    await this.affiliateNotifications.sendRejectionEmail({
+      to: application.user.email,
+      displayName: application.displayName,
+      reason,
     });
 
     return { ok: true, application };

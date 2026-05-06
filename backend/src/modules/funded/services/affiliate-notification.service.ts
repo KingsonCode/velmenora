@@ -7,6 +7,12 @@ type ApprovalEmailInput = {
   commissionRatePct: unknown;
 };
 
+type RejectionEmailInput = {
+  to: string;
+  displayName?: string | null;
+  reason: string;
+};
+
 function appBaseUrl() {
   return (
     process.env.APP_BASE_URL ||
@@ -23,26 +29,81 @@ function emailFrom() {
   );
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 @Injectable()
 export class AffiliateNotificationService {
   private readonly logger = new Logger(AffiliateNotificationService.name);
 
-  async sendApprovalEmail(input: ApprovalEmailInput) {
+  private async sendEmail(input: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    logLabel: string;
+  }) {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      this.logger.warn('RESEND_API_KEY is not configured. Skipping affiliate approval email.');
+      this.logger.warn(
+        `RESEND_API_KEY is not configured. Skipping ${input.logLabel} email.`,
+      );
       return { ok: false, skipped: true, reason: 'resend_api_key_missing' };
     }
 
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: emailFrom(),
+          to: [input.to],
+          subject: input.subject,
+          html: input.html,
+          text: input.text,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        this.logger.error(
+          `${input.logLabel} email failed: ${res.status} ${JSON.stringify(data)}`,
+        );
+        return { ok: false, status: res.status, data };
+      }
+
+      this.logger.log(`${input.logLabel} email sent to ${input.to}`);
+      return { ok: true, data };
+    } catch (error) {
+      this.logger.error(`${input.logLabel} email exception`, error as Error);
+      return { ok: false, error: 'email_exception' };
+    }
+  }
+
+  async sendApprovalEmail(input: ApprovalEmailInput) {
     const baseUrl = appBaseUrl();
     const dashboardUrl = `${baseUrl}/affiliate/sign-in`;
-    const referralUrl = `${baseUrl}/funded?ref=${encodeURIComponent(input.affiliateCode)}`;
+    const referralUrl = `${baseUrl}/funded?ref=${encodeURIComponent(
+      input.affiliateCode,
+    )}`;
     const signInUrl = `${baseUrl}/sign-in`;
     const forgotPasswordUrl = `${baseUrl}/forgot-password`;
 
-    const partnerName = input.displayName || 'Velmenora Partner';
+    const partnerName = escapeHtml(input.displayName || 'Velmenora Partner');
+    const affiliateCode = escapeHtml(input.affiliateCode);
     const rate = Number(input.commissionRatePct ?? 0);
+    const rateLabel = Number.isFinite(rate) ? `${rate}%` : 'Active';
 
     const subject = 'Your Velmenora Affiliate Account Has Been Approved';
 
@@ -53,8 +114,8 @@ export class AffiliateNotificationService {
         <p>Your Velmenora affiliate application has been approved. Your affiliate dashboard and referral link are now active.</p>
 
         <div style="background:#f3f4f6;border-radius:16px;padding:18px;margin:22px 0;">
-          <p style="margin:0 0 8px;"><strong>Affiliate code:</strong> ${input.affiliateCode}</p>
-          <p style="margin:0 0 8px;"><strong>Commission rate:</strong> ${Number.isFinite(rate) ? `${rate}%` : 'Active'}</p>
+          <p style="margin:0 0 8px;"><strong>Affiliate code:</strong> ${affiliateCode}</p>
+          <p style="margin:0 0 8px;"><strong>Commission rate:</strong> ${escapeHtml(rateLabel)}</p>
           <p style="margin:0;"><strong>Referral link:</strong><br><a href="${referralUrl}">${referralUrl}</a></p>
         </div>
 
@@ -78,12 +139,12 @@ export class AffiliateNotificationService {
     `;
 
     const text = [
-      `Hello ${partnerName},`,
+      `Hello ${input.displayName || 'Velmenora Partner'},`,
       '',
       'Your Velmenora affiliate application has been approved.',
       '',
       `Affiliate code: ${input.affiliateCode}`,
-      `Commission rate: ${Number.isFinite(rate) ? `${rate}%` : 'Active'}`,
+      `Commission rate: ${rateLabel}`,
       `Referral link: ${referralUrl}`,
       '',
       `Dashboard: ${dashboardUrl}`,
@@ -93,36 +154,63 @@ export class AffiliateNotificationService {
       'Do not share your account password. Velmenora will never ask for your password by email.',
     ].join('\n');
 
-    try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: emailFrom(),
-          to: [input.to],
-          subject,
-          html,
-          text,
-        }),
-      });
+    return this.sendEmail({
+      to: input.to,
+      subject,
+      html,
+      text,
+      logLabel: 'Affiliate approval',
+    });
+  }
 
-      const data = await res.json().catch(() => null);
+  async sendRejectionEmail(input: RejectionEmailInput) {
+    const baseUrl = appBaseUrl();
+    const applyUrl = `${baseUrl}/affiliate/apply`;
 
-      if (!res.ok) {
-        this.logger.error(
-          `Affiliate approval email failed: ${res.status} ${JSON.stringify(data)}`,
-        );
-        return { ok: false, status: res.status, data };
-      }
+    const partnerName = escapeHtml(input.displayName || 'Velmenora Partner');
+    const reason = escapeHtml(input.reason || 'Application rejected');
 
-      this.logger.log(`Affiliate approval email sent to ${input.to}`);
-      return { ok: true, data };
-    } catch (error) {
-      this.logger.error('Affiliate approval email exception', error as Error);
-      return { ok: false, error: 'email_exception' };
-    }
+    const subject = 'Velmenora Affiliate Application Update';
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;max-width:680px;margin:0 auto;padding:24px;">
+        <h1 style="margin:0 0 16px;font-size:28px;">Affiliate application update</h1>
+        <p>Hello ${partnerName},</p>
+        <p>Thank you for applying to the Velmenora Affiliate Program.</p>
+        <p>Your application was not approved at this time.</p>
+
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:16px;padding:18px;margin:22px 0;">
+          <p style="margin:0 0 8px;"><strong>Reason:</strong></p>
+          <p style="margin:0;">${reason}</p>
+        </div>
+
+        <p>You may improve your audience details, promotion plan, or channel information and apply again.</p>
+
+        <p>
+          <a href="${applyUrl}" style="display:inline-block;background:#10b981;color:#000;text-decoration:none;font-weight:700;padding:14px 20px;border-radius:12px;">
+            Review Affiliate Application
+          </a>
+        </p>
+      </div>
+    `;
+
+    const text = [
+      `Hello ${input.displayName || 'Velmenora Partner'},`,
+      '',
+      'Thank you for applying to the Velmenora Affiliate Program.',
+      'Your application was not approved at this time.',
+      '',
+      `Reason: ${input.reason || 'Application rejected'}`,
+      '',
+      `You may review or apply again here: ${applyUrl}`,
+    ].join('\n');
+
+    return this.sendEmail({
+      to: input.to,
+      subject,
+      html,
+      text,
+      logLabel: 'Affiliate rejection',
+    });
   }
 }

@@ -8,6 +8,11 @@ type AuthState = "checking" | "guest" | "member";
 type AffiliateMe = {
   ok?: boolean;
   approved?: boolean;
+  user?: {
+    id?: string;
+    email?: string;
+    name?: string | null;
+  };
   application?: {
     status?: string;
     rejectionReason?: string | null;
@@ -276,6 +281,19 @@ export default function AffiliateApplyPage() {
             onSubmit={submitApplication}
             className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-6"
           >
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-200">Notification email</span>
+              <input
+                value={affiliateMe?.user?.email || ""}
+                readOnly
+                className="mt-2 w-full cursor-not-allowed rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-300 outline-none"
+                placeholder="Your account email"
+              />
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                We will use this email to notify you when your affiliate application is approved or rejected.
+              </p>
+            </label>
+
             <label className="block">
               <span className="text-sm font-semibold text-slate-200">Display name</span>
               <input
