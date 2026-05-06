@@ -171,6 +171,95 @@ export class AffiliatePayoutService {
     };
   }
 
+  async adminListPayouts(input: { ref?: string | null } = {}) {
+    const ref = cleanString(input.ref);
+
+    const affiliates = await this.prisma.affiliate.findMany({
+      where: ref ? { slug: ref } : undefined,
+      select: {
+        id: true,
+        slug: true,
+      },
+      take: 100,
+    });
+
+    const affiliateIds = affiliates.map((affiliate) => affiliate.id);
+
+    if (ref && affiliateIds.length === 0) {
+      return {
+        ok: true,
+        filters: {
+          ref,
+          take: 100,
+        },
+        payouts: [],
+      };
+    }
+
+    const payouts = await this.prisma.affiliatePayout.findMany({
+      where:
+        affiliateIds.length > 0
+          ? {
+              affiliateId: {
+                in: affiliateIds,
+              },
+            }
+          : undefined,
+      orderBy: { requestedAt: "desc" },
+      include: {
+        commissions: {
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+            planSlug: true,
+            paymentId: true,
+            challengeAccountId: true,
+            createdAt: true,
+          },
+        },
+      },
+      take: 100,
+    });
+
+    const affiliateById = new Map(
+      affiliates.map((affiliate) => [affiliate.id, affiliate]),
+    );
+
+    return {
+      ok: true,
+      filters: {
+        ref: ref || null,
+        take: 100,
+      },
+      payouts: payouts.map((payout) => {
+        const affiliate = affiliateById.get(payout.affiliateId);
+
+        return {
+          id: payout.id,
+          affiliateId: payout.affiliateId,
+          ref: affiliate?.slug ?? null,
+          affiliate,
+          amount: String(payout.amount),
+          currency: payout.currency,
+          status: payout.status,
+          method: payout.method,
+          reference: payout.reference,
+          notes: payout.notes,
+          requestedAt: payout.requestedAt,
+          approvedAt: payout.approvedAt,
+          rejectedAt: payout.rejectedAt,
+          paidAt: payout.paidAt,
+          commissions: payout.commissions.map((commission) => ({
+            ...commission,
+            amount: String(commission.amount),
+          })),
+        };
+      }),
+    };
+  }
+
   async listPayouts(ref: string) {
     const cleanRef = cleanString(ref);
 

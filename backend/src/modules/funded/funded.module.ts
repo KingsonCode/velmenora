@@ -34,6 +34,8 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
 import { CtaTrackingController } from "./cta-tracking/cta-tracking.controller";
 import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
 
+import { AdminAffiliatePayoutsController } from "./admin-affiliate-payouts.controller";
+
 @Module({
   controllers: [
     FundedController,
@@ -43,7 +45,9 @@ import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
     AffiliateCommissionReviewController,
     CtaTrackingController,
     AffiliateMeController,
-    AdminAffiliateApplicationsController,],
+    AdminAffiliateApplicationsController,
+    AdminAffiliatePayoutsController,
+  ],
   providers: [
     PrismaService,
     ChallengeLifecycleService,
