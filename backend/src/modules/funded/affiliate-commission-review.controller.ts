@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Inject,
   Param,
   Post,
@@ -9,6 +10,7 @@ import {
 } from "@nestjs/common";
 
 import { AffiliateCommissionReviewService } from "./services/affiliate-commission-review.service";
+import { assertAdminSecret } from "./security/admin-secret";
 
 type ReviewBody = {
   reviewerId?: string;
@@ -39,7 +41,13 @@ export class AffiliateCommissionReviewController {
   }
 
   @Post(":id/approve")
-  async approve(@Param("id") id: string, @Body() body: ReviewBody) {
+  async approve(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: ReviewBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.reviewService.approve({
       commissionId: id,
       reviewerId: body.reviewerId ?? "",
@@ -48,7 +56,13 @@ export class AffiliateCommissionReviewController {
   }
 
   @Post(":id/reject")
-  async reject(@Param("id") id: string, @Body() body: ReviewBody) {
+  async reject(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: ReviewBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.reviewService.reject({
       commissionId: id,
       reviewerId: body.reviewerId ?? "",

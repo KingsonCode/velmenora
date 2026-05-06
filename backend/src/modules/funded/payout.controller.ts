@@ -1,6 +1,7 @@
-import { Body, Controller, Inject, Param, Post } from "@nestjs/common";
+import { Body, Controller, Headers, Inject, Param, Post } from "@nestjs/common";
 import { PayoutReviewService } from "./services/payout-review.service";
 import { PayoutExecutionService } from "./services/payout-execution.service";
+import { assertAdminSecret } from "./security/admin-secret";
 
 type ReviewerBody = {
   reviewerId: string;
@@ -25,7 +26,13 @@ export class PayoutController {
   ) {}
 
   @Post(":id/review/start")
-  async startReview(@Param("id") id: string, @Body() body: ReviewerBody) {
+  async startReview(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: ReviewerBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.payoutReviewService.startReview({
       payoutRequestId: id,
       reviewerId: body.reviewerId,
@@ -33,7 +40,13 @@ export class PayoutController {
   }
 
   @Post(":id/approve")
-  async approve(@Param("id") id: string, @Body() body: ReviewerBody) {
+  async approve(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: ReviewerBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.payoutReviewService.approve({
       payoutRequestId: id,
       reviewerId: body.reviewerId,
@@ -41,7 +54,13 @@ export class PayoutController {
   }
 
   @Post(":id/reject")
-  async reject(@Param("id") id: string, @Body() body: RejectBody) {
+  async reject(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: RejectBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.payoutReviewService.reject({
       payoutRequestId: id,
       reviewerId: body.reviewerId,
@@ -50,7 +69,13 @@ export class PayoutController {
   }
 
   @Post(":id/pay")
-  async pay(@Param("id") id: string, @Body() body: PayBody) {
+  async pay(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Param("id") id: string,
+    @Body() body: PayBody,
+  ) {
+    assertAdminSecret(adminSecret);
+
     return this.payoutExecutionService.markPaid({
       payoutRequestId: id,
       actorUserId: body.actorUserId,
