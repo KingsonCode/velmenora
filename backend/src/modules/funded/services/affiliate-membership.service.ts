@@ -184,21 +184,64 @@ export class AffiliateMembershipService {
       throw new ForbiddenException('affiliate_not_approved');
     }
 
-    const payouts = await this.prisma.affiliatePayoutRequest.groupBy({
-      by: ['status'],
-      where: { affiliateProfileId: affiliate.id },
-      _sum: { amount: true },
-      _count: { id: true },
+    const legacyAffiliate = await this.prisma.affiliate.findFirst({
+      where: {
+        userId: user.id,
+        slug: affiliate.affiliateCode,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        slug: true,
+      },
     });
+
+    const [payouts, commissionGroups] = await Promise.all([
+      this.prisma.affiliatePayoutRequest.groupBy({
+        by: ['status'],
+        where: { affiliateProfileId: affiliate.id },
+        _sum: { amount: true },
+        _count: { id: true },
+      }),
+
+      legacyAffiliate
+        ? this.prisma.affiliateCommission.groupBy({
+            by: ['status', 'currency'],
+            where: { affiliateId: legacyAffiliate.id },
+            _sum: { amount: true },
+            _count: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const sumByStatus = (status: string) =>
+      commissionGroups
+        .filter((group: any) => group.status === status)
+        .reduce((sum: number, group: any) => sum + Number(group._sum.amount ?? 0), 0);
+
+    const totalCommission = commissionGroups.reduce(
+      (sum: number, group: any) => sum + Number(group._sum.amount ?? 0),
+      0,
+    );
+
+    const approvedCommission = sumByStatus('approved');
+    const pendingCommission = sumByStatus('pending');
+    const payoutRequestedCommission = sumByStatus('payout_requested');
+    const payoutPaidCommission = sumByStatus('payout_paid');
 
     return {
       ok: true,
       affiliate,
       stats: {
-        totalEarned: affiliate.totalEarned,
-        totalPaid: affiliate.totalPaid,
-        payoutBalance: affiliate.payoutBalance,
+        totalEarned: totalCommission,
+        totalPaid: Number(affiliate.totalPaid ?? 0) || payoutPaidCommission,
+        payoutBalance: approvedCommission,
+        pendingCommission,
+        approvedCommission,
+        payoutRequestedCommission,
+        payoutPaidCommission,
         commissionRatePct: affiliate.commissionRatePct,
+        commissionGroups,
         payouts,
       },
     };
