@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminAuthGate from "../../../_components/AdminAuthGate";
+import AdminNav from "../../../_components/AdminNav";
 import { adminGet, adminPost } from "../_components/adminAffiliateApi";
 
 type Commission = {
@@ -82,6 +83,7 @@ export default function AdminCommissionReviewPage() {
     <AdminAuthGate>
       <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto max-w-7xl">
+        <AdminNav />
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-cyan-300">
