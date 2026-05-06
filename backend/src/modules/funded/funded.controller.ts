@@ -233,7 +233,12 @@ export class FundedController {
   }
 
   @Post("payment/nowpayments/reconcile")
-  async reconcileNowPaymentsPayment(@Body() body: { paymentId: string }) {
+  async reconcileNowPaymentsPayment(
+    @Headers("x-admin-secret") adminSecret: string | undefined,
+    @Body() body: { paymentId: string },
+  ) {
+    assertAdminSecret(adminSecret);
+
     if (!body.paymentId) {
       return {
         ok: false,
