@@ -349,6 +349,19 @@ export class AffiliateMembershipService {
         },
       });
 
+      await tx.affiliate.upsert({
+        where: { userId: app.userId },
+        update: {
+          slug: profile.affiliateCode,
+          isActive: true,
+        },
+        create: {
+          userId: app.userId,
+          slug: profile.affiliateCode,
+          isActive: true,
+        },
+      });
+
       return { application: updatedApplication, affiliate: profile };
     });
 
