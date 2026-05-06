@@ -404,6 +404,27 @@ export class AffiliateMembershipService {
         },
       });
 
+      await tx.auditLog.create({
+        data: {
+          actorUserId: req.user?.id || req.user?.userId || req.user?.sub || undefined,
+          eventType: 'admin_action',
+          entityType: 'user',
+          entityId: app.userId,
+          metadataJson: {
+            source: 'affiliate_membership_service',
+            action: 'affiliate_application_approved',
+            applicationId: app.id,
+            userId: app.userId,
+            affiliateProfileId: profile.id,
+            affiliateCode: profile.affiliateCode,
+            commissionRatePct,
+            previousStatus: app.status,
+            nextStatus: updatedApplication.status,
+            reviewedAt: updatedApplication.reviewedAt?.toISOString?.() ?? null,
+          },
+        },
+      });
+
       return { application: updatedApplication, affiliate: profile };
     });
 
@@ -452,6 +473,25 @@ export class AffiliateMembershipService {
       },
       include: {
         user: true,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorUserId: req.user?.id || req.user?.userId || req.user?.sub || undefined,
+        eventType: 'admin_action',
+        entityType: 'user',
+        entityId: application.userId,
+        metadataJson: {
+          source: 'affiliate_membership_service',
+          action: 'affiliate_application_rejected',
+          applicationId: application.id,
+          userId: application.userId,
+          previousStatus: existingApplication.status,
+          nextStatus: application.status,
+          rejectionReason: reason,
+          reviewedAt: application.reviewedAt?.toISOString?.() ?? null,
+        },
       },
     });
 
