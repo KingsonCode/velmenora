@@ -168,18 +168,44 @@ export default function AdminCommissionReviewPage() {
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2">
                           <button
-                            disabled={busyId === id}
+                            disabled={
+                              busyId === id ||
+                              ["approved", "rejected", "paid", "payout_requested"].includes(
+                                String(row.status)
+                              )
+                            }
                             onClick={() => action(id, "approve")}
-                            className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-50"
+                            className={
+                              row.status === "approved"
+                                ? "cursor-not-allowed rounded-lg bg-emerald-900/50 px-3 py-2 text-xs font-bold text-emerald-300 opacity-70"
+                                : ["rejected", "paid", "payout_requested"].includes(
+                                      String(row.status)
+                                    )
+                                  ? "cursor-not-allowed rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500 opacity-60"
+                                  : "rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-50"
+                            }
                           >
-                            Approve
+                            {row.status === "approved" ? "Approved" : "Approve"}
                           </button>
                           <button
-                            disabled={busyId === id}
+                            disabled={
+                              busyId === id ||
+                              ["approved", "rejected", "paid", "payout_requested"].includes(
+                                String(row.status)
+                              )
+                            }
                             onClick={() => action(id, "reject")}
-                            className="rounded-lg bg-red-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                            className={
+                              row.status === "rejected"
+                                ? "cursor-not-allowed rounded-lg bg-red-900/50 px-3 py-2 text-xs font-bold text-red-300 opacity-70"
+                                : ["approved", "paid", "payout_requested"].includes(
+                                      String(row.status)
+                                    )
+                                  ? "cursor-not-allowed rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500 opacity-60"
+                                  : "rounded-lg bg-red-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                            }
                           >
-                            Reject
+                            {row.status === "rejected" ? "Rejected" : "Reject"}
                           </button>
                         </div>
                       </td>
