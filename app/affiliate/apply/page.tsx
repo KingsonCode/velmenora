@@ -176,7 +176,7 @@ export default function AffiliateApplyPage() {
             <div>
               <h2 className="text-2xl font-black">Sign in to continue</h2>
               <p className="mt-2 text-slate-400">
-                Already registered? Enter your login details to apply as an affiliate.
+                Already have a Velmenora account? Sign in below to continue your affiliate application.
               </p>
             </div>
 
@@ -221,7 +221,7 @@ export default function AffiliateApplyPage() {
                 Forgot password?
               </Link>
               <Link href="/funded/apply" className="text-slate-300 hover:underline">
-                Create account through funded challenge
+                Create member account
               </Link>
             </div>
 

@@ -177,7 +177,7 @@ export default function AffiliateSignInPage() {
             <InfoRow
               step="1"
               title="Sign in with your Velmenora account"
-              body="Use the same account you used to apply for the affiliate program."
+              body="Sign in with your Velmenora member account. If you are not registered yet, create an account first."
             />
             <InfoRow
               step="2"
@@ -204,7 +204,7 @@ export default function AffiliateSignInPage() {
               <div>
                 <h2 className="text-2xl font-black">Open affiliate area</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Already registered? Sign in below. New partners should apply first.
+                  Already have a Velmenora account? Sign in below. New users should create a member account first.
                 </p>
               </div>
 
