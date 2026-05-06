@@ -153,8 +153,8 @@ export default function AffiliateSignInPage() {
         : "border-emerald-400/20 bg-emerald-400/10";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto grid max-w-6xl gap-8 px-6 py-12 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+    <main className="min-h-screen bg-slate-950 pt-28 text-white sm:pt-32">
+      <section className="mx-auto grid max-w-6xl gap-10 px-6 pb-16 lg:grid-cols-[1fr_0.9fr] lg:items-start">
         <div>
           <Link href="/affiliate" className="text-sm font-semibold text-emerald-300 hover:underline">
             ← Affiliate Program
@@ -266,19 +266,19 @@ export default function AffiliateSignInPage() {
           )}
 
           {authState === "member" && accessState !== "approved" && (
-            <div className={`rounded-3xl border p-6 ${statusTone}`}>
+            <div className={`rounded-3xl border p-7 sm:p-8 ${statusTone}`}>
               <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
                 Affiliate Status
               </p>
 
               <h2 className="mt-3 text-3xl font-black">{statusTitle}</h2>
 
-              <p className="mt-4 leading-7 text-slate-300">
+              <p className="mt-5 max-w-3xl leading-8 text-slate-300">
                 {status ||
                   "This account does not have an approved affiliate profile yet. Apply first, then admin approval will unlock the dashboard."}
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <Link
                   href="/affiliate/apply"
                   className="rounded-2xl bg-emerald-400 px-5 py-3 text-center font-black text-slate-950 hover:bg-emerald-300"
@@ -294,7 +294,7 @@ export default function AffiliateSignInPage() {
                 </Link>
               </div>
 
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-slate-400">
+              <div className="mt-8 rounded-2xl border border-white/10 bg-black/25 p-5 text-sm leading-7 text-slate-300">
                 Approved affiliates receive a referral code, tracking link, commission stats,
                 and payout request access inside the dashboard.
               </div>
