@@ -22,6 +22,20 @@ export class PayoutReviewService {
   ) {}
 
   async startReview(input: ReviewInput) {
+    if (!input.reviewerId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "reviewer_id_required",
+      });
+    }
+
+    if (!input.payoutRequestId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "payout_request_id_required",
+      });
+    }
+
     await this.adminGuard.assertAdminUser(input.reviewerId);
     const payout = await this.prisma.payoutRequest.findUnique({
       where: { id: input.payoutRequestId },
@@ -82,6 +96,20 @@ export class PayoutReviewService {
   }
 
   async approve(input: ReviewInput) {
+    if (!input.reviewerId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "reviewer_id_required",
+      });
+    }
+
+    if (!input.payoutRequestId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "payout_request_id_required",
+      });
+    }
+
     await this.adminGuard.assertAdminUser(input.reviewerId);
     const payout = await this.prisma.payoutRequest.findUnique({
       where: { id: input.payoutRequestId },
@@ -142,13 +170,28 @@ export class PayoutReviewService {
   }
 
   async reject(input: RejectInput) {
-    await this.adminGuard.assertAdminUser(input.reviewerId);
+    if (!input.reviewerId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "reviewer_id_required",
+      });
+    }
+
+    if (!input.payoutRequestId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "payout_request_id_required",
+      });
+    }
+
     if (!input.rejectionReason?.trim()) {
       throw new BadRequestException({
         ok: false,
         reason: "rejection_reason_required",
       });
     }
+
+    await this.adminGuard.assertAdminUser(input.reviewerId);
 
     const payout = await this.prisma.payoutRequest.findUnique({
       where: { id: input.payoutRequestId },

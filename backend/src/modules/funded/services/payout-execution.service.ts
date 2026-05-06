@@ -19,6 +19,20 @@ export class PayoutExecutionService {
   ) {}
 
   async markPaid(input: MarkPaidInput) {
+    if (!input.actorUserId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "actor_user_id_required",
+      });
+    }
+
+    if (!input.payoutRequestId?.trim()) {
+      throw new BadRequestException({
+        ok: false,
+        reason: "payout_request_id_required",
+      });
+    }
+
     await this.adminGuard.assertAdminUser(input.actorUserId);
     const payout = await this.prisma.payoutRequest.findUnique({
       where: { id: input.payoutRequestId },
