@@ -180,7 +180,7 @@ export default function AffiliateApplyPage() {
             <div>
               <h2 className="text-2xl font-black">Sign in to continue</h2>
               <p className="mt-2 text-slate-400">
-                Sign in with your Velmenora account to open the affiliate request form.
+                Sign in with your Velmenora account to open the affiliate request form. New here? Create an account first.
               </p>
             </div>
 
@@ -218,14 +218,14 @@ export default function AffiliateApplyPage() {
             </button>
 
             <div className="flex flex-wrap gap-4 text-sm">
-              <Link href="/sign-in" className="text-emerald-300 hover:underline">
+              <Link href="/sign-in?next=/affiliate/apply" className="text-emerald-300 hover:underline">
                 Open sign-in page
               </Link>
               <Link href="/forgot-password" className="text-slate-300 hover:underline">
                 Forgot password?
               </Link>
-              <Link href="/affiliate" className="text-slate-300 hover:underline">
-                Back to affiliate program
+              <Link href="/sign-up?next=/affiliate/apply" className="text-slate-300 hover:underline">
+                Create Velmenora account
               </Link>
             </div>
 

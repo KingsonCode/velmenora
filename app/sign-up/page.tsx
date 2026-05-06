@@ -9,9 +9,10 @@ function nextUrl() {
   return next;
 }
 
-
-export default function SignInPage() {
+export default function SignUpPage() {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,29 +23,24 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/signin", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        body: JSON.stringify({ fullName, email, phone, password }),
       });
 
-      let data: any = null;
-
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Invalid server response");
-      }
+      const data = await res.json().catch(() => null);
 
       if (!res.ok || data?.ok === false) {
-        throw new Error(data?.message || data?.error || "Invalid email or password");
+        throw new Error(data?.message || data?.error || "Account creation failed");
       }
 
       window.location.href = nextUrl();
     } catch (err: any) {
-      setError(err.message || "Sign in failed");
+      setError(err.message || "Account creation failed");
     } finally {
       setLoading(false);
     }
@@ -54,16 +50,31 @@ export default function SignInPage() {
     <main className="min-h-screen bg-black px-6 py-16 text-white">
       <section className="mx-auto max-w-md rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
         <p className="text-sm font-black uppercase tracking-[0.25em] text-green-400">
-          Member Sign In
+          Create Account
         </p>
 
-        <h1 className="mt-3 text-4xl font-black">Access your account</h1>
+        <h1 className="mt-3 text-4xl font-black">Create your Velmenora account</h1>
 
-        <p className="mt-3 text-sm text-gray-400">
-          Sign in to view your funded challenges, broker verification, metrics, and payout status.
+        <p className="mt-3 text-sm leading-6 text-gray-400">
+          Use one account for funded challenges, affiliate applications, dashboard access,
+          and payouts.
         </p>
 
         <form onSubmit={submit} className="mt-7 space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Full name
+            </label>
+            <input
+              value={fullName}
+              disabled={loading}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+              placeholder="Your full name"
+              required
+            />
+          </div>
+
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-300">
               Email
@@ -74,31 +85,37 @@ export default function SignInPage() {
               disabled={loading}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+              placeholder="you@example.com"
               required
             />
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <label className="block text-sm font-semibold text-gray-300">
-                Password
-              </label>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Phone / WhatsApp optional
+            </label>
+            <input
+              value={phone}
+              disabled={loading}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+              placeholder="+255700000000"
+            />
+          </div>
 
-              <a
-                href="/forgot-password"
-                className="text-xs font-bold text-green-400 hover:text-green-300"
-              >
-                Forgot password?
-              </a>
-            </div>
-
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-300">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               disabled={loading}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black px-4 py-4 outline-none transition focus:border-green-500 disabled:opacity-60"
+              placeholder="Minimum 8 characters"
               required
+              minLength={8}
             />
           </div>
 
@@ -110,29 +127,22 @@ export default function SignInPage() {
 
           <button
             type="submit"
-            disabled={loading || !email || !password}
+            disabled={loading || !fullName || !email || password.length < 8}
             className="w-full rounded-2xl bg-green-500 py-4 font-black text-black transition hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-400"
           >
-            {loading ? "Signing In..." : "Sign In"}
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-gray-400">
-          New here?{" "}
+          Already have an account?{" "}
           <a
-            href={`/sign-up?next=${encodeURIComponent(nextUrl())}`}
+            href={`/sign-in?next=${encodeURIComponent(nextUrl())}`}
             className="font-bold text-green-400 hover:text-green-300"
           >
-            Create account
+            Sign in
           </a>
         </p>
-
-        <a
-          href="/funded"
-          className="mt-4 block rounded-2xl border border-white/10 px-5 py-3 text-center font-bold text-white transition hover:border-green-500 hover:text-green-400"
-        >
-          View Funded Challenges
-        </a>
       </section>
     </main>
   );

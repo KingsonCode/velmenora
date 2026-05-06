@@ -29,6 +29,68 @@ export class AuthController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @Post("signup")
+  async signup(
+    @Body() body: { fullName?: string; email?: string; password?: string; phone?: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const fullName = String(body.fullName || "").trim().slice(0, 120);
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+    const phone = body.phone ? String(body.phone).trim().slice(0, 40) : null;
+
+    if (!fullName) {
+      throw new BadRequestException("Full name is required");
+    }
+
+    if (!email || !email.includes("@")) {
+      throw new BadRequestException("Valid email is required");
+    }
+
+    if (password.length < 8) {
+      throw new BadRequestException("Password must be at least 8 characters");
+    }
+
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new BadRequestException("An account with this email already exists");
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        fullName,
+        phone,
+        passwordHash: await hashPassword(password),
+        role: "trader",
+        isActive: true,
+      },
+    });
+
+    const token = createSessionToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    res.setHeader("Set-Cookie", buildSessionCookie(token));
+
+    return {
+      ok: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        role: user.role,
+      },
+    };
+  }
+
   @Post("signin")
   async signin(
     @Body() body: { email?: string; password?: string },
