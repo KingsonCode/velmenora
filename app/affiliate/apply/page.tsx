@@ -163,8 +163,7 @@ export default function AffiliateApplyPage() {
 
         <h1 className="mt-6 text-4xl font-black">Apply to become an affiliate</h1>
         <p className="mt-3 text-slate-300">
-          Sign in first, then submit your affiliate application. Referral links are
-          issued only after approval.
+          Sign in first, then this page will open the affiliate request form. Referral links are issued only after approval.
         </p>
 
         {authState === "checking" && (
@@ -181,7 +180,7 @@ export default function AffiliateApplyPage() {
             <div>
               <h2 className="text-2xl font-black">Sign in to continue</h2>
               <p className="mt-2 text-slate-400">
-                Already have a Velmenora account? Sign in below to continue your affiliate application.
+                Sign in with your Velmenora account to open the affiliate request form.
               </p>
             </div>
 
@@ -215,18 +214,18 @@ export default function AffiliateApplyPage() {
               disabled={loginBusy}
               className="w-full rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 disabled:opacity-60"
             >
-              {loginBusy ? "Signing in..." : "Sign In & Continue"}
+              {loginBusy ? "Signing in..." : "Sign In to Submit Affiliate Request"}
             </button>
 
             <div className="flex flex-wrap gap-4 text-sm">
               <Link href="/sign-in" className="text-emerald-300 hover:underline">
-                Open full sign-in page
+                Open sign-in page
               </Link>
               <Link href="/forgot-password" className="text-slate-300 hover:underline">
                 Forgot password?
               </Link>
-              <Link href="/funded/apply" className="text-slate-300 hover:underline">
-                Create member account
+              <Link href="/affiliate" className="text-slate-300 hover:underline">
+                Back to affiliate program
               </Link>
             </div>
 
