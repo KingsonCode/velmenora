@@ -145,7 +145,7 @@ export default function MemberPage() {
               </h1>
 
               <p className="mt-3 max-w-2xl text-gray-400">
-                Track your funded challenges, broker verification, metrics, reviews, and rewards.
+                Manage your funded challenges, broker verification, account activity, and rewards.
               </p>
             </div>
 
@@ -175,10 +175,10 @@ export default function MemberPage() {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <a
-                href="/affiliate"
+                href="/affiliate/sign-in"
                 className="rounded-2xl border border-white/10 px-5 py-3 text-center font-black text-white transition hover:border-green-500 hover:text-green-300"
               >
-                Affiliate Dashboard
+                Affiliate Area
               </a>
 
               <a
