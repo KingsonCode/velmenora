@@ -84,11 +84,10 @@ export class AffiliateMembershipService {
 
     if (role === 'admin' || role === 'super_admin') return true;
 
-    if (
-      process.env.ADMIN_API_KEY &&
-      adminSecret &&
-      adminSecret === process.env.ADMIN_API_KEY
-    ) {
+    const configuredAdminSecret =
+      process.env.FUNDED_ADMIN_SECRET || process.env.ADMIN_API_KEY;
+
+    if (configuredAdminSecret && adminSecret && adminSecret === configuredAdminSecret) {
       return true;
     }
 
@@ -421,10 +420,27 @@ export class AffiliateMembershipService {
   async rejectApplication(req: RequestLike, applicationId: string, body: any) {
     await this.requireAdmin(req);
 
+    if (!applicationId?.trim()) {
+      throw new BadRequestException('application_id_required');
+    }
+
     const reason =
       typeof body?.reason === 'string' && body.reason.trim()
         ? body.reason.trim().slice(0, 1000)
-        : 'Application rejected';
+        : typeof body?.rejectionReason === 'string' && body.rejectionReason.trim()
+          ? body.rejectionReason.trim().slice(0, 1000)
+          : 'Application rejected';
+
+    const existingApplication = await this.prisma.affiliateApplication.findUnique({
+      where: { id: applicationId },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!existingApplication) {
+      throw new NotFoundException('application_not_found');
+    }
 
     const application = await this.prisma.affiliateApplication.update({
       where: { id: applicationId },
