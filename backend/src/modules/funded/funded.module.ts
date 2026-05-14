@@ -1,7 +1,7 @@
-import { AffiliateMembershipService } from './services/affiliate-membership.service';
-import { AffiliateNotificationService } from './services/affiliate-notification.service';
-import { AdminAffiliateApplicationsController } from './admin-affiliate-applications.controller';
-import { AffiliateMeController } from './affiliate-me.controller';
+import { AffiliateMembershipService } from "./services/affiliate-membership.service";
+import { AffiliateNotificationService } from "./services/affiliate-notification.service";
+import { AdminAffiliateApplicationsController } from "./admin-affiliate-applications.controller";
+import { AffiliateMeController } from "./affiliate-me.controller";
 import { Module } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
@@ -35,6 +35,7 @@ import { CtaTrackingController } from "./cta-tracking/cta-tracking.controller";
 import { CtaTrackingService } from "./cta-tracking/cta-tracking.service";
 
 import { AdminAffiliatePayoutsController } from "./admin-affiliate-payouts.controller";
+import { RetakeDiscountService } from "./services/retake-discount.service";
 
 @Module({
   controllers: [
@@ -49,6 +50,7 @@ import { AdminAffiliatePayoutsController } from "./admin-affiliate-payouts.contr
     AdminAffiliatePayoutsController,
   ],
   providers: [
+    RetakeDiscountService,
     PrismaService,
     ChallengeLifecycleService,
 
@@ -77,6 +79,7 @@ import { AdminAffiliatePayoutsController } from "./admin-affiliate-payouts.contr
     CtaTrackingService,
     AffiliateMembershipService,
     AffiliateNotificationService,],
-  exports: [MetricsOrchestrator],
+  exports: [
+    RetakeDiscountService,MetricsOrchestrator],
 })
 export class FundedModule {}

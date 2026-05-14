@@ -14,6 +14,7 @@ import { FraudDetectorService } from "../services/fraud-detector.service";
 import { StateMachineService } from "../services/state-machine.service";
 import { DrawdownEngineService } from "../services/drawdown-engine.service";
 import { DayResetService } from "../services/day-reset.service";
+import { RetakeDiscountService } from "../services/retake-discount.service";
 
 @Injectable()
 export class MetricsOrchestrator {
@@ -41,6 +42,7 @@ export class MetricsOrchestrator {
 
     @Inject(DayResetService)
     private readonly dayReset: DayResetService,
+    private readonly retakeDiscountService: RetakeDiscountService,
   ) {}
 
   async process(accountId: string, metrics: any) {
@@ -310,6 +312,51 @@ export class MetricsOrchestrator {
 
       return updated;
     });
+
+
+    if (
+      String(previousStatus) !== ChallengeStatus.failed &&
+      nextStatus === ChallengeStatus.failed
+    ) {
+      try {
+        const retakeDiscount =
+          await this.retakeDiscountService.createForFailedAccount(accountId);
+
+        await this.prisma.auditLog.create({
+          data: {
+            actorUserId: null,
+            entityType: AuditEntityType.challenge_account,
+            entityId: accountId,
+            eventType: AuditEventType.admin_action,
+            metadataJson: {
+              source: "metrics_orchestrator",
+              action: "retake_discount_created",
+              retakeDiscountId: retakeDiscount.id,
+              retakeDiscountCode: retakeDiscount.code,
+              percentOff: Number(retakeDiscount.percentOff),
+              originalPrice: Number(retakeDiscount.originalPrice),
+              discountedPrice: Number(retakeDiscount.discountedPrice),
+              expiresAt: retakeDiscount.expiresAt,
+            },
+          },
+        });
+      } catch (error) {
+        await this.prisma.auditLog.create({
+          data: {
+            actorUserId: null,
+            entityType: AuditEntityType.challenge_account,
+            entityId: accountId,
+            eventType: AuditEventType.admin_action,
+            metadataJson: {
+              source: "metrics_orchestrator",
+              action: "retake_discount_create_failed",
+              error: error instanceof Error ? error.message : String(error),
+            },
+          },
+        });
+      }
+    }
+
 
     return {
       ok: true,

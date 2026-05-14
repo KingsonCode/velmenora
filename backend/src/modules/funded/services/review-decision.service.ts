@@ -12,6 +12,7 @@ import {
 
 import { PrismaService } from "../../../prisma/prisma.service";
 import { StateMachineService } from "./state-machine.service";
+import { RetakeDiscountService } from "./retake-discount.service";
 
 @Injectable()
 export class ReviewDecisionService {

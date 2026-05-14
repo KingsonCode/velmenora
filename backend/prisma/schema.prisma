@@ -661,3 +661,36 @@ model AffiliatePayoutRequest {
   @@index([requestedAt])
   @@map("affiliate_payout_requests")
 }
+
+enum RetakeDiscountStatus {
+  active
+  used
+  expired
+  cancelled
+}
+
+model RetakeDiscount {
+  id                 String               @id @default(cuid())
+  email              String
+  userId             String?
+  challengeAccountId String               @unique
+  challengeId        String?
+  planSlug           String
+  code               String               @unique
+  percentOff         Decimal              @db.Decimal(5, 2)
+  originalPrice      Decimal              @db.Decimal(10, 2)
+  discountedPrice    Decimal              @db.Decimal(10, 2)
+  currency           String               @default("USD")
+  status             RetakeDiscountStatus @default(active)
+  expiresAt          DateTime
+  usedAt             DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([email])
+  @@index([userId])
+  @@index([challengeAccountId])
+  @@index([planSlug])
+  @@index([status])
+  @@index([expiresAt])
+}

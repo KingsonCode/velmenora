@@ -11,6 +11,7 @@ import {
 } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { calculateFundedAffiliateCommission } from "../affiliates/commission-rules";
+import { RetakeDiscountService } from "../services/retake-discount.service";
 import {
   NowPaymentsIpnPayload,
   NowPaymentsService,
@@ -71,9 +72,10 @@ export class PaymentProcessingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly nowPayments: NowPaymentsService,
+    private readonly retakeDiscountService: RetakeDiscountService,
   ) {}
 
-  async initiateNowPaymentsPayment(challengeAccountId: string) {
+  async initiateNowPaymentsPayment(challengeAccountId: string, discountCode?: string) {
     const account = await this.prisma.challengeAccount.findUnique({
       where: { id: challengeAccountId },
       include: {
@@ -395,6 +397,49 @@ export class PaymentProcessingService {
             userId: true,
           },
         });
+
+        
+        const rawPaymentPayload = jsonObject(payment.rawPayloadJson);
+        const retakeDiscountPayload = rawPaymentPayload.retakeDiscount;
+
+        if (
+          retakeDiscountPayload &&
+          typeof retakeDiscountPayload === "object" &&
+          !Array.isArray(retakeDiscountPayload) &&
+          typeof retakeDiscountPayload.code === "string"
+        ) {
+          try {
+            await this.retakeDiscountService.markUsed(retakeDiscountPayload.code);
+
+            await tx.auditLog.create({
+              data: {
+                eventType: "admin_action",
+                entityType: "payment",
+                entityId: payment.id,
+                metadataJson: {
+                  source: "nowpayments_ipn",
+                  action: "retake_discount_marked_used",
+                  discountCode: retakeDiscountPayload.code,
+                  challengeAccountId: payment.challengeAccountId,
+                },
+              },
+            });
+          } catch (error) {
+            await tx.auditLog.create({
+              data: {
+                eventType: "admin_action",
+                entityType: "payment",
+                entityId: payment.id,
+                metadataJson: {
+                  source: "nowpayments_ipn",
+                  action: "retake_discount_mark_used_failed",
+                  discountCode: retakeDiscountPayload.code,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+              },
+            });
+          }
+        }
 
         const commissionAmount = calculateFundedAffiliateCommission(
           freshAccount.challenge.slug,

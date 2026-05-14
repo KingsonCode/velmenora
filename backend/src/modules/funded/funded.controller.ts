@@ -183,7 +183,7 @@ export class FundedController {
   }
 
   @Post("payment/initiate")
-  async initiatePayment(@Body() body: { challengeAccountId: string }) {
+  async initiatePayment(@Body() body: { challengeAccountId: string; discountCode?: string }) {
     return this.paymentProcessingService.initiateNowPaymentsPayment(
       body.challengeAccountId,
     );
