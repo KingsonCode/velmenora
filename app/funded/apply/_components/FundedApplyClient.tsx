@@ -166,11 +166,11 @@ export default function FundedApplyClient() {
 
             {retakeCode && (
               <div className="mt-6 rounded-2xl border border-green-500/30 bg-green-950/20 p-5 text-sm text-green-200">
-                <p className="font-bold text-green-300">Retake discount code detected</p>
+                <p className="font-bold text-green-300">Discount code detected</p>
                 <p className="mt-2">
-                  Your retake code{" "}
+                  Your discount code{" "}
                   <span className="font-mono font-bold text-white">{retakeCode}</span>{" "}
-                  will be carried to checkout and applied if it matches your email and plan.
+                  will be applied at checkout if it matches your email and selected plan.
                 </p>
               </div>
             )}

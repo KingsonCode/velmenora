@@ -111,12 +111,12 @@ export default function AccountActions({
       <div className="mt-5">
           {retakeCode && (
             <div className="mb-4 rounded-2xl border border-green-500/30 bg-green-950/20 p-4 text-sm text-green-200">
-              <p className="font-bold text-green-300">Retake discount code applied</p>
+              <p className="font-bold text-green-300">Discount code applied</p>
               <p className="mt-1">
                 Code: <span className="font-mono font-bold text-white">{retakeCode}</span>
               </p>
               <p className="mt-1 text-xs text-green-200/80">
-                The discount will be validated against your email and plan at checkout.
+                Your discount will be validated against your email and selected plan at checkout.
               </p>
             </div>
           )}
