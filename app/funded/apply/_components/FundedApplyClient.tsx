@@ -8,6 +8,7 @@ import { useState } from "react";
 export default function FundedApplyClient() {
   const params = useSearchParams();
   const plan = params.get("plan") ?? "";
+  const retakeCode = params.get("retakeCode") ?? params.get("discountCode") ?? "";
   const selectedPlan = getFundedPlan(plan);
 
   const [email, setEmail] = useState("");

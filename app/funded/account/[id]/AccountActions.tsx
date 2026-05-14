@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   accountId: string;
@@ -17,6 +17,19 @@ export default function AccountActions({
 }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [retakeCode, setRetakeCode] = useState("");
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const fromUrl = url.searchParams.get("retakeCode") || url.searchParams.get("discountCode");
+    const fromStorage = window.localStorage.getItem("velmenora_retake_code") || "";
+    const code = fromUrl || fromStorage;
+
+    if (code) {
+      setRetakeCode(code);
+      window.localStorage.setItem("velmenora_retake_code", code);
+    }
+  }, []);
 
   async function startPayment() {
     setLoading("payment");
