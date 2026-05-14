@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { hashPassword } from "../../auth/auth-utils";
+import { assertNoClientPlanTampering, getFundedPlanOrThrow } from "./config/funded-plan-catalog";
 
 type ApplyInput = {
   email: string;
@@ -27,7 +28,10 @@ export class ChallengeLifecycleService {
   async apply(input: ApplyInput) {
     const email = input.email?.trim().toLowerCase();
     const fullName = input.fullName?.trim();
-    const planSlug = input.planSlug?.trim();
+    assertNoClientPlanTampering(input as unknown as Record<string, unknown>);
+
+    const selectedPlan = getFundedPlanOrThrow(input.planSlug);
+    const planSlug = selectedPlan.slug;
     const rawRef = input.ref?.trim().toLowerCase().slice(0, 80) || null;
     let ref: string | null = null;
 
@@ -35,7 +39,6 @@ export class ChallengeLifecycleService {
 
     if (!email) throw new BadRequestException("Email is required");
     if (!fullName) throw new BadRequestException("fullName is required");
-    if (!planSlug) throw new BadRequestException("planSlug is required");
     if (password.length < 8) {
       throw new BadRequestException("Password must be at least 8 characters");
     }
@@ -46,7 +49,12 @@ export class ChallengeLifecycleService {
       });
 
       if (!challenge || !challenge.isActive) {
-        throw new Error("Funded challenge not found or inactive");
+        throw new BadRequestException({
+          ok: false,
+          code: "FUNDED_PLAN_NOT_CONFIGURED",
+          message: "Selected funded challenge plan is not configured or inactive.",
+          planSlug,
+        });
       }
 
       if (rawRef) {
@@ -94,11 +102,11 @@ export class ChallengeLifecycleService {
           ref,
           applicationIpAddress: input.ipAddress ?? null,
           applicationUserAgent: input.userAgent ?? null,
-          initialBalance: challenge.virtualBalance,
-          dayStartBalance: challenge.virtualBalance,
-          currentBalance: challenge.virtualBalance,
-          currentEquity: challenge.virtualBalance,
-          peakEquity: challenge.virtualBalance,
+          initialBalance: selectedPlan.initialBalance,
+          dayStartBalance: selectedPlan.initialBalance,
+          currentBalance: selectedPlan.initialBalance,
+          currentEquity: selectedPlan.initialBalance,
+          peakEquity: selectedPlan.initialBalance,
         },
       });
 
@@ -107,12 +115,13 @@ export class ChallengeLifecycleService {
           userId: user.id,
           challengeAccountId: challengeAccount.id,
           provider: PaymentProvider.manual,
-          amount: challenge.feeAmount,
-          currency: challenge.currency,
+          amount: selectedPlan.feeUsd,
+          currency: "USD",
           status: PaymentStatus.pending,
           rawPayloadJson: {
             source: "funded_apply",
             planSlug: challenge.slug,
+            lockedPlan: selectedPlan,
           },
         },
       });
@@ -135,6 +144,7 @@ export class ChallengeLifecycleService {
             source: "POST /api/funded/apply",
             planSlug: challenge.slug,
             challengeId: challenge.id,
+            lockedPlan: selectedPlan,
             ref,
             ipAddress: input.ipAddress ?? null,
             userAgent: input.userAgent ?? null,

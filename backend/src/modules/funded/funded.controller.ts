@@ -18,6 +18,7 @@ import { PaymentProcessingService } from "./payments/payment-processing.service"
 import { NowPaymentsService } from "./payments/nowpayments.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { assertAdminSecret } from "./security/admin-secret";
+import { assertNoClientPlanTampering } from "./config/funded-plan-catalog";
 
 type HeaderMap = Record<string, string | string[] | undefined>;
 
@@ -104,6 +105,8 @@ export class FundedController {
     @Req() req: Request,
     @Headers() headers: HeaderMap,
   ) {
+    assertNoClientPlanTampering(body as Record<string, unknown>);
+
     return this.lifecycle.apply({
       email: body.email,
       fullName: body.fullName,
