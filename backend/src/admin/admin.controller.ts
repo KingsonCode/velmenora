@@ -6,6 +6,7 @@ import {
   Headers,
   Inject,
   NotFoundException,
+  ForbiddenException,
   Param,
   Post,
   Query,
@@ -766,6 +767,12 @@ load();
 
     if (!challengeAccount) {
       throw new NotFoundException("Challenge account not found");
+    }
+
+    if (challengeAccount.paymentStatus !== "paid") {
+      throw new ForbiddenException(
+        "Payment must be completed before submitting broker account details.",
+      );
     }
 
     const existingPending = await this.prisma.brokerAccount.findFirst({
