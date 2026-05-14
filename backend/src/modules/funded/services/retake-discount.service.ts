@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { AffiliateNotificationService } from "./affiliate-notification.service";
 
 type RetakePlan = '10K' | '25K' | '50K';
 
@@ -23,7 +24,10 @@ const RETAKE_PRICE_TABLE: Record<RetakePlan, { original: Prisma.Decimal; discoun
 
 @Injectable()
 export class RetakeDiscountService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: AffiliateNotificationService,
+  ) {}
 
   getPolicy() {
     return {
@@ -44,6 +48,17 @@ export class RetakeDiscountService {
     if (raw.includes('50k') || raw.includes('50000')) return '50K';
 
     throw new BadRequestException(`Unsupported retake discount plan: ${planSlug}`);
+  }
+
+  private resolveDisplayName(account: any): string | null {
+    return (
+      account?.fullName ||
+      account?.name ||
+      account?.user?.fullName ||
+      account?.user?.name ||
+      account?.user?.displayName ||
+      null
+    );
   }
 
   private generateCode(plan: RetakePlan): string {
@@ -116,6 +131,7 @@ export class RetakeDiscountService {
 
     const account = await (this.prisma as any).challengeAccount.findUnique({
       where: { id: challengeAccountId },
+      include: { user: true, challenge: true },
     });
 
     if (!account) {
@@ -134,7 +150,7 @@ export class RetakeDiscountService {
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    return (this.prisma as any).retakeDiscount.create({
+    const discount = await (this.prisma as any).retakeDiscount.create({
       data: {
         email,
         userId,
@@ -150,6 +166,24 @@ export class RetakeDiscountService {
         expiresAt,
       },
     });
+
+    try {
+      await this.notifications.sendRetakeDiscountEmail({
+        to: email,
+        displayName: this.resolveDisplayName(account),
+        planSlug: plan,
+        code: discount.code,
+        percentOff: discount.percentOff,
+        originalPrice: discount.originalPrice,
+        discountedPrice: discount.discountedPrice,
+        currency: discount.currency,
+        expiresAt: discount.expiresAt,
+      });
+    } catch {
+      // Email delivery must never block the challenge failure lifecycle.
+    }
+
+    return discount;
   }
 
   async validateForCheckout(params: { code: string; email: string; planSlug: string }) {

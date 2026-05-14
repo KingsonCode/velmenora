@@ -13,6 +13,18 @@ type RejectionEmailInput = {
   reason: string;
 };
 
+type RetakeDiscountEmailInput = {
+  to: string;
+  displayName?: string | null;
+  planSlug: string;
+  code: string;
+  percentOff: unknown;
+  originalPrice: unknown;
+  discountedPrice: unknown;
+  currency?: string | null;
+  expiresAt: Date | string;
+};
+
 function appBaseUrl() {
   return (
     process.env.APP_BASE_URL ||
@@ -213,4 +225,90 @@ export class AffiliateNotificationService {
       logLabel: 'Affiliate rejection',
     });
   }
+  async sendRetakeDiscountEmail(input: RetakeDiscountEmailInput) {
+    const baseUrl = appBaseUrl();
+    const fundedUrl = `${baseUrl}/funded`;
+    const applyUrl = `${baseUrl}/funded/apply?retakeCode=${encodeURIComponent(
+      input.code,
+    )}`;
+
+    const traderName = escapeHtml(input.displayName || 'Trader');
+    const planSlug = escapeHtml(input.planSlug);
+    const code = escapeHtml(input.code);
+    const currency = escapeHtml(input.currency || 'USD');
+
+    const percent = Number(input.percentOff ?? 0);
+    const original = Number(input.originalPrice ?? 0);
+    const discounted = Number(input.discountedPrice ?? 0);
+    const expiresAt = new Date(input.expiresAt);
+    const expiresLabel = Number.isNaN(expiresAt.getTime())
+      ? String(input.expiresAt)
+      : expiresAt.toUTCString();
+
+    const percentLabel = Number.isFinite(percent) ? `${percent}%` : '20%';
+    const originalLabel = Number.isFinite(original)
+      ? `${currency} ${original.toFixed(2)}`
+      : `${currency} ${input.originalPrice}`;
+    const discountedLabel = Number.isFinite(discounted)
+      ? `${currency} ${discounted.toFixed(2)}`
+      : `${currency} ${input.discountedPrice}`;
+
+    const subject = 'Your Velmenora Retake Discount Is Ready';
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;max-width:680px;margin:0 auto;padding:24px;">
+        <h1 style="margin:0 0 16px;font-size:28px;">Your retake discount is ready</h1>
+        <p>Hello ${traderName},</p>
+
+        <p>Your Velmenora challenge has ended, but you are eligible for a private retake discount.</p>
+
+        <div style="background:#f3f4f6;border-radius:16px;padding:18px;margin:22px 0;">
+          <p style="margin:0 0 8px;"><strong>Plan:</strong> ${planSlug}</p>
+          <p style="margin:0 0 8px;"><strong>Discount:</strong> ${escapeHtml(percentLabel)} off</p>
+          <p style="margin:0 0 8px;"><strong>Original price:</strong> ${escapeHtml(originalLabel)}</p>
+          <p style="margin:0 0 8px;"><strong>Your retake price:</strong> ${escapeHtml(discountedLabel)}</p>
+          <p style="margin:0 0 8px;"><strong>Retake code:</strong> <span style="font-family:monospace;font-size:16px;">${code}</span></p>
+          <p style="margin:0;"><strong>Valid until:</strong> ${escapeHtml(expiresLabel)}</p>
+        </div>
+
+        <p>
+          <a href="${applyUrl}" style="display:inline-block;background:#10b981;color:#000;text-decoration:none;font-weight:700;padding:14px 20px;border-radius:12px;">
+            Start Retake With Discount
+          </a>
+        </p>
+
+        <p>If the button does not work, go to <a href="${fundedUrl}">${fundedUrl}</a> and enter your retake code during checkout.</p>
+
+        <p style="color:#6b7280;font-size:14px;">
+          This discount is linked to your registered email, valid for one use only, and cannot be transferred.
+        </p>
+      </div>
+    `;
+
+    const text = [
+      `Hello ${input.displayName || 'Trader'},`,
+      '',
+      'Your Velmenora challenge has ended, but you are eligible for a private retake discount.',
+      '',
+      `Plan: ${input.planSlug}`,
+      `Discount: ${percentLabel} off`,
+      `Original price: ${originalLabel}`,
+      `Your retake price: ${discountedLabel}`,
+      `Retake code: ${input.code}`,
+      `Valid until: ${expiresLabel}`,
+      '',
+      `Start retake: ${applyUrl}`,
+      '',
+      'This discount is linked to your registered email, valid for one use only, and cannot be transferred.',
+    ].join('\n');
+
+    return this.sendEmail({
+      to: input.to,
+      subject,
+      html,
+      text,
+      logLabel: 'Retake discount',
+    });
+  }
+
 }
