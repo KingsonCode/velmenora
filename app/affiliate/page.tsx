@@ -66,16 +66,16 @@ export default function AffiliatePage() {
             paid referrals.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:flex">
+          <div className="mt-8 grid gap-4 sm:flex sm:items-center">
             <a
               href="/affiliate/apply"
-              className="rounded-2xl bg-emerald-400 px-8 py-4 text-center text-lg font-black text-black"
+              className="w-full rounded-2xl bg-emerald-400 px-8 py-4 text-center text-lg font-black text-black sm:w-auto"
             >
               Join Affiliate Program
             </a>
             <a
               href="/affiliate/dashboard"
-              className="rounded-2xl border border-white/15 px-8 py-4 text-center text-lg font-black text-white"
+              className="w-full rounded-2xl border border-white/15 px-8 py-4 text-center text-lg font-black text-white sm:w-auto"
             >
               Affiliate Sign In
             </a>
@@ -240,10 +240,10 @@ export default function AffiliatePage() {
           </p>
 
           <div className="mt-8 grid gap-4 sm:flex sm:justify-center">
-            <a href="/affiliate/apply" className="rounded-2xl bg-emerald-400 px-8 py-4 text-lg font-black text-black">
+            <a href="/affiliate/apply" className="w-full rounded-2xl bg-emerald-400 px-8 py-4 text-center text-lg font-black text-black sm:w-auto">
               Apply Now
             </a>
-            <a href="/affiliate/dashboard" className="rounded-2xl border border-white/15 px-8 py-4 text-lg font-black text-white">
+            <a href="/affiliate/dashboard" className="w-full rounded-2xl border border-white/15 px-8 py-4 text-center text-lg font-black text-white sm:w-auto">
               Affiliate Sign In
             </a>
           </div>
