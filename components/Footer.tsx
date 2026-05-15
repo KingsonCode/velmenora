@@ -251,7 +251,20 @@ export default function Footer() {
                         </p>
                     </div>
 
-                    <div className="mx-auto mt-8 max-w-3xl text-center">
+                    <div className="mx-auto mt-8 max-w-5xl text-center">
+                        <div className="mb-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-xs text-white/45">
+                            <Link href="/terms" className="transition hover:text-cyan-300">Terms</Link>
+                            <Link href="/refund-policy" className="transition hover:text-cyan-300">Refund Policy</Link>
+                            <Link href="/risk-disclosure" className="transition hover:text-cyan-300">Risk Disclosure</Link>
+                            <Link href="/simulated-environment" className="transition hover:text-cyan-300">Simulated Environment</Link>
+                            <Link href="/support" className="transition hover:text-cyan-300">Support</Link>
+                            <Link href="/payouts" className="transition hover:text-cyan-300">Rewards</Link>
+                        </div>
+
+                        <p className="mb-5 text-xs tracking-[0.18em] text-white/30">
+                            Velmenora — Trading Evaluation Platform
+                        </p>
+
                         <div className="flex items-center justify-center gap-6">
                             <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/15 sm:w-24" />
                             <p className="text-xs tracking-[0.2em] text-white/35">
@@ -483,8 +496,21 @@ export default function Footer() {
                             </p>
                         </div>
 
-                        {/* COPYRIGHT */}
-                        <div className="mx-auto mt-6 max-w-4xl text-center">
+                        {/* LEGAL + COPYRIGHT */}
+                        <div className="mx-auto mt-6 max-w-5xl text-center">
+                            <div className="mb-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs text-white/45">
+                                <Link href="/terms" className="transition hover:text-cyan-300">Terms</Link>
+                                <Link href="/refund-policy" className="transition hover:text-cyan-300">Refund Policy</Link>
+                                <Link href="/risk-disclosure" className="transition hover:text-cyan-300">Risk Disclosure</Link>
+                                <Link href="/simulated-environment" className="transition hover:text-cyan-300">Simulated Environment</Link>
+                                <Link href="/support" className="transition hover:text-cyan-300">Support</Link>
+                                <Link href="/payouts" className="transition hover:text-cyan-300">Rewards</Link>
+                            </div>
+
+                            <p className="mb-5 text-xs tracking-[0.18em] text-white/30">
+                                Velmenora — Trading Evaluation Platform
+                            </p>
+
                             <div className="flex items-center justify-center gap-8">
                                 <div className="h-px w-20 bg-gradient-to-r from-transparent to-white/15" />
                                 <p className="text-xs tracking-[0.2em] text-white/35">
