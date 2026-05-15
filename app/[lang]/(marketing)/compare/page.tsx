@@ -226,7 +226,7 @@ export default async function ComparePage({
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-8 md:p-10">
                     <div className="grid gap-6 md:grid-cols-3">
                         <Link
-                            href={`/${lang}/country/academy/what-is-forex`}
+                            href={`/${lang}/academy/what-is-forex`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">New to forex?</h3>
@@ -236,7 +236,7 @@ export default async function ComparePage({
                         </Link>
 
                         <Link
-                            href={`/${lang}/country/academy/forex-for-beginners`}
+                            href={`/${lang}/academy/forex-for-beginners`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">Beginner guide</h3>
@@ -246,7 +246,7 @@ export default async function ComparePage({
                         </Link>
 
                         <Link
-                            href={`/${lang}/country/academy/forex-risk-management`}
+                            href={`/${lang}/academy/forex-risk-management`}
                             className="rounded-2xl border border-white/10 bg-black/20 p-6 transition hover:bg-black/30"
                         >
                             <h3 className="mb-2 font-semibold">Risk management</h3>

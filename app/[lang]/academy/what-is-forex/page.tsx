@@ -140,7 +140,7 @@ export default async function WhatIsForexPage({
 
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href={`/${lang}/country/academy/forex-for-beginners`}
+                            href={`/${lang}/academy/forex-for-beginners`}
                             className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-700"
                         >
                             Forex for Beginners →
@@ -214,7 +214,7 @@ export default async function WhatIsForexPage({
                     <p className="text-gray-400 leading-relaxed">
                         If you are new, read our{" "}
                         <Link
-                            href={`/${lang}/country/academy/forex-for-beginners`}
+                            href={`/${lang}/academy/forex-for-beginners`}
                             className="text-blue-400 underline underline-offset-4 transition hover:text-blue-300"
                         >
                             beginner forex guide
@@ -443,14 +443,14 @@ export default async function WhatIsForexPage({
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
-                        href={`/${lang}/country/academy/forex-for-beginners`}
+                        href={`/${lang}/academy/forex-for-beginners`}
                         className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-7 py-3.5 font-semibold text-white transition hover:bg-blue-700"
                     >
                         Forex for Beginners →
                     </Link>
 
                     <Link
-                        href={`/${lang}/country/academy/how-to-trade-forex`}
+                        href={`/${lang}/academy/how-to-trade-forex`}
                         className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10"
                     >
                         How to Trade Forex

@@ -165,7 +165,7 @@ export default async function ForexBeginnersPage({
                         </Link>
 
                         <Link
-                            href={`/${lang}/country/academy`}
+                            href={`/${lang}/academy`}
                             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                         >
                             Back to Academy
@@ -212,7 +212,7 @@ export default async function ForexBeginnersPage({
                     <p className="text-gray-400 leading-relaxed">
                         If you are still trying to understand the market itself, start with{" "}
                         <Link
-                            href={`/${lang}/country/academy/what-is-forex`}
+                            href={`/${lang}/academy/what-is-forex`}
                             className="text-blue-400 underline underline-offset-4 transition hover:text-blue-300"
                         >
                             what forex trading is
@@ -495,7 +495,7 @@ export default async function ForexBeginnersPage({
                     </Link>
 
                     <Link
-                        href={`/${lang}/country/academy/how-to-trade-forex`}
+                        href={`/${lang}/academy/how-to-trade-forex`}
                         className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 font-semibold text-white transition hover:bg-white/10"
                     >
                         Learn How to Trade Forex

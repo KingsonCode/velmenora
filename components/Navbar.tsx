@@ -1,20 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const SUPPORTED_LANGS = new Set(["en", "de", "fr", "ar"]);
-
-const MARKET_LINKS = [
-    { label: "EUR/USD", slug: "eurusd" },
-    { label: "GBP/USD", slug: "gbpusd" },
-    { label: "USD/JPY", slug: "usdjpy" },
-    { label: "XAU/USD", slug: "xauusd" },
-    { label: "BTC/USD", slug: "btcusd" },
-    { label: "ETH/USD", slug: "ethusd" },
-] as const;
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
@@ -30,8 +21,6 @@ export default function Navbar() {
     const compareHref = `${langPrefix}/compare`;
     const academyHref = `${langPrefix}/academy`;
     const blogHref = "/blog";
-    const marketsHref = `${langPrefix}/markets`;
-    const watchlistHref = `${langPrefix}/watchlist`;
     const fundedHref = "/funded";
     const affiliateHref = "/affiliate";
     const signInHref = "/sign-in";
@@ -48,15 +37,6 @@ export default function Navbar() {
         { pair: "GBP/USD", value: 1.2731 },
         { pair: "USD/JPY", value: 151.22 },
     ]);
-
-    const marketLinks = useMemo(
-        () =>
-            MARKET_LINKS.map((market) => ({
-                ...market,
-                href: `${langPrefix}/markets/${market.slug}`,
-            })),
-        [langPrefix]
-    );
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -216,7 +196,7 @@ export default function Navbar() {
 
                         <div
                             className="
-            pointer-events-none absolute left-0 top-full z-50 mt-1 min-w-[240px]
+            pointer-events-none absolute left-0 top-full z-50 mt-1 min-w-[180px]
             rounded-2xl border border-white/10 bg-black/95 p-3 opacity-0 shadow-xl
             backdrop-blur transition duration-150
             group-hover:pointer-events-auto group-hover:opacity-100
@@ -229,38 +209,6 @@ export default function Navbar() {
                             >
                                 Academy
                             </Link>
-
-                            <Link
-                                href={marketsHref}
-                                className="block rounded-xl px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5 hover:text-white"
-                            >
-                                Markets
-                            </Link>
-
-                            <Link
-                                href={watchlistHref}
-                                className="block rounded-xl px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5 hover:text-white"
-                            >
-                                Watchlist
-                            </Link>
-
-                            <div className="my-2 border-t border-white/10" />
-
-                            <div className="px-4 pb-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-                                Popular Markets
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 px-1 pb-1">
-                                {marketLinks.slice(0, 4).map((market) => (
-                                    <Link
-                                        key={market.slug}
-                                        href={market.href}
-                                        className="rounded-lg px-3 py-2 text-xs text-gray-400 transition hover:bg-white/5 hover:text-white"
-                                    >
-                                        {market.label}
-                                    </Link>
-                                ))}
-                            </div>
                         </div>
                     </div>
 
@@ -328,24 +276,6 @@ export default function Navbar() {
                         </Link>
                         <Link href={blogHref}>Blog</Link>
                         <Link href={academyHref}>Academy</Link>
-                        <Link href={marketsHref}>Markets</Link>
-                        <Link href={watchlistHref}>Watchlist</Link>
-                    </div>
-
-                    <div className="px-6 pb-6">
-                        <div className="mb-3 text-sm text-gray-400">Popular Markets</div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            {marketLinks.map((market) => (
-                                <Link
-                                    key={market.slug}
-                                    href={market.href}
-                                    className="rounded bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-                                >
-                                    {market.label}
-                                </Link>
-                            ))}
-                        </div>
                     </div>
 
                     <div className="mt-auto px-6 pb-8">

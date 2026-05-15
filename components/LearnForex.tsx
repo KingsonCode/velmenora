@@ -18,7 +18,7 @@ type Props = {
 export default function LearnForex({ lang = "en" }: Props) {
     const t = getLearnContent(lang);
 
-    const base = `/${lang}/country/academy`;
+    const base = `/${lang}/academy`;
 
     const cards = [
         {

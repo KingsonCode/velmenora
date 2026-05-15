@@ -174,7 +174,7 @@ export default function ExplorerClient({ lang }: Props) {
 
                         <div className="flex flex-col sm:flex-row gap-4">
                             <Link
-                                href={`/${lang}/country/academy`}
+                                href={`/${lang}/academy`}
                                 className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 font-semibold text-white transition hover:bg-white/10"
                             >
                                 Learn Forex First

@@ -55,7 +55,7 @@ export default function AcademyTopNav({
                 <span className="text-gray-600">/</span>
 
                 <Link
-                    href={`/${lang}/country/academy`}
+                    href={`/${lang}/academy`}
                     className="transition hover:text-white"
                 >
                     Academy
@@ -76,8 +76,8 @@ export default function AcademyTopNav({
                         const isActive = item.href === current;
 
                         const href = item.href
-                            ? `/${lang}/country/academy/${item.href}`
-                            : `/${lang}/country/academy`;
+                            ? `/${lang}/academy/${item.href}`
+                            : `/${lang}/academy`;
 
                         return (
                             <Link
