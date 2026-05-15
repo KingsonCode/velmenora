@@ -66,16 +66,16 @@ export default function AffiliatePage() {
             paid referrals.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:flex sm:items-center">
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
             <a
               href="/affiliate/apply"
-              className="w-full rounded-2xl bg-emerald-400 px-8 py-4 text-center text-lg font-black text-black sm:w-auto"
+              className="block w-full rounded-2xl bg-emerald-400 px-6 py-4 text-center text-base font-black text-black md:text-lg"
             >
               Join Affiliate Program
             </a>
             <a
               href="/affiliate/dashboard"
-              className="w-full rounded-2xl border border-white/15 px-8 py-4 text-center text-lg font-black text-white sm:w-auto"
+              className="block w-full rounded-2xl border border-white/15 px-6 py-4 text-center text-base font-black text-white md:text-lg"
             >
               Affiliate Sign In
             </a>
@@ -239,11 +239,11 @@ export default function AffiliatePage() {
             and transparent tracking.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:flex sm:justify-center">
-            <a href="/affiliate/apply" className="w-full rounded-2xl bg-emerald-400 px-8 py-4 text-center text-lg font-black text-black sm:w-auto">
+          <div className="mx-auto mt-8 grid w-full max-w-md grid-cols-1 gap-4 md:grid-cols-2">
+            <a href="/affiliate/apply" className="block w-full rounded-2xl bg-emerald-400 px-6 py-4 text-center text-base font-black text-black md:text-lg">
               Apply Now
             </a>
-            <a href="/affiliate/dashboard" className="w-full rounded-2xl border border-white/15 px-8 py-4 text-center text-lg font-black text-white sm:w-auto">
+            <a href="/affiliate/dashboard" className="block w-full rounded-2xl border border-white/15 px-6 py-4 text-center text-base font-black text-white md:text-lg">
               Affiliate Sign In
             </a>
           </div>
