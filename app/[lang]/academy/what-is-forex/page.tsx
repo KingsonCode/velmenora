@@ -1,10 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import AcademyTopNav from "@/components/academy/AcademyTopNav";
 
 const SUPPORTED_LANGS = ["en", "ar", "de", "fr"] as const;
 type Lang = (typeof SUPPORTED_LANGS)[number];
 type RouteParams = Promise<{ lang: string }>;
+
+const BASE_URL = "https://velmenora.com";
+
+const ACADEMY_CANONICAL =
+    `${BASE_URL}/en/academy/what-is-forex`;
+
+const ACADEMY_TITLE =
+    "What Is Forex Trading? Beginner Guide | Velmenora";
+
+const ACADEMY_DESCRIPTION =
+    "Learn what forex trading is, how currency pairs work, essential terminology, beginner risks, and the importance of demo practice and risk management.";
 
 function isValidLang(value: string): value is Lang {
     return (SUPPORTED_LANGS as readonly string[]).includes(value);
@@ -100,6 +112,69 @@ const faqs = [
     },
 ];
 
+export async function generateMetadata({
+    params,
+}: {
+    params: RouteParams;
+}): Promise<Metadata> {
+    const { lang } = await params;
+
+    if (!isValidLang(lang)) {
+        return {
+            title: "Academy Page Not Found | Velmenora",
+            robots: {
+                index: false,
+                follow: false,
+            },
+        };
+    }
+
+    return {
+        title: ACADEMY_TITLE,
+        description: ACADEMY_DESCRIPTION,
+        authors: [
+            {
+                name: "Velmenora Research",
+                url: `${BASE_URL}/`,
+            },
+        ],
+        publisher: "Velmenora",
+        alternates: {
+            canonical: ACADEMY_CANONICAL,
+            languages: {
+                en: ACADEMY_CANONICAL,
+                "x-default": ACADEMY_CANONICAL,
+            },
+        },
+        openGraph: {
+            type: "article",
+            title: ACADEMY_TITLE,
+            description: ACADEMY_DESCRIPTION,
+            url: ACADEMY_CANONICAL,
+            siteName: "Velmenora",
+            locale: "en_US",
+            images: [
+                {
+                    url: `${BASE_URL}/og-default.jpg`,
+                    width: 1200,
+                    height: 630,
+                    alt: "What is forex trading — Velmenora Academy",
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: ACADEMY_TITLE,
+            description: ACADEMY_DESCRIPTION,
+            images: [`${BASE_URL}/og-default.jpg`],
+        },
+        robots: {
+            index: lang === "en",
+            follow: true,
+        },
+    };
+}
+
 export default async function WhatIsForexPage({
     params,
 }: {
@@ -111,8 +186,116 @@ export default async function WhatIsForexPage({
         notFound();
     }
 
+    const breadcrumbId =
+        `${ACADEMY_CANONICAL}#breadcrumb`;
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "LearningResource",
+                "@id": `${ACADEMY_CANONICAL}#learning-resource`,
+                url: ACADEMY_CANONICAL,
+                name: ACADEMY_TITLE,
+                headline: "What is Forex Trading?",
+                description: ACADEMY_DESCRIPTION,
+                inLanguage: "en",
+                isAccessibleForFree: true,
+                learningResourceType: "Beginner guide",
+                educationalLevel: "Beginner",
+                teaches: [
+                    "How currency pairs work",
+                    "Basic forex terminology",
+                    "Forex market risks",
+                    "Demo trading and risk management",
+                ],
+                author: {
+                    "@id": `${BASE_URL}/#organization`,
+                },
+                publisher: {
+                    "@id": `${BASE_URL}/#organization`,
+                },
+                isPartOf: {
+                    "@id": `${BASE_URL}/#website`,
+                },
+                breadcrumb: {
+                    "@id": breadcrumbId,
+                },
+            },
+            {
+                "@type": "FAQPage",
+                "@id": `${ACADEMY_CANONICAL}#faq`,
+                mainEntity: faqs.map((item) => ({
+                    "@type": "Question",
+                    name: item.q,
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: item.a,
+                    },
+                })),
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": breadcrumbId,
+                itemListElement: [
+                    {
+                        "@type": "ListItem",
+                        position: 1,
+                        name: "Home",
+                        item: `${BASE_URL}/`,
+                    },
+                    {
+                        "@type": "ListItem",
+                        position: 2,
+                        name: "Forex Academy",
+                        item: `${BASE_URL}/en/academy`,
+                    },
+                    {
+                        "@type": "ListItem",
+                        position: 3,
+                        name: "What is Forex?",
+                        item: ACADEMY_CANONICAL,
+                    },
+                ],
+            },
+        ],
+    };
+
     return (
-        <main className="max-w-6xl mx-auto px-4 pt-32 pb-20">
+        <>
+            <script
+                id="velmenora-academy-structured-data"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(
+                        structuredData
+                    ).replace(/</g, "\\u003c"),
+                }}
+            />
+            <main className="max-w-6xl mx-auto px-4 pt-32 pb-20">
+            <nav
+                aria-label="Breadcrumb"
+                className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-400"
+            >
+                <Link
+                    href="/"
+                    className="transition hover:text-white"
+                >
+                    Home
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link
+                    href={`/${lang}/academy`}
+                    className="transition hover:text-white"
+                >
+                    Forex Academy
+                </Link>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">
+                    What is Forex?
+                </span>
+            </nav>
+
             <AcademyTopNav
                 lang={lang}
                 current="what-is-forex"
@@ -457,6 +640,7 @@ export default async function WhatIsForexPage({
                     </Link>
                 </div>
             </section>
-        </main>
+            </main>
+        </>
     );
 }

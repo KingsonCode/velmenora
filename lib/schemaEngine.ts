@@ -1,6 +1,6 @@
 import { Broker } from "./types/broker";
 
-const BASE_URL = "https://www.velmenora.com";
+const BASE_URL = "https://velmenora.com";
 
 function url(path: string) {
     return `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;

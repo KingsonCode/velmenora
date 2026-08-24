@@ -6,7 +6,7 @@ import {
 
 const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
-    "https://www.velmenora.com";
+    "https://velmenora.com";
 
 // Google example kwenye docs hutumia 50,000 max kwa sitemap moja.
 // Ukiwa conservative unaweza kuweka 5,000 au 10,000 kama unataka.

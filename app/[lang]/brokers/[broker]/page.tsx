@@ -1,9 +1,56 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { getBroker, getRelatedBrokers } from "@/lib/brokers";
 import { resolveGeo } from "@/lib/geo";
+
+const BASE_URL = "https://velmenora.com";
+
+const SUPPORTED_LANGUAGES =
+    ["en", "ar", "de", "fr"] as const;
+
+type SupportedLanguage =
+    (typeof SUPPORTED_LANGUAGES)[number];
+
+const LANGUAGE_LOCALES:
+    Record<SupportedLanguage, string> = {
+        en: "en_US",
+        ar: "ar_AR",
+        de: "de_DE",
+        fr: "fr_FR",
+    };
+
+function isSupportedLanguage(
+    lang: string
+): lang is SupportedLanguage {
+    return SUPPORTED_LANGUAGES.includes(
+        lang as SupportedLanguage
+    );
+}
+
+function buildBrokerUrl(
+    lang: SupportedLanguage,
+    slug: string
+) {
+    return `${BASE_URL}/${lang}/brokers/${slug}`;
+}
+
+function buildLanguageAlternates(slug: string) {
+    const languages: Record<string, string> =
+        Object.fromEntries(
+            SUPPORTED_LANGUAGES.map((lang) => [
+                lang,
+                buildBrokerUrl(lang, slug),
+            ])
+        );
+
+    languages["x-default"] =
+        buildBrokerUrl("en", slug);
+
+    return languages;
+}
 
 /* 🔥 COMPONENTS */
 import BrokerHeroCard from "@/components/broker/BrokerHeroCard";
@@ -21,42 +68,64 @@ type Props = {
 };
 
 /* ================= LANG ENGINE ================= */
-function getTranslations(lang: string, brokerName: string, geoLabel: string) {
+function getTranslations(
+    lang: SupportedLanguage,
+    brokerName: string,
+    geoLabel: string
+) {
     switch (lang) {
         case "de":
             return {
-                title: `${brokerName} Bewertung (${geoLabel}) – Lohnt es sich?`,
-                description: `Vollständige Bewertung von ${brokerName} mit Spreads, Auszahlungen und Plattformen.`,
-                intro1: `${brokerName} ist einer der zuverlässigsten Forex-Broker weltweit.`,
-                intro2: `Trader in ${geoLabel} bevorzugen ${brokerName} wegen schneller Ausführung und stabiler Plattform.`,
-                compare: `Vergleiche ${brokerName}`,
-                cta: `Jetzt Konto eröffnen`,
+                title: `${brokerName} Bewertung (${geoLabel}) – Konditionen und Plattformen`,
+                description: `Unabhängige Übersicht zu ${brokerName}, einschließlich Plattformen, Spreads, Auszahlungen und wichtiger Prüfpunkte.`,
+                intro1: `Diese Übersicht fasst öffentlich verfügbare Informationen zu ${brokerName} und seinen Handelsbedingungen zusammen.`,
+                intro2: `Prüfe Regulierung, Gebühren, Plattformbedingungen und Risikohinweise direkt beim Anbieter, bevor du ein Konto eröffnest.`,
+                compare: `${brokerName} vergleichen`,
+                home: "Startseite",
+                brokers: "Broker",
+                disclosure: "Broker-Verfügbarkeit und Bedingungen können je nach Land variieren. Prüfe Regulierung, Gebühren und Risikohinweise direkt beim Anbieter.",
             };
 
         case "ar":
             return {
-                title: `مراجعة ${brokerName} (${geoLabel}) — هل يستحق؟`,
-                description: `مراجعة كاملة لـ ${brokerName} تشمل السبريد والسحب والمنصات.`,
-                intro1: `${brokerName} هو أحد أكثر الوسطاء موثوقية عالميًا.`,
-                intro2: `المتداولون في ${geoLabel} يفضلون ${brokerName} بسبب السرعة والموثوقية.`,
+                title: `مراجعة ${brokerName} (${geoLabel}) — الشروط والمنصات`,
+                description: `نظرة مستقلة على ${brokerName} تشمل المنصات وفروق الأسعار والسحب ونقاط التحقق المهمة.`,
+                intro1: `تلخص هذه الصفحة المعلومات المتاحة علناً حول ${brokerName} وشروط التداول الخاصة به.`,
+                intro2: `تحقق من التنظيم والرسوم وشروط المنصة وتحذيرات المخاطر مباشرة من مقدم الخدمة قبل فتح حساب.`,
                 compare: `قارن ${brokerName}`,
-                cta: `ابدأ التداول الآن`,
+                home: "الرئيسية",
+                brokers: "الوسطاء",
+                disclosure: "قد يختلف توفر الوسيط وشروطه حسب البلد. تحقق من التنظيم والرسوم وتحذيرات المخاطر مباشرة من مقدم الخدمة.",
+            };
+
+        case "fr":
+            return {
+                title: `Avis ${brokerName} (${geoLabel}) — Conditions et plateformes`,
+                description: `Présentation indépendante de ${brokerName}, notamment ses plateformes, spreads, retraits et principaux points de vérification.`,
+                intro1: `Cette page résume les informations publiques concernant ${brokerName} et ses conditions de trading.`,
+                intro2: `Vérifiez la réglementation, les frais, les conditions de plateforme et les avertissements de risque auprès du fournisseur avant d’ouvrir un compte.`,
+                compare: `Comparer ${brokerName}`,
+                home: "Accueil",
+                brokers: "Courtiers",
+                disclosure: "La disponibilité et les conditions du courtier peuvent varier selon le pays. Vérifiez la réglementation, les frais et les avertissements de risque auprès du fournisseur.",
             };
 
         default:
             return {
-                title: `${brokerName} Review (${geoLabel}) — Is It Worth It?`,
-                description: `Full ${brokerName} review covering spreads, withdrawals, platforms.`,
-                intro1: `${brokerName} is one of the most trusted forex brokers globally.`,
-                intro2: `Traders in ${geoLabel} prefer ${brokerName} due to its execution speed.`,
+                title: `${brokerName} Review (${geoLabel}) — Conditions and Platforms`,
+                description: `Independent overview of ${brokerName}, including platforms, spreads, withdrawals, and important verification points.`,
+                intro1: `This review summarises publicly available information about ${brokerName} and its trading conditions.`,
+                intro2: `Verify regulation, fees, platform terms, and risk disclosures directly with the provider before opening an account.`,
                 compare: `Compare ${brokerName}`,
-                cta: `Open Account Now`,
+                home: "Home",
+                brokers: "Brokers",
+                disclosure: "Broker availability and terms can vary by country. Verify regulation, fees, and risk disclosures directly with the provider.",
             };
     }
 }
 
 /* ================= RTL SUPPORT ================= */
-function isRTL(lang: string) {
+function isRTL(lang: SupportedLanguage) {
     return lang === "ar";
 }
 
@@ -72,25 +141,99 @@ async function buildRequestFromHeaders() {
 }
 
 /* ================= SEO ================= */
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { broker: slug, lang } = await params;
+export async function generateMetadata({
+    params,
+}: Props): Promise<Metadata> {
+    const {
+        broker: slug,
+        lang,
+    } = await params;
 
     const broker = getBroker(slug);
-    if (!broker) return {};
 
-    const geoLabel = "Global";
+    if (
+        !broker ||
+        !isSupportedLanguage(lang)
+    ) {
+        return {
+            title: "Broker Review Not Found | Velmenora",
+            robots: {
+                index: false,
+                follow: false,
+            },
+        };
+    }
 
-    const t = getTranslations(lang, broker.name, geoLabel);
+    const t =
+        getTranslations(lang, broker.name, "Global");
+
+    const canonical =
+        buildBrokerUrl(lang, broker.slug);
+
+    const alternateLocale =
+        SUPPORTED_LANGUAGES
+            .filter((candidate) => candidate !== lang)
+            .map((candidate) =>
+                LANGUAGE_LOCALES[candidate]
+            );
 
     return {
         title: t.title,
         description: t.description,
+        authors: [
+            {
+                name: "Velmenora Research",
+                url: `${BASE_URL}/`,
+            },
+        ],
+        publisher: "Velmenora",
+        alternates: {
+            canonical,
+            languages:
+                buildLanguageAlternates(broker.slug),
+        },
+        openGraph: {
+            type: "website",
+            title: t.title,
+            description: t.description,
+            url: canonical,
+            siteName: "Velmenora",
+            locale: LANGUAGE_LOCALES[lang],
+            alternateLocale,
+            images: [
+                {
+                    url: `${BASE_URL}/og-default.jpg`,
+                    width: 1200,
+                    height: 630,
+                    alt: `${broker.name} broker review by Velmenora`,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: t.title,
+            description: t.description,
+            images: [`${BASE_URL}/og-default.jpg`],
+        },
+        robots: {
+            index: true,
+            follow: true,
+        },
     };
 }
 
 /* ================= PAGE ================= */
 export default async function BrokerLangPage({ params }: Props) {
-    const { broker: slug, lang } = await params;
+    const {
+        broker: slug,
+        lang: requestedLanguage,
+    } = await params;
+
+    if (!isSupportedLanguage(requestedLanguage)) {
+        return notFound();
+    }
+
+    const lang = requestedLanguage;
 
     const broker = getBroker(slug);
     if (!broker) return notFound();
@@ -102,18 +245,119 @@ export default async function BrokerLangPage({ params }: Props) {
 
     const geoLabel = config?.seo?.keyword_modifier || "Global";
 
-    const t = getTranslations(lang, broker.name, geoLabel);
+    const t = getTranslations(
+        lang,
+        broker.name,
+        geoLabel
+    );
+
+    const seoT = getTranslations(
+        lang,
+        broker.name,
+        "Global"
+    );
 
     const rtl = isRTL(lang);
 
-    const related = getRelatedBrokers(broker.slug, 3);
+    const related =
+        getRelatedBrokers(broker.slug, 3);
+
+    const canonical =
+        buildBrokerUrl(lang, broker.slug);
+
+    const breadcrumbId =
+        `${canonical}#breadcrumb`;
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebPage",
+                "@id": `${canonical}#webpage`,
+                url: canonical,
+                name: seoT.title,
+                description: seoT.description,
+                inLanguage: lang,
+                isPartOf: {
+                    "@id": `${BASE_URL}/#website`,
+                },
+                publisher: {
+                    "@id": `${BASE_URL}/#organization`,
+                },
+                about: {
+                    "@type": "Organization",
+                    name: broker.name,
+                },
+                breadcrumb: {
+                    "@id": breadcrumbId,
+                },
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": breadcrumbId,
+                itemListElement: [
+                    {
+                        "@type": "ListItem",
+                        position: 1,
+                        name: t.home,
+                        item: `${BASE_URL}/`,
+                    },
+                    {
+                        "@type": "ListItem",
+                        position: 2,
+                        name: t.brokers,
+                        item: `${BASE_URL}/brokers`,
+                    },
+                    {
+                        "@type": "ListItem",
+                        position: 3,
+                        name: broker.name,
+                        item: canonical,
+                    },
+                ],
+            },
+        ],
+    };
 
     return (
-        <main
+        <>
+            <script
+                id="velmenora-broker-structured-data"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(
+                        structuredData
+                    ).replace(/</g, "\\u003c"),
+                }}
+            />
+            <main
             dir={rtl ? "rtl" : "ltr"}
             className={`w-full max-w-7xl mx-auto px-6 py-12 ${rtl ? "text-right" : ""
                 }`}
         >
+            <nav
+                aria-label="Breadcrumb"
+                className="mb-6 flex flex-wrap items-center gap-2 text-sm text-gray-400"
+            >
+                <Link
+                    href="/"
+                    className="transition hover:text-white"
+                >
+                    {t.home}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link
+                    href="/brokers"
+                    className="transition hover:text-white"
+                >
+                    {t.brokers}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">
+                    {broker.name}
+                </span>
+            </nav>
+
             {/* 🌍 LANGUAGE */}
             <div className="mb-6 text-sm text-gray-400">
                 {lang.toUpperCase()}
@@ -174,11 +418,19 @@ export default async function BrokerLangPage({ params }: Props) {
                 </section>
             )}
 
+            <aside
+                className="mb-10 rounded-xl border border-amber-400/20 bg-amber-400/5 p-5 text-sm leading-relaxed text-gray-300"
+                aria-label="Broker review disclosure"
+            >
+                {t.disclosure}
+            </aside>
+
             {/* CTA */}
             <BrokerCTA broker={broker} />
 
             {/* STICKY CTA */}
             <StickyCTA broker={broker} />
-        </main>
+            </main>
+        </>
     );
 }

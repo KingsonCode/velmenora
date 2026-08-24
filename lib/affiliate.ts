@@ -14,7 +14,7 @@ export type BuildAffiliateInput = {
 
 /* ================= MONEY CONFIG ================= */
 
-const VELMENORA_BASE_URL = "https://www.velmenora.com";
+const VELMENORA_BASE_URL = "https://velmenora.com";
 const GLOBAL_MONEY_BROKER = "exness";
 
 const COUNTRY_TOP_BROKER: Record<string, string> = {

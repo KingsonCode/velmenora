@@ -5,7 +5,7 @@ import { weightedPick } from "@/lib/utils/pick";
 /* ================= CORE ================= */
 
 export const BRAND = "Velmenora";
-export const BASE_URL = "https://www.velmenora.com";
+export const BASE_URL = "https://velmenora.com";
 const YEAR = new Date().getFullYear();
 
 /* ================= CORE TITLE ================= */

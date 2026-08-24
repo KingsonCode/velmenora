@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: "Velmenora Funded Challenge",
     description:
       "Choose a simulated funded challenge, trade transparent rules, and qualify for fixed rewards after review.",
-    url: "https://www.velmenora.com/funded",
+    url: "https://velmenora.com/funded",
     type: "website",
   },
   twitter: {
@@ -35,7 +35,7 @@ function JsonLd() {
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: "Velmenora Funded Challenge",
-      url: "https://www.velmenora.com/funded",
+      url: "https://velmenora.com/funded",
       description:
         "Simulated funded trading challenge plans with fixed rewards and transparent risk rules.",
     },
@@ -48,7 +48,7 @@ function JsonLd() {
         name: plan.name,
         price: plan.fee.replace("$", ""),
         priceCurrency: "USD",
-        url: `https://www.velmenora.com/funded/apply?plan=${plan.slug}`,
+        url: `https://velmenora.com/funded/apply?plan=${plan.slug}`,
         itemOffered: {
           "@type": "Service",
           name: `${plan.name} Simulated Funded Challenge`,

@@ -85,7 +85,7 @@ function buildPaymentBrokerCards(): BrokerCardData[] {
 
 export function buildPaymentPage({
     lang = "en",
-    baseUrl = "https://www.velmenora.com",
+    baseUrl = "https://velmenora.com",
     slug,
     country,
     payment,

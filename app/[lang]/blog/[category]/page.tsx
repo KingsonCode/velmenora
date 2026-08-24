@@ -31,7 +31,7 @@ export const revalidate = 3600;
 ========================================= */
 
 function getBaseUrl() {
-    return process.env.NEXT_PUBLIC_BASE_URL || "https://www.velmenora.com";
+    return process.env.NEXT_PUBLIC_BASE_URL || "https://velmenora.com";
 }
 
 function getRelatedLinks(lang: Lang, category: BlogCategory) {

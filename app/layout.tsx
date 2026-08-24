@@ -1,3 +1,4 @@
+import VelmenoraSitewideJsonLd from "@/components/seo/VelmenoraSitewideJsonLd";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
@@ -25,8 +26,13 @@ const geistMono = Geist_Mono({
 /* =========================
    SEO (UPGRADED)
 ========================= */
+const IS_INDEXABLE_DEPLOYMENT =
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV !== "preview" &&
+    process.env.VERCEL_ENV !== "development";
+
 export const metadata: Metadata = {
-    metadataBase: new URL("https://www.velmenora.com"),
+    metadataBase: new URL("https://velmenora.com"),
 
     title: {
         default: "Velmenora — Best Forex Brokers in Africa",
@@ -54,7 +60,7 @@ export const metadata: Metadata = {
         title: "Velmenora — Best Forex Brokers",
         description:
             "Find top forex brokers with fast withdrawals and low spreads.",
-        url: "https://www.velmenora.com",
+        url: "https://velmenora.com",
         siteName: "Velmenora",
         images: [
             {
@@ -77,8 +83,8 @@ export const metadata: Metadata = {
     },
 
     robots: {
-        index: true,
-        follow: true,
+        index: IS_INDEXABLE_DEPLOYMENT,
+        follow: IS_INDEXABLE_DEPLOYMENT,
     },
 };
 
@@ -108,6 +114,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#020617] text-white`}
             >
+                <VelmenoraSitewideJsonLd />
                 <RefCapture />
                 <div className="flex flex-col min-h-screen">
 

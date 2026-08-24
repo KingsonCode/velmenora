@@ -59,7 +59,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { type } = await params;
     const title = CATEGORY_MAP[type] || "Forex Trading Guides";
-    const canonical = `https://www.velmenora.com/blog/category/${type}`;
+    const canonical = `https://velmenora.com/blog/category/${type}`;
 
     return {
         title: `${title} | Velmenora`,

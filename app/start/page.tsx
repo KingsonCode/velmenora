@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     title: "Start Velmenora",
     description:
       "Choose your path: start a simulated funded challenge or compare trusted forex brokers.",
-    url: "https://www.velmenora.com/start",
+    url: "https://velmenora.com/start",
     type: "website",
   },
   twitter: {
@@ -95,7 +95,7 @@ function JsonLd() {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: "Start Velmenora",
-    url: "https://www.velmenora.com/start",
+    url: "https://velmenora.com/start",
     description:
       "Landing page for Velmenora simulated funded challenge plans and broker recommendations.",
     hasOfferCatalog: {
@@ -106,7 +106,7 @@ function JsonLd() {
         name: plan.name,
         price: plan.fee.replace("$", ""),
         priceCurrency: "USD",
-        url: `https://www.velmenora.com/funded/apply?plan=${plan.slug}`,
+        url: `https://velmenora.com/funded/apply?plan=${plan.slug}`,
       })),
     },
   };

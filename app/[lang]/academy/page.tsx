@@ -1,10 +1,72 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import AcademyTopNav from "@/components/academy/AcademyTopNav";
 
 const SUPPORTED_LANGS = ["en", "ar", "de", "fr"] as const;
 type Lang = (typeof SUPPORTED_LANGS)[number];
 type RouteParams = Promise<{ lang: string }>;
+
+const BASE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
+    "https://velmenora.com";
+
+const ACADEMY_CANONICAL = `${BASE_URL}/en/academy`;
+const ACADEMY_TITLE =
+    "Forex Trading Academy for Beginners | Velmenora";
+const ACADEMY_DESCRIPTION =
+    "Learn forex market fundamentals, demo trading, trade execution, and risk management through Velmenora's structured educational guides.";
+
+export async function generateMetadata({
+    params,
+}: {
+    params: RouteParams;
+}): Promise<Metadata> {
+    const { lang } = await params;
+
+    if (!isValidLang(lang)) {
+        return {
+            robots: {
+                index: false,
+                follow: false,
+            },
+        };
+    }
+
+    return {
+        title: ACADEMY_TITLE,
+        description: ACADEMY_DESCRIPTION,
+        alternates: {
+            canonical: ACADEMY_CANONICAL,
+        },
+        robots: {
+            index: lang === "en",
+            follow: true,
+        },
+        openGraph: {
+            title: ACADEMY_TITLE,
+            description: ACADEMY_DESCRIPTION,
+            url: ACADEMY_CANONICAL,
+            siteName: "Velmenora",
+            type: "website",
+            images: [
+                {
+                    url: `${BASE_URL}/og-default.jpg`,
+                    width: 1200,
+                    height: 630,
+                    alt: "Velmenora Forex Trading Academy",
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: ACADEMY_TITLE,
+            description: ACADEMY_DESCRIPTION,
+            images: [`${BASE_URL}/og-default.jpg`],
+        },
+    };
+}
 
 function isValidLang(value: string): value is Lang {
     return (SUPPORTED_LANGS as readonly string[]).includes(value);
@@ -62,8 +124,69 @@ export default async function AcademyPage({
         notFound();
     }
 
+    const academyStructuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "CollectionPage",
+                "@id": `${ACADEMY_CANONICAL}#webpage`,
+                url: ACADEMY_CANONICAL,
+                name: ACADEMY_TITLE,
+                description: ACADEMY_DESCRIPTION,
+                inLanguage: "en",
+                isPartOf: {
+                    "@id": `${BASE_URL}/#website`,
+                },
+                mainEntity: {
+                    "@id": `${ACADEMY_CANONICAL}#guides`,
+                },
+            },
+            {
+                "@type": "ItemList",
+                "@id": `${ACADEMY_CANONICAL}#guides`,
+                name: "Velmenora Forex Academy Guides",
+                numberOfItems: academyGuides.length,
+                itemListElement: academyGuides.map((guide, index) => ({
+                    "@type": "ListItem",
+                    position: index + 1,
+                    name: guide.title,
+                    description: guide.desc,
+                    url: `${BASE_URL}/en/academy/${guide.href}`,
+                })),
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": `${ACADEMY_CANONICAL}#breadcrumb`,
+                itemListElement: [
+                    {
+                        "@type": "ListItem",
+                        position: 1,
+                        name: "Home",
+                        item: `${BASE_URL}/`,
+                    },
+                    {
+                        "@type": "ListItem",
+                        position: 2,
+                        name: "Forex Academy",
+                        item: ACADEMY_CANONICAL,
+                    },
+                ],
+            },
+        ],
+    };
+
     return (
         <main className="max-w-7xl mx-auto px-4 pt-32 pb-20">
+            {lang === "en" ? (
+                <script
+                    id="velmenora-academy-landing-structured-data"
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(academyStructuredData),
+                    }}
+                />
+            ) : null}
+
             <AcademyTopNav
                 lang={lang}
                 current=""
@@ -281,6 +404,21 @@ export default async function AcademyPage({
                         </li>
                     </ul>
                 </div>
+            </section>
+
+            <section
+                aria-label="Academy education disclaimer"
+                className="mb-12 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-6"
+            >
+                <h2 className="mb-2 text-lg font-semibold text-amber-200">
+                    Education and risk notice
+                </h2>
+                <p className="leading-relaxed text-gray-300">
+                    Velmenora Academy provides educational information only and
+                    should not be considered financial advice. Forex trading
+                    involves substantial risk. Learn carefully, practise on a
+                    demo account, and verify regulated providers independently.
+                </p>
             </section>
 
             {/* CTA */}

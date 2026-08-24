@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
     process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "") ||
-    "https://www.velmenora.com";
+    "https://velmenora.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const now = new Date();
@@ -30,12 +30,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
         {
             url: `${BASE_URL}/compare`,
-            lastModified: now,
-            changeFrequency: "weekly",
-            priority: 0.85,
-        },
-        {
-            url: `${BASE_URL}/academy`,
             lastModified: now,
             changeFrequency: "weekly",
             priority: 0.85,
@@ -83,26 +77,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: now,
             changeFrequency: "weekly",
             priority: 0.85,
-        },
-
-        /* ================= SITEMAP DISCOVERY ================= */
-        {
-            url: `${BASE_URL}/blog/sitemap.xml`,
-            lastModified: now,
-            changeFrequency: "weekly",
-            priority: 0.3,
-        },
-        {
-            url: `${BASE_URL}/money-pages/sitemap.xml`,
-            lastModified: now,
-            changeFrequency: "weekly",
-            priority: 0.3,
-        },
-        {
-            url: `${BASE_URL}/programmatic/sitemap/0.xml`,
-            lastModified: now,
-            changeFrequency: "weekly",
-            priority: 0.3,
         },
     ];
 }

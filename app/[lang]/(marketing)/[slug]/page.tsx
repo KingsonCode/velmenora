@@ -25,7 +25,7 @@ function isValidLang(value: string): value is Lang {
 }
 
 function getBaseUrl(): string {
-    const raw = process.env.NEXT_PUBLIC_SITE_URL || "https://www.velmenora.com";
+    const raw = process.env.NEXT_PUBLIC_SITE_URL || "https://velmenora.com";
     return raw.replace(/\/+$/, "");
 }
 

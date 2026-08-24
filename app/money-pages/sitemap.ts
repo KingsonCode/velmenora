@@ -3,7 +3,7 @@ import { PROGRAMMATIC_SUPPORTED_LANGS } from "@/lib/programmatic/staticSlugs";
 
 const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
-    "https://www.velmenora.com";
+    "https://velmenora.com";
 
 const COUNTRIES = [
     "tanzania",

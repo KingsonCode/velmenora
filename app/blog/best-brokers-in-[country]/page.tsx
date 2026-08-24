@@ -38,9 +38,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
     params,
 }: {
-    params: { country: string };
+    params: Promise<{ country: string }>;
 }) {
-    const country = getCountryBySlug(params.country);
+    const { country: countrySlug } = await params;
+    const country = getCountryBySlug(countrySlug);
 
     if (!country) return {};
 
@@ -58,12 +59,13 @@ export async function generateMetadata({
 }
 
 /* ================= PAGE ================= */
-export default function Page({
+export default async function Page({
     params,
 }: {
-    params: { country: string };
+    params: Promise<{ country: string }>;
 }) {
-    const country = getCountryBySlug(params.country);
+    const { country: countrySlug } = await params;
+    const country = getCountryBySlug(countrySlug);
 
     if (!country) return notFound();
 

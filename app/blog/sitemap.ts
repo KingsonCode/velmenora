@@ -3,7 +3,7 @@ import { generateAllKeywords } from "@/lib/blog/programmaticEngine";
 
 const BASE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
-    "https://www.velmenora.com";
+    "https://velmenora.com";
 
 /* 🔥 unaweza kuongeza hadi 5000 au 10000 */
 const SITEMAP_SIZE = 2000;

@@ -116,11 +116,18 @@ export async function generateMetadata({
     const description =
         post.description || "Forex trading guides and broker comparisons.";
     const image = post.image || "/og-default.jpg";
-    const canonical = `https://www.velmenora.com/blog/${post.slug}`;
+    const canonical = `https://velmenora.com/blog/${post.slug}`;
 
     return {
         title,
         description,
+        authors: [
+            {
+                name: "Velmenora Research",
+                url: "https://velmenora.com/",
+            },
+        ],
+        publisher: "Velmenora",
         alternates: {
             canonical,
         },
@@ -167,8 +174,121 @@ export default async function BlogPostPage({
         notFound();
     }
 
+    const canonical =
+        `https://velmenora.com/blog/${post.slug}`;
+
+    const postImage =
+        "image" in post &&
+        typeof post.image === "string" &&
+        post.image
+            ? post.image
+            : "/og-default.jpg";
+
+    const absoluteImage = postImage.startsWith("http")
+        ? postImage
+        : `https://velmenora.com${postImage.startsWith("/") ? postImage : `/${postImage}`}`;
+
+    const publishedDate =
+        "date" in post &&
+        typeof post.date === "string" &&
+        post.date
+            ? post.date
+            : undefined;
+
+    const breadcrumbSchema = {
+        "@type": "BreadcrumbList",
+        "@id": `${canonical}#breadcrumb`,
+        itemListElement: [
+            {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://velmenora.com/",
+            },
+            {
+                "@type": "ListItem",
+                position: 2,
+                name: "Blog",
+                item: "https://velmenora.com/blog",
+            },
+            {
+                "@type": "ListItem",
+                position: 3,
+                name: post.title,
+                item: canonical,
+            },
+        ],
+    };
+
+    const primarySchema = isCategorySlug(post.slug)
+        ? {
+            "@type": "CollectionPage",
+            "@id": `${canonical}#webpage`,
+            url: canonical,
+            name: post.title,
+            description:
+                post.description ||
+                "Forex broker comparisons and trading guides.",
+            isPartOf: {
+                "@id": "https://velmenora.com/#website",
+            },
+            breadcrumb: {
+                "@id": `${canonical}#breadcrumb`,
+            },
+            inLanguage: "en",
+        }
+        : {
+            "@type": "BlogPosting",
+            "@id": `${canonical}#article`,
+            url: canonical,
+            headline: post.title,
+            description:
+                post.description ||
+                "Forex trading guides and broker comparisons.",
+            image: [absoluteImage],
+            datePublished: publishedDate,
+            dateModified: publishedDate,
+            author: {
+                "@type": "Organization",
+                "@id": "https://velmenora.com/#organization",
+                name: "Velmenora Research",
+                url: "https://velmenora.com/",
+            },
+            publisher: {
+                "@id": "https://velmenora.com/#organization",
+            },
+            mainEntityOfPage: {
+                "@id": `${canonical}#webpage`,
+            },
+            isPartOf: {
+                "@id": "https://velmenora.com/#website",
+            },
+            breadcrumb: {
+                "@id": `${canonical}#breadcrumb`,
+            },
+            inLanguage: "en",
+        };
+
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            primarySchema,
+            breadcrumbSchema,
+        ],
+    };
+
     return (
-        <main className="min-h-screen bg-[#050816] text-white">
+        <>
+            <script
+                id="velmenora-blog-structured-data"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(
+                        structuredData
+                    ).replace(/</g, "\\u003c"),
+                }}
+            />
+            <main className="min-h-screen bg-[#050816] text-white">
             {/* HERO */}
             <section className="relative overflow-hidden border-b border-white/10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.10),transparent_30%)]" />
@@ -345,6 +465,7 @@ export default async function BlogPostPage({
                     </aside>
                 </div>
             </section>
-        </main>
+            </main>
+        </>
     );
 }

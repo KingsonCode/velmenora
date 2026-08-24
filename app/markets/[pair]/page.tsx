@@ -84,7 +84,7 @@ export async function generateMetadata({
 
     if (!market) return {};
 
-    const url = `https://www.velmenora.com/markets/${pair.toLowerCase()}`;
+    const url = `https://velmenora.com/markets/${pair.toLowerCase()}`;
 
     return {
         title: `${market.name} Live Chart & Analysis | Velmenora`,

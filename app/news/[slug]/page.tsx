@@ -39,9 +39,10 @@ async function getNews(slug: string): Promise<News | null> {
 
 /* 🔥 SEO METADATA */
 export async function generateMetadata(
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-    const article = await getNews(params.slug);
+    const { slug } = await params;
+    const article = await getNews(slug);
 
     if (!article) {
         return {
@@ -64,9 +65,10 @@ export async function generateMetadata(
 export default async function NewsDetailPage({
     params,
 }: {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }) {
-    const article = await getNews(params.slug);
+    const { slug } = await params;
+    const article = await getNews(slug);
 
     if (!article) return notFound();
 

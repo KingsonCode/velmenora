@@ -55,7 +55,7 @@ function buildGeoBrokerCards(): BrokerCardData[] {
 
 export function buildGeoPage({
     lang = "en",
-    baseUrl = "https://www.velmenora.com",
+    baseUrl = "https://velmenora.com",
     slug,
     country,
 }: GeoBuilderInput): BuiltPageContent {
