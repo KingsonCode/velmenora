@@ -103,7 +103,9 @@ export async function generateMetadata({
 
     if (!post) {
         return {
-            title: "Blog Post Not Found | Velmenora",
+            title: {
+                absolute: "Blog Post Not Found | Velmenora",
+            },
             description: "The requested blog post could not be found.",
             robots: {
                 index: false,
@@ -119,7 +121,7 @@ export async function generateMetadata({
     const canonical = `https://velmenora.com/blog/${post.slug}`;
 
     return {
-        title,
+        title: { absolute: title },
         description,
         authors: [
             {

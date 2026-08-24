@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IS_INDEXABLE_DEPLOYMENT } from "@/lib/seo/indexing";
 import type { ReactNode } from "react";
 
 const BASE_URL = "https://velmenora.com";
@@ -80,7 +81,7 @@ export function buildAcademyMetadata(
         ["en", "ar", "de", "fr"].includes(lang);
 
     return {
-        title: page.title,
+        title: { absolute: page.title },
         description: page.description,
         authors: [
             {
@@ -119,8 +120,8 @@ export function buildAcademyMetadata(
             images: [BASE_URL + "/og-default.jpg"],
         },
         robots: {
-            index: lang === "en",
-            follow: supportedLanguage,
+            index: lang === "en" && IS_INDEXABLE_DEPLOYMENT,
+            follow: supportedLanguage && IS_INDEXABLE_DEPLOYMENT,
         },
     };
 }

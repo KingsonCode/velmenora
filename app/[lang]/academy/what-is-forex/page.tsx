@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { IS_INDEXABLE_DEPLOYMENT } from "@/lib/seo/indexing";
 import AcademyTopNav from "@/components/academy/AcademyTopNav";
 
 const SUPPORTED_LANGS = ["en", "ar", "de", "fr"] as const;
@@ -121,7 +122,9 @@ export async function generateMetadata({
 
     if (!isValidLang(lang)) {
         return {
-            title: "Academy Page Not Found | Velmenora",
+            title: {
+                absolute: "Academy Page Not Found | Velmenora",
+            },
             robots: {
                 index: false,
                 follow: false,
@@ -130,7 +133,7 @@ export async function generateMetadata({
     }
 
     return {
-        title: ACADEMY_TITLE,
+        title: { absolute: ACADEMY_TITLE },
         description: ACADEMY_DESCRIPTION,
         authors: [
             {
@@ -169,8 +172,8 @@ export async function generateMetadata({
             images: [`${BASE_URL}/og-default.jpg`],
         },
         robots: {
-            index: lang === "en",
-            follow: true,
+            index: lang === "en" && IS_INDEXABLE_DEPLOYMENT,
+            follow: IS_INDEXABLE_DEPLOYMENT,
         },
     };
 }

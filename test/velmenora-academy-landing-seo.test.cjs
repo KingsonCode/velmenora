@@ -12,8 +12,8 @@ const source = fs.readFileSync(
 test("Academy landing has canonical and index-safe metadata", () => {
   assert.match(source, /export async function generateMetadata/);
   assert.match(source, /canonical: ACADEMY_CANONICAL/);
-  assert.match(source, /index: lang === "en"/);
-  assert.match(source, /follow: true/);
+  assert.match(source, /index: lang === "en" && IS_INDEXABLE_DEPLOYMENT/);
+  assert.match(source, /follow: IS_INDEXABLE_DEPLOYMENT/);
 });
 
 test("Academy landing exposes official social metadata", () => {

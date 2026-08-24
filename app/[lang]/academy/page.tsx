@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { IS_INDEXABLE_DEPLOYMENT } from "@/lib/seo/indexing";
 import { notFound } from "next/navigation";
 import AcademyTopNav from "@/components/academy/AcademyTopNav";
 
@@ -35,14 +36,14 @@ export async function generateMetadata({
     }
 
     return {
-        title: ACADEMY_TITLE,
+        title: { absolute: ACADEMY_TITLE },
         description: ACADEMY_DESCRIPTION,
         alternates: {
             canonical: ACADEMY_CANONICAL,
         },
         robots: {
-            index: lang === "en",
-            follow: true,
+            index: lang === "en" && IS_INDEXABLE_DEPLOYMENT,
+            follow: IS_INDEXABLE_DEPLOYMENT,
         },
         openGraph: {
             title: ACADEMY_TITLE,

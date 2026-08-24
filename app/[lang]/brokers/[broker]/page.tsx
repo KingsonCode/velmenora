@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { IS_INDEXABLE_DEPLOYMENT } from "@/lib/seo/indexing";
 
 import { getBroker, getRelatedBrokers } from "@/lib/brokers";
 import { resolveGeo } from "@/lib/geo";
@@ -156,7 +157,9 @@ export async function generateMetadata({
         !isSupportedLanguage(lang)
     ) {
         return {
-            title: "Broker Review Not Found | Velmenora",
+            title: {
+                absolute: "Broker Review Not Found | Velmenora",
+            },
             robots: {
                 index: false,
                 follow: false,
@@ -216,8 +219,8 @@ export async function generateMetadata({
             images: [`${BASE_URL}/og-default.jpg`],
         },
         robots: {
-            index: true,
-            follow: true,
+            index: IS_INDEXABLE_DEPLOYMENT,
+            follow: IS_INDEXABLE_DEPLOYMENT,
         },
     };
 }
